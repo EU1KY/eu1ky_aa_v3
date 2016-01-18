@@ -1,0 +1,10 @@
+# use glob syntax.
+syntax: glob
+
+bin/*
+obj/*
+*.orig
+Thumbs.db
+*.emDepend
+*.emLayout
+*.emTemp
