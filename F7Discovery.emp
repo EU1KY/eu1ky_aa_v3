@@ -13,25 +13,16 @@
 				<Option type="1" />
 				<Option compiler="armelfgcc" />
 				<Compiler>
-					<Add option="-mcpu=cortex-m4" />
-					<Add option="-mthumb" />
 					<Add option="-g" />
-					<Add option=" -DDEBUG=1" />
-					<Add directory="Inc" />
+					<Add option="-DDEBUG=1" />
+					<Add option="-DUSE_FULL_ASSERT" />
 				</Compiler>
 				<Linker>
-					<Add option="-Wl,-Map" />
-					<Add option="-Wl,${TARGET_OUTPUT_FILE}.map" />
-					<Add option="-Wl,--gc-sections" />
-					<Add option="-n" />
-					<Add option="-Wl,-cref" />
-					<Add option="-mcpu=cortex-m4" />
-					<Add option="-mthumb" />
-					<Add option=" -TSetup/Flash.ld" />
+					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
 				</Linker>
 				<PostOutput>
-					<ConvertedOutput PostOutputCreate="0" />
-					<ConvertedOutput PostOutputType="HEX" />
+					<ConvertedOutput PostOutputCreate="1" />
+					<ConvertedOutput PostOutputType="BIN" />
 					<ConvertedOutput PostOutputFile="${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}" />
 				</PostOutput>
 			</Target>
@@ -41,38 +32,447 @@
 				<Option type="1" />
 				<Option compiler="armelfgcc" />
 				<Compiler>
-					<Add option="-mcpu=cortex-m4" />
-					<Add option="-mthumb" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-Os" />
 					<Add option="-g" />
-					<Add option="-O2" />
-					<Add directory="Inc" />
 				</Compiler>
 				<Linker>
-					<Add option="-Wl,-Map" />
-					<Add option="-Wl,${TARGET_OUTPUT_FILE}.map" />
-					<Add option="-Wl,--gc-sections" />
-					<Add option="-n" />
-					<Add option="-Wl,-cref" />
-					<Add option="-mcpu=cortex-m4" />
-					<Add option="-mthumb" />
-					<Add option=" -TSetup/Flash.ld" />
-					<Add option="-s" />
+					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
 				</Linker>
 				<PostOutput>
-					<ConvertedOutput PostOutputCreate="0" />
-					<ConvertedOutput PostOutputType="HEX" />
+					<ConvertedOutput PostOutputCreate="1" />
+					<ConvertedOutput PostOutputType="BIN" />
 					<ConvertedOutput PostOutputFile="${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}" />
 				</PostOutput>
 			</Target>
 		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="-mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16" />
+			<Add option="-DSTM32F746G_DISCO" />
+			<Add option="-DSTM32F746NGHx" />
+			<Add option="-DSTM32F7" />
+			<Add option="-DSTM32" />
+			<Add option="-DUSE_HAL_DRIVER" />
+			<Add option="-DSTM32F746xx" />
+			<Add directory="Src" />
+			<Add directory="Src/BSP/STM32746G-Discovery" />
+			<Add directory="Src/BSP/Components/ampire480272" />
+			<Add directory="Src/BSP/Components/ampire640480" />
+			<Add directory="Src/BSP/Components/Common" />
+			<Add directory="Src/BSP/Components/exc7200" />
+			<Add directory="Src/BSP/Components/ft5336" />
+			<Add directory="Src/BSP/Components/mfxstm32l152 " />
+			<Add directory="Src/BSP/Components/n25q128a" />
+			<Add directory="Src/BSP/Components/n25q512a" />
+			<Add directory="Src/BSP/Components/ov9655" />
+			<Add directory="Src/BSP/Components/rk043fn48h" />
+			<Add directory="Src/BSP/Components/s5k5cag" />
+			<Add directory="Src/BSP/Components/stmpe811" />
+			<Add directory="Src/BSP/Components/ts3510" />
+			<Add directory="Src/BSP/Components/wm8994" />
+			<Add directory="Src/CMSIS/Device/ST/STM32F7xx/Include" />
+			<Add directory="Src/CMSIS/Include" />
+			<Add directory="Src/Inc" />
+			<Add directory="Src/STM32F7xx_HAL_Driver/Inc" />
+			<Add directory="Src/STM32F7xx_HAL_Driver/Inc/Legacy" />
+			<Add directory="Src/Utilities/Fonts" />
+		</Compiler>
+		<Linker>
+			<Add option="--specs=nano.specs" />
+			<Add option="-Wl,--gc-sections" />
+			<Add option="-n" />
+			<Add option="-Wl,-cref" />
+			<Add option="-mcpu=cortex-m7" />
+			<Add option="-Wl,-Map" />
+			<Add option="-Wl,${TARGET_OUTPUT_FILE}.map" />
+			<Add option="-mthumb" />
+			<Add option="-mcpu=cortex-m7" />
+			<Add option="-mfloat-abi=hard" />
+			<Add option="-mfpu=fpv4-sp-d16" />
+			<Add option="-Wl,--start-group,-lc,-lm" />
+			<Add option="-Wl,--end-group,-static" />
+			<Add option="-Wl,-cref,-u,Reset_Handler" />
+			<Add option="-Wl,--defsym=malloc_getpagesize_P=0x1000" />
+		</Linker>
 		<PostOutput>
-			<ConvertedOutput PostOutputCreate="0" />
+			<ConvertedOutput PostOutputCreate="1" />
 			<ConvertedOutput PostOutputType="HEX" />
 			<ConvertedOutput PostOutputFile="${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}" />
 		</PostOutput>
-		<Unit filename="Doc/README.txt" />
-		<Unit filename="Setup/Flash.ld" />
-		<Unit filename="Setup/startup.S" />
+		<ExtraCommands>
+			<Add after="arm-none-eabi-size ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME}" />
+		</ExtraCommands>
+		<Unit filename="Src/BSP/Components/Common/accelero.h" />
+		<Unit filename="Src/BSP/Components/Common/audio.h" />
+		<Unit filename="Src/BSP/Components/Common/camera.h" />
+		<Unit filename="Src/BSP/Components/Common/epd.h" />
+		<Unit filename="Src/BSP/Components/Common/gyro.h" />
+		<Unit filename="Src/BSP/Components/Common/idd.h" />
+		<Unit filename="Src/BSP/Components/Common/io.h" />
+		<Unit filename="Src/BSP/Components/Common/lcd.h" />
+		<Unit filename="Src/BSP/Components/Common/magneto.h" />
+		<Unit filename="Src/BSP/Components/Common/ts.h" />
+		<Unit filename="Src/BSP/Components/Common/tsensor.h" />
+		<Unit filename="Src/BSP/Components/ampire480272/ampire480272.h" />
+		<Unit filename="Src/BSP/Components/ampire640480/ampire640480.h" />
+		<Unit filename="Src/BSP/Components/exc7200/exc7200.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/exc7200/exc7200.h" />
+		<Unit filename="Src/BSP/Components/ft5336/ft5336.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/ft5336/ft5336.h" />
+		<Unit filename="Src/BSP/Components/mfxstm32l152/mfxstm32l152.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/mfxstm32l152/mfxstm32l152.h" />
+		<Unit filename="Src/BSP/Components/n25q128a/n25q128a.h" />
+		<Unit filename="Src/BSP/Components/n25q512a/n25q512a.h" />
+		<Unit filename="Src/BSP/Components/ov9655/ov9655.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/ov9655/ov9655.h" />
+		<Unit filename="Src/BSP/Components/rk043fn48h/rk043fn48h.h" />
+		<Unit filename="Src/BSP/Components/s5k5cag/s5k5cag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/s5k5cag/s5k5cag.h" />
+		<Unit filename="Src/BSP/Components/stmpe811/stmpe811.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/stmpe811/stmpe811.h" />
+		<Unit filename="Src/BSP/Components/ts3510/ts3510.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/ts3510/ts3510.h" />
+		<Unit filename="Src/BSP/Components/wm8994/wm8994.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/Components/wm8994/wm8994.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_audio.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_eeprom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_eeprom.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_lcd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_lcd.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_qspi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_qspi.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_sd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_sd.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_sdram.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_sdram.h" />
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_ts.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/BSP/STM32746G-Discovery/stm32746g_discovery_ts.h" />
+		<Unit filename="Src/CMSIS/Device/ST/STM32F7xx/Include/stm32f746xx.h" />
+		<Unit filename="Src/CMSIS/Device/ST/STM32F7xx/Include/stm32f7xx.h" />
+		<Unit filename="Src/CMSIS/Device/ST/STM32F7xx/Include/system_stm32f7xx.h" />
+		<Unit filename="Src/CMSIS/Include/arm_common_tables.h" />
+		<Unit filename="Src/CMSIS/Include/arm_const_structs.h" />
+		<Unit filename="Src/CMSIS/Include/arm_math.h" />
+		<Unit filename="Src/CMSIS/Include/core_cm7.h" />
+		<Unit filename="Src/CMSIS/Include/core_cmFunc.h" />
+		<Unit filename="Src/CMSIS/Include/core_cmInstr.h" />
+		<Unit filename="Src/CMSIS/Include/core_cmSimd.h" />
+		<Unit filename="Src/CMSIS/Include/core_sc000.h" />
+		<Unit filename="Src/CMSIS/Include/core_sc300.h" />
+		<Unit filename="Src/CMSIS/RTOS/Template/cmsis_os.h" />
+		<Unit filename="Src/Inc/main.h" />
+		<Unit filename="Src/Inc/stm32f7xx_hal_conf.h" />
+		<Unit filename="Src/Inc/stm32f7xx_it.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_adc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_adc_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_can.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cec.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_conf_template.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cortex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_crc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_crc_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cryp.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cryp_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dac.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dac_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dcmi.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dcmi_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_def.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dma.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dma2d.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dma_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_eth.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_flash.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_flash_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_gpio.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_gpio_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_hash.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_hash_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_hcd.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_i2c.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_i2c_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_i2s.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_irda.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_irda_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_iwdg.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_lptim.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_ltdc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_nand.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_nor.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pwr.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pwr_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_qspi.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rng.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rtc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rtc_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_sai.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_sai_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_sd.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_sdram.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_smartcard.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_smartcard_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spdifrx.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_spi.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_sram.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_usart.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_usart_ex.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_wwdg.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_fmc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h" />
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_adc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_adc_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_can.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cec.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_crc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_crc_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cryp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cryp_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dac.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dac_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dcmi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dcmi_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma2d.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_eth.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hash_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2s.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_irda.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_iwdg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_lptim.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_ltdc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_nand.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_nor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_qspi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rng.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rtc_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sdram.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_smartcard.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_smartcard_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_spdifrx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_spi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sram.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_tim_ex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_usart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_wwdg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_fmc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_sdmmc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Sys/startup_stm32f746xx.s" />
+		<Unit filename="Src/Sys/stm32f7xx_hal_msp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Sys/stm32f7xx_it.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Sys/system_stm32f7xx.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Utilities/Fonts/font12.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Utilities/Fonts/font16.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Utilities/Fonts/font20.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Utilities/Fonts/font24.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Utilities/Fonts/font8.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src/Utilities/Fonts/fonts.h" />
 		<Unit filename="Src/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
