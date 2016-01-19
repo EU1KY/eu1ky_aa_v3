@@ -11,3 +11,5 @@ Thumbs.db
 *.depend
 *.elay
 *_build_log.html
+*.cscope_file_list
+cscope.out
