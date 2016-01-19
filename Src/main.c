@@ -49,6 +49,8 @@ int main(void)
     /* Configure LCD : Only one layer is used */
     BSP_LCD_Init();
 
+    BSP_TS_Init(FT5336_MAX_WIDTH, FT5336_MAX_HEIGHT);
+
     /* LCD Initialization */
     BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
     BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4));
@@ -78,16 +80,29 @@ int main(void)
     BSP_LCD_SelectLayer(0);
     BSP_LCD_DisplayStringAt(0, 40, (uint8_t*)"sample project", CENTER_MODE);
 
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
+    BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
+    BSP_LCD_SetFont(&Font16);
+
     uint32_t ctr = 0;
-    char buf[30];
+    char buf[70];
+    TS_StateTypeDef ts;
     while (1)
     {
-        Sleep(100);
+        BSP_TS_GetState(&ts);
+        if (ts.touchDetected)
+        {
+            sprintf(buf, "x %d, y %d, wt %d", ts.touchX[0], ts.touchY[0], ts.touchWeight[0]);
+            BSP_LCD_ClearStringLine(10);
+            BSP_LCD_DisplayStringAtLine(10, buf);
+        }
+        else
+        {
+            BSP_LCD_ClearStringLine(10);
+        }
+        Sleep(50);
         sprintf(buf, "%.3f seconds", (float)HAL_GetTick() / 1000.);
-        BSP_LCD_SelectLayer(1);
-        BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
-        BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
-        BSP_LCD_SetFont(&Font16);
         BSP_LCD_DisplayStringAt(0, 70, (uint8_t*)buf, CENTER_MODE);
     }
     return 0;

@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    LTDC/LTDC_Display_1Layer/Inc/main.h 
+  * @file    LTDC/LTDC_Display_1Layer/Inc/main.h
   * @author  MCD Application Team
   * @version V1.0.0
   * @date    25-June-2015
@@ -34,7 +34,7 @@
   *
   ******************************************************************************
   */
-  
+
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
@@ -43,6 +43,7 @@
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
 #include "stm32746g_discovery_lcd.h"
+#include "stm32746g_discovery_ts.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
