@@ -8,3 +8,6 @@ Thumbs.db
 *.emDepend
 *.emLayout
 *.emTemp
+*.depend
+*.elay
+*_build_log.html

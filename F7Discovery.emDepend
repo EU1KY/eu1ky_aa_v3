@@ -603,7 +603,7 @@
 
 1453145295 source:c:\users\yury\desktop\work\f7_discovery\f7discovery\src\sys\startup_stm32f746xx.s
 
-1453145295 source:c:\users\yury\desktop\work\f7_discovery\f7discovery\src\sys\stm32f7xx_hal_msp.c
+1453150132 source:c:\users\yury\desktop\work\f7_discovery\f7discovery\src\sys\stm32f7xx_hal_msp.c
 	"main.h"
 
 1453145295 c:\users\yury\desktop\work\f7_discovery\f7discovery\src\inc\main.h
@@ -636,6 +636,6 @@
 1453145295 source:c:\users\yury\desktop\work\f7_discovery\f7discovery\src\utilities\fonts\font8.c
 	"fonts.h"
 
-1453149467 source:c:\users\yury\desktop\work\f7_discovery\f7discovery\src\main.c
+1453152677 source:c:\users\yury\desktop\work\f7_discovery\f7discovery\src\main.c
 	"main.h"
 
