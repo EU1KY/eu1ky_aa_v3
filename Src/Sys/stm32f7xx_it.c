@@ -1,11 +1,11 @@
 /**
   ******************************************************************************
-  * @file    LTDC/LTDC_Display_1Layer/Src/stm32f7xx_it.c 
+  * @file    LTDC/LTDC_Display_1Layer/Src/stm32f7xx_it.c
   * @author  MCD Application Team
   * @version V1.0.0
   * @date    25-June-2015
   * @brief   Main Interrupt Service Routines.
-  *          This file provides template for all exceptions handler and 
+  *          This file provides template for all exceptions handler and
   *          peripherals interrupt service routine.
   ******************************************************************************
   * @attention
@@ -164,15 +164,30 @@ void SysTick_Handler(void)
 /*  available peripheral interrupt handler's name please refer to the startup */
 /*  file (startup_stm32f7xx.s).                                               */
 /******************************************************************************/
+extern SAI_HandleTypeDef             haudio_out_sai;
+extern SAI_HandleTypeDef             haudio_in_sai;
 
 /**
-  * @brief  This function handles PPP interrupt request.
-  * @param  None
+  * @brief This function handles DMA2 Stream 4 interrupt request.
+  * @param None
   * @retval None
   */
-/*void PPP_IRQHandler(void)
+void AUDIO_OUT_SAIx_DMAx_IRQHandler(void)
 {
-}*/
+  HAL_DMA_IRQHandler(haudio_out_sai.hdmatx);
+}
+
+/**
+  * @brief This function handles DMA2 Stream 7 interrupt request.
+  * @param None
+  * @retval None
+  */
+void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(haudio_in_sai.hdmarx);
+}
+
+
 
 /**
   * @}
@@ -180,7 +195,7 @@ void SysTick_Handler(void)
 
 /**
   * @}
-  */ 
+  */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

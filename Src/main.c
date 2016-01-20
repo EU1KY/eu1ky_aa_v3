@@ -10,6 +10,15 @@ void Sleep(uint32_t nms)
     while ((HAL_GetTick() - tstart) < nms);
 }
 
+static volatile int audioReady = 0;
+static uint16_t audioBuf[65536];
+void BSP_AUDIO_IN_TransferComplete_CallBack(void)
+{
+    audioReady = 1;
+    //BSP_AUDIO_IN_Pause();
+}
+
+
 int main(void)
 {
     RCC_PeriphCLKInitTypeDef  PeriphClkInitStruct;
@@ -49,6 +58,7 @@ int main(void)
     /* Configure LCD : Only one layer is used */
     BSP_LCD_Init();
 
+    //Touchscreen
     BSP_TS_Init(FT5336_MAX_WIDTH, FT5336_MAX_HEIGHT);
 
     /* LCD Initialization */
@@ -81,9 +91,16 @@ int main(void)
     BSP_LCD_DisplayStringAt(0, 40, (uint8_t*)"sample project", CENTER_MODE);
 
     BSP_LCD_SelectLayer(1);
-    BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
     BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
     BSP_LCD_SetFont(&Font16);
+
+    uint8_t ret;
+    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_DIGITAL_MICROPHONE_2, 100, I2S_AUDIOFREQ_44K);
+    if (ret != AUDIO_OK)
+    {
+        BSP_LCD_SetTextColor(LCD_COLOR_RED);
+        BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
+    }
 
     uint32_t ctr = 0;
     char buf[70];
@@ -94,16 +111,41 @@ int main(void)
         if (ts.touchDetected)
         {
             sprintf(buf, "x %d, y %d, wt %d", ts.touchX[0], ts.touchY[0], ts.touchWeight[0]);
-            BSP_LCD_ClearStringLine(10);
-            BSP_LCD_DisplayStringAtLine(10, buf);
+            BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
+            BSP_LCD_ClearStringLine(3);
+            BSP_LCD_DisplayStringAtLine(3, buf);
         }
         else
         {
-            BSP_LCD_ClearStringLine(10);
+            BSP_LCD_ClearStringLine(3);
         }
-        Sleep(50);
+
         sprintf(buf, "%.3f seconds", (float)HAL_GetTick() / 1000.);
         BSP_LCD_DisplayStringAt(0, 70, (uint8_t*)buf, CENTER_MODE);
+
+        if (audioReady == 0)
+        {
+            ret = BSP_AUDIO_IN_Record(audioBuf, 2048);
+            if (ret != AUDIO_OK)
+            {
+                BSP_LCD_SetTextColor(LCD_COLOR_RED);
+                BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Record failed");
+            }
+            audioReady = 2;
+        }
+        else if (audioReady == 1)
+        {
+            BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
+            BSP_LCD_FillRect(0, 140, 480, 140);
+            int i;
+            for (i = 0; i < 2048; i+=4)
+            {
+                if (i/4 >= 480)
+                    break;
+                BSP_LCD_DrawPixel(i/4, 210 - ((int16_t)audioBuf[i])/ 500, LCD_COLOR_LIGHTBLUE);
+            }
+            audioReady = 0;
+        }
     }
     return 0;
 }
