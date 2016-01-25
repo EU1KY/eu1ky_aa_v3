@@ -1,5 +1,7 @@
 #include "main.h"
+#include "stm32f7xx_hal_uart.h"
 #include <stdio.h>
+#include <string.h>
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -11,12 +13,14 @@ void Sleep(uint32_t nms)
 }
 
 static volatile int audioReady = 0;
-static uint16_t audioBuf[65536];
+static uint16_t audioBuf[2048];
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
     audioReady = 1;
-    //BSP_AUDIO_IN_Pause();
+    BSP_AUDIO_IN_Pause();
 }
+
+UART_HandleTypeDef UartHandle = {0};
 
 
 int main(void)
@@ -51,6 +55,18 @@ int main(void)
     PeriphClkInitStruct.PLLSAI.PLLSAIR = 5;
     PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
     HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+
+    memset(&UartHandle, 0, sizeof(UartHandle));
+    UartHandle.Instance        = USART1;
+    UartHandle.Init.BaudRate   = 9600;
+    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
+    UartHandle.Init.StopBits   = UART_STOPBITS_1;
+    UartHandle.Init.Parity     = UART_PARITY_NONE;
+    UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+    UartHandle.Init.Mode       = UART_MODE_TX_RX;
+    UartHandle.Init.OverSampling = UART_OVERSAMPLING_8;
+    UartHandle.Init.OneBitSampling = UART_ONEBIT_SAMPLING_ENABLED;
+    HAL_UART_Init(&UartHandle);
 
     /* Configure LED1 */
     BSP_LED_Init(LED1);
@@ -101,12 +117,15 @@ int main(void)
         BSP_LCD_SetTextColor(LCD_COLOR_RED);
         BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
     }
+    audioReady = 2;
+    BSP_AUDIO_IN_Record(audioBuf, 2048);
 
     uint32_t ctr = 0;
     char buf[70];
     TS_StateTypeDef ts;
     while (1)
     {
+        (HAL_GetTick() & 0x400 ? BSP_LED_On : BSP_LED_Off)(LED1);
         BSP_TS_GetState(&ts);
         if (ts.touchDetected)
         {
@@ -125,6 +144,8 @@ int main(void)
 
         if (audioReady == 0)
         {
+            BSP_AUDIO_IN_Resume();
+            /*
             ret = BSP_AUDIO_IN_Record(audioBuf, 2048);
             if (ret != AUDIO_OK)
             {
@@ -132,6 +153,7 @@ int main(void)
                 BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Record failed");
             }
             audioReady = 2;
+            */
         }
         else if (audioReady == 1)
         {
@@ -145,6 +167,14 @@ int main(void)
                 BSP_LCD_DrawPixel(i/4, 210 - ((int16_t)audioBuf[i])/ 500, LCD_COLOR_LIGHTBLUE);
             }
             audioReady = 0;
+
+//            sprintf(buf, "%d\n", HAL_GetTick());
+//            HAL_UART_Transmit(&UartHandle, buf, strlen(buf), 10);
+
+            //if (HAL_UART_Receive(&UartHandle, buf, 1, 5))
+            {
+                HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);
+            }
         }
     }
     return 0;
