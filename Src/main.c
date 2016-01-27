@@ -111,21 +111,22 @@ int main(void)
     BSP_LCD_SetFont(&Font16);
 
     uint8_t ret;
-    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_DIGITAL_MICROPHONE_2, 100, I2S_AUDIOFREQ_44K);
+    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, I2S_AUDIOFREQ_48K);
     if (ret != AUDIO_OK)
     {
         BSP_LCD_SetTextColor(LCD_COLOR_RED);
         BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
     }
     audioReady = 2;
-    BSP_AUDIO_IN_Record(audioBuf, 2048);
+    BSP_AUDIO_IN_Record(audioBuf, 1024);
 
     uint32_t ctr = 0;
     char buf[70];
+    int paused = 0;
     TS_StateTypeDef ts;
     while (1)
     {
-        (HAL_GetTick() & 0x400 ? BSP_LED_On : BSP_LED_Off)(LED1);
+        (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);
         BSP_TS_GetState(&ts);
         if (ts.touchDetected)
         {
@@ -133,48 +134,55 @@ int main(void)
             BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
             BSP_LCD_ClearStringLine(3);
             BSP_LCD_DisplayStringAtLine(3, buf);
+            paused = !paused;
+            continue;
         }
         else
         {
             BSP_LCD_ClearStringLine(3);
         }
-
+        if (paused)
+            continue;
         sprintf(buf, "%.3f seconds", (float)HAL_GetTick() / 1000.);
         BSP_LCD_DisplayStringAt(0, 70, (uint8_t*)buf, CENTER_MODE);
 
         if (audioReady == 0)
         {
             BSP_AUDIO_IN_Resume();
-            /*
-            ret = BSP_AUDIO_IN_Record(audioBuf, 2048);
-            if (ret != AUDIO_OK)
-            {
-                BSP_LCD_SetTextColor(LCD_COLOR_RED);
-                BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Record failed");
-            }
-            audioReady = 2;
-            */
         }
         else if (audioReady == 1)
         {
             BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
             BSP_LCD_FillRect(0, 140, 480, 140);
             int i;
-            for (i = 0; i < 2048; i+=4)
+            uint16_t lasty_left = 210;
+            uint16_t lasty_right = 210;
+            for (i = 0; i < 512; i++)
             {
-                if (i/4 >= 480)
+                if (i >= 480)
                     break;
-                BSP_LCD_DrawPixel(i/4, 210 - ((int16_t)audioBuf[i])/ 500, LCD_COLOR_LIGHTBLUE);
+                if (i == 0)
+                {
+                    lasty_left = 210 - ((int16_t)audioBuf[i*2+20])/ 500;
+                    BSP_LCD_DrawPixel(i, lasty_left, LCD_COLOR_GREEN);
+                    lasty_right = 210 - ((int16_t)audioBuf[i*2+1+20])/ 500;
+                    BSP_LCD_DrawPixel(i, lasty_right, LCD_COLOR_RED);
+                }
+                else
+                {
+                    uint16_t y_left = 210 - ((int16_t)audioBuf[i*2+20])/ 500;
+                    uint16_t y_right = 210 - ((int16_t)audioBuf[i*2+1+20])/ 500;
+                    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+                    BSP_LCD_DrawLine(i-1, lasty_left, i, y_left);
+                    BSP_LCD_SetTextColor(LCD_COLOR_RED);
+                    BSP_LCD_DrawLine(i-1, lasty_right, i, y_right);
+                    lasty_left = y_left;
+                    lasty_right = y_right;
+                }
             }
             audioReady = 0;
 
-//            sprintf(buf, "%d\n", HAL_GetTick());
-//            HAL_UART_Transmit(&UartHandle, buf, strlen(buf), 10);
-
-            //if (HAL_UART_Receive(&UartHandle, buf, 1, 5))
-            {
-                HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);
-            }
+            HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);
         }
     }
     return 0;
