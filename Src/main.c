@@ -2,6 +2,9 @@
 #include "stm32f7xx_hal_uart.h"
 #include <stdio.h>
 #include <string.h>
+#include "arm_math.h"
+#include <complex.h>
+#include <math.h>
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -13,7 +16,7 @@ void Sleep(uint32_t nms)
 }
 
 static volatile int audioReady = 0;
-static uint16_t audioBuf[2048];
+static int16_t audioBuf[(1024 + 32) * 2];
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
     audioReady = 1;
@@ -21,6 +24,46 @@ void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 }
 
 UART_HandleTypeDef UartHandle = {0};
+
+
+#define FSAMPLE I2S_AUDIOFREQ_16K
+
+static float rfft_input[1024];
+static float rfft_output[1024];
+static float rfft_mags[512];
+float complex *prfft   = (float complex*)rfft_output; //512 bins
+float binwidth = (FSAMPLE/2) / 512.f;
+static float wnd[1024];
+
+static void fillwnd(void)
+{
+    int i;
+    for(i = 0; i < 1024; i++)
+    {
+        //Blackman window, >66 dB OOB rejection
+        wnd[i]= 0.426591f - .496561f * cosf( (2 * M_PI * i) / 1024) + .076848f * cosf((4 * M_PI * i) / 1024);
+    }
+}
+static void do_fft_audiobuf()
+{
+    int i;
+    arm_rfft_fast_instance_f32 S;
+
+    for(i = 0; i < 1024; i++)
+    {
+        rfft_input[i] = (float)audioBuf[(i + 32) * 2];
+        rfft_input[i] *= wnd[i];
+    }
+
+    arm_rfft_fast_init_f32(&S, 1024);
+    arm_rfft_fast_f32(&S, rfft_input, rfft_output, 0);
+
+    for (i = 0; i < 512; i++)
+    {
+        float complex binf = prfft[i];
+        rfft_mags[i] = cabsf(binf) / 512;
+    }
+}
 
 
 int main(void)
@@ -111,19 +154,22 @@ int main(void)
     BSP_LCD_SetFont(&Font16);
 
     uint8_t ret;
-    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, I2S_AUDIOFREQ_48K);
+    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, FSAMPLE);
     if (ret != AUDIO_OK)
     {
         BSP_LCD_SetTextColor(LCD_COLOR_RED);
         BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
     }
     audioReady = 2;
-    BSP_AUDIO_IN_Record(audioBuf, 1024);
+    BSP_AUDIO_IN_Record(audioBuf, (1024 + 32) * 2);
 
     uint32_t ctr = 0;
-    char buf[70];
+    char buf[100];
     int paused = 0;
     TS_StateTypeDef ts;
+
+    fillwnd();
+
     while (1)
     {
         (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);
@@ -134,17 +180,12 @@ int main(void)
             BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
             BSP_LCD_ClearStringLine(3);
             BSP_LCD_DisplayStringAtLine(3, buf);
-            paused = !paused;
             continue;
         }
         else
         {
             BSP_LCD_ClearStringLine(3);
         }
-        if (paused)
-            continue;
-        sprintf(buf, "%.3f seconds", (float)HAL_GetTick() / 1000.);
-        BSP_LCD_DisplayStringAt(0, 70, (uint8_t*)buf, CENTER_MODE);
 
         if (audioReady == 0)
         {
@@ -152,34 +193,66 @@ int main(void)
         }
         else if (audioReady == 1)
         {
-            BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
+            uint32_t tstart = HAL_GetTick();
+            do_fft_audiobuf();
+            tstart = HAL_GetTick() - tstart;
+
+            //Draw oscilloscope
+            BSP_LCD_SetTextColor(0xFF000020);
             BSP_LCD_FillRect(0, 140, 480, 140);
+            BSP_LCD_SetTextColor(0xFF000040);
             int i;
-            uint16_t lasty_left = 210;
-            uint16_t lasty_right = 210;
+            for (i = 279; i > 140; i-=10)
+            {
+                BSP_LCD_DrawLine(0, i, 479, i);
+            }
+
+            float maxmag = 0.;
+            int idxmax = -1;
             for (i = 0; i < 512; i++)
             {
-                if (i >= 480)
-                    break;
+                if (rfft_mags[i] > maxmag)
+                {
+                    maxmag = rfft_mags[i];
+                    idxmax = i;
+                }
+            }
+            sprintf(buf,"RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
+            BSP_LCD_SetTextColor(LCD_COLOR_RED);
+            BSP_LCD_ClearStringLine(4);
+            BSP_LCD_DisplayStringAtLine(4, buf);
+
+            for (int x = 0; x < 480; x++)
+            {
+                int y = (int)(279 - 20 * log10f(rfft_mags[x]));
+                BSP_LCD_DrawLine(x, 279, x, y);
+            }
+/*
+            uint16_t lasty_left = 210;
+            uint16_t lasty_right = 210;
+            for (i = 32; i < 1024; i += 2)
+            {
                 if (i == 0)
                 {
-                    lasty_left = 210 - ((int16_t)audioBuf[i*2+20])/ 500;
-                    BSP_LCD_DrawPixel(i, lasty_left, LCD_COLOR_GREEN);
-                    lasty_right = 210 - ((int16_t)audioBuf[i*2+1+20])/ 500;
-                    BSP_LCD_DrawPixel(i, lasty_right, LCD_COLOR_RED);
+                    lasty_left = 210 - audioBuf[(i + 32) * 2]/ 500;
+                    BSP_LCD_DrawPixel(i/2, lasty_left, LCD_COLOR_GREEN);
+                    lasty_right = 210 - audioBuf[(i + 32) * 2 + 1 ]/ 500;
+                    BSP_LCD_DrawPixel(i/2, lasty_right, LCD_COLOR_RED);
                 }
                 else
                 {
-                    uint16_t y_left = 210 - ((int16_t)audioBuf[i*2+20])/ 500;
-                    uint16_t y_right = 210 - ((int16_t)audioBuf[i*2+1+20])/ 500;
+                    uint16_t y_left = 210 - audioBuf[(i + 32) * 2]/ 500;
+                    uint16_t y_right = 210 - audioBuf[(i + 32) * 2 + 1]/ 500;
                     BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-                    BSP_LCD_DrawLine(i-1, lasty_left, i, y_left);
+                    BSP_LCD_DrawLine(i/2-1, lasty_left, i/2, y_left);
                     BSP_LCD_SetTextColor(LCD_COLOR_RED);
-                    BSP_LCD_DrawLine(i-1, lasty_right, i, y_right);
+                    BSP_LCD_DrawLine(i/2-1, lasty_right, i/2, y_right);
                     lasty_left = y_left;
                     lasty_right = y_right;
                 }
             }
+*/
+            HAL_Delay(20);
             audioReady = 0;
 
             HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);

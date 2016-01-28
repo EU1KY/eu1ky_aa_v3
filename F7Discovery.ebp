@@ -36,6 +36,8 @@
 					<Add symbol="STM32F7" />
 					<Add symbol="STM32" />
 					<Add symbol="USE_HAL_DRIVER" />
+					<Add symbol="ARM_MATH_CM7" />
+					<Add symbol="__FPU_PRESENT" />
 					<Add directory="Src\BSP\Components\ampire480272" />
 					<Add directory="Src\BSP\Components\ampire640480" />
 					<Add directory="Src\BSP\Components\Common" />
@@ -74,6 +76,7 @@
 					<Add option="-mthumb" />
 					<Add option="-mfloat-abi=hard" />
 					<Add option="-mfpu=fpv5-sp-d16" />
+					<Add library="m" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="arm-none-eabi-size ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME}" />
@@ -111,6 +114,8 @@
 					<Add symbol="STM32F7" />
 					<Add symbol="STM32" />
 					<Add symbol="USE_HAL_DRIVER" />
+					<Add symbol="ARM_MATH_CM7" />
+					<Add symbol="__FPU_PRESENT" />
 					<Add directory="Src\BSP\Components\ampire480272" />
 					<Add directory="Src\BSP\Components\ampire640480" />
 					<Add directory="Src\BSP\Components\Common" />
@@ -139,6 +144,7 @@
 					<Add option="-eb_start_files" />
 					<Add option="-flto" />
 					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
+					<Add library="m" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="arm-none-eabi-size ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME}" />
@@ -246,6 +252,27 @@
 		<Unit filename="Src\CMSIS\Device\ST\STM32F7xx\Include\stm32f746xx.h" />
 		<Unit filename="Src\CMSIS\Device\ST\STM32F7xx\Include\stm32f7xx.h" />
 		<Unit filename="Src\CMSIS\Device\ST\STM32F7xx\Include\system_stm32f7xx.h" />
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\CommonTables\arm_common_tables.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\CommonTables\arm_const_structs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\TransformFunctions\arm_bitreversal2.S">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\TransformFunctions\arm_cfft_f32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\TransformFunctions\arm_cfft_radix8_f32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\TransformFunctions\arm_rfft_fast_f32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\CMSIS\DSP_Lib\Source\TransformFunctions\arm_rfft_fast_init_f32.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\CMSIS\Include\arm_common_tables.h" />
 		<Unit filename="Src\CMSIS\Include\arm_const_structs.h" />
 		<Unit filename="Src\CMSIS\Include\arm_math.h" />
@@ -544,7 +571,6 @@
 			<projectwizard TargetDevice="STM32F437ZG" />
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Release" active_interface="" />
 				<target_debugging_settings target="Debug" active_interface="ST-link">
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="2000" options="10" reg_filter="0" active_family="STMicroelectronics">
 						<family_options family_id="STMicroelectronics">
@@ -562,6 +588,7 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
+				<target_debugging_settings target="Release" active_interface="" />
 			</debugger>
 			<DoxyBlocks>
 				<comment_style block="0" line="0" />
