@@ -15,8 +15,11 @@ void Sleep(uint32_t nms)
     while ((HAL_GetTick() - tstart) < nms);
 }
 
+#define NSAMPLES 2048
+#define NDUMMY 64
+
 static volatile int audioReady = 0;
-static int16_t audioBuf[(1024 + 32) * 2];
+static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
     audioReady = 1;
@@ -28,17 +31,17 @@ UART_HandleTypeDef UartHandle = {0};
 
 #define FSAMPLE I2S_AUDIOFREQ_16K
 
-static float rfft_input[1024];
-static float rfft_output[1024];
-static float rfft_mags[512];
-float complex *prfft   = (float complex*)rfft_output; //512 bins
-float binwidth = (FSAMPLE/2) / 512.f;
-static float wnd[1024];
+static float rfft_input[NSAMPLES];
+static float rfft_output[NSAMPLES];
+static float rfft_mags[NSAMPLES/2];
+float complex *prfft   = (float complex*)rfft_output;
+static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
+static float wnd[NSAMPLES];
 
 static void fillwnd(void)
 {
-    int i;
-    for(i = 0; i < 1024; i++)
+    int32_t i;
+    for(i = 0; i < NSAMPLES; i++)
     {
         //Blackman window, >66 dB OOB rejection
         wnd[i]= 0.426591f - .496561f * cosf( (2 * M_PI * i) / 1024) + .076848f * cosf((4 * M_PI * i) / 1024);
@@ -49,19 +52,19 @@ static void do_fft_audiobuf()
     int i;
     arm_rfft_fast_instance_f32 S;
 
-    for(i = 0; i < 1024; i++)
+    for(i = 0; i < NSAMPLES; i++)
     {
-        rfft_input[i] = (float)audioBuf[(i + 32) * 2];
+        rfft_input[i] = (float)audioBuf[(i + NDUMMY) * 2];
         rfft_input[i] *= wnd[i];
     }
 
-    arm_rfft_fast_init_f32(&S, 1024);
+    arm_rfft_fast_init_f32(&S, NSAMPLES);
     arm_rfft_fast_f32(&S, rfft_input, rfft_output, 0);
 
-    for (i = 0; i < 512; i++)
+    for (i = 0; i < NSAMPLES/2; i++)
     {
         float complex binf = prfft[i];
-        rfft_mags[i] = cabsf(binf) / 512;
+        rfft_mags[i] = cabsf(binf) / (NSAMPLES/2);
     }
 }
 
@@ -161,7 +164,7 @@ int main(void)
         BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
     }
     audioReady = 2;
-    BSP_AUDIO_IN_Record(audioBuf, (1024 + 32) * 2);
+    BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
 
     uint32_t ctr = 0;
     char buf[100];
@@ -209,7 +212,7 @@ int main(void)
 
             float maxmag = 0.;
             int idxmax = -1;
-            for (i = 0; i < 512; i++)
+            for (i = 0; i < NSAMPLES/2; i++)
             {
                 if (rfft_mags[i] > maxmag)
                 {
