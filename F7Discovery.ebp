@@ -60,6 +60,8 @@
 					<Add directory="Src\Utilities\Fonts" />
 					<Add directory="Src\STM32F7xx_HAL_Driver\Src" />
 					<Add directory="Src\STM32F7xx_HAL_Driver\Inc\Legacy" />
+					<Add directory="Src\analyzer\lcd" />
+					<Add directory="Src\analyzer\window" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--keep-locals" />
@@ -169,6 +171,38 @@
 			<Add option="-eb_lib=n" />
 			<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
 		</Linker>
+		<Unit filename="Src\analyzer\lcd\consbig.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\consbig.h" />
+		<Unit filename="Src\analyzer\lcd\font.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\font.h" />
+		<Unit filename="Src\analyzer\lcd\fran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\fran.h" />
+		<Unit filename="Src\analyzer\lcd\franbig.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\franbig.h" />
+		<Unit filename="Src\analyzer\lcd\LCD.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\LCD.h" />
+		<Unit filename="Src\analyzer\lcd\sdigits.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\sdigits.h" />
+		<Unit filename="Src\analyzer\lcd\touch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\touch.h" />
+		<Unit filename="Src\analyzer\window\panvswr2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\window\panvswr2.h" />
 		<Unit filename="Src\BSP\Components\ampire480272\ampire480272.h" />
 		<Unit filename="Src\BSP\Components\ampire640480\ampire640480.h" />
 		<Unit filename="Src\BSP\Components\Common\accelero.h" />

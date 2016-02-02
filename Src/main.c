@@ -5,14 +5,16 @@
 #include "arm_math.h"
 #include <complex.h>
 #include <math.h>
+#include "lcd.h"
+#include "touch.h"
+#include "panvswr2.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 
 void Sleep(uint32_t nms)
 {
-    uint32_t tstart = HAL_GetTick();
-    while ((HAL_GetTick() - tstart) < nms);
+    HAL_Delay(nms);
 }
 
 #define NSAMPLES 2048
@@ -71,8 +73,6 @@ static void do_fft_audiobuf()
 
 int main(void)
 {
-    RCC_PeriphCLKInitTypeDef  PeriphClkInitStruct;
-
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
@@ -91,17 +91,6 @@ int main(void)
     /* Configure the system clock to 216 MHz */
     SystemClock_Config();
 
-    /* LCD clock configuration */
-    /* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-    /* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
-    /* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz */
-    /* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz */
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
-    PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-    PeriphClkInitStruct.PLLSAI.PLLSAIR = 5;
-    PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
-    HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
-
     memset(&UartHandle, 0, sizeof(UartHandle));
     UartHandle.Instance        = USART1;
     UartHandle.Init.BaudRate   = 9600;
@@ -117,35 +106,16 @@ int main(void)
     /* Configure LED1 */
     BSP_LED_Init(LED1);
 
-    /* Configure LCD : Only one layer is used */
-    BSP_LCD_Init();
+    //LCD
+    LCD_Init();
 
     //Touchscreen
-    BSP_TS_Init(FT5336_MAX_WIDTH, FT5336_MAX_HEIGHT);
+    TOUCH_Init();
 
-    /* LCD Initialization */
-    BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
-    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4));
-
-    /* Enable the LCD */
-    BSP_LCD_DisplayOn();
-
-    /* Select the LCD Background Layer  */
-    BSP_LCD_SelectLayer(0);
-
-    /* Clear the Background Layer */
-    BSP_LCD_Clear(LCD_COLOR_BLACK);
-
-    /* Select the LCD Foreground Layer  */
-    BSP_LCD_SelectLayer(1);
-
-    /* Clear the Foreground Layer */
-    BSP_LCD_Clear(LCD_COLOR_BLACK);
-
-    /* Configure the transparency for foreground and background :
-     Increase the transparency */
-    BSP_LCD_SetTransparency(0, 255);
-    BSP_LCD_SetTransparency(1, 240);
+    for(;;)
+    {
+        PANVSWR2_Proc();
+    }
 
     BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
     BSP_LCD_DisplayStringAt(0, 0, (uint8_t*)"STM32F746G Discovery", CENTER_MODE);
