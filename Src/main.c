@@ -17,21 +17,21 @@ void Sleep(uint32_t nms)
     HAL_Delay(nms);
 }
 
-#define NSAMPLES 2048
-#define NDUMMY 64
+#define NSAMPLES 4096
+#define NDUMMY 128
 
 static volatile int audioReady = 0;
 static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
     audioReady = 1;
-    BSP_AUDIO_IN_Pause();
+    //BSP_AUDIO_IN_Pause();
 }
 
 UART_HandleTypeDef UartHandle = {0};
 
 
-#define FSAMPLE I2S_AUDIOFREQ_16K
+#define FSAMPLE I2S_AUDIOFREQ_44K
 
 static float rfft_input[NSAMPLES];
 static float rfft_output[NSAMPLES];
@@ -46,7 +46,9 @@ static void fillwnd(void)
     for(i = 0; i < NSAMPLES; i++)
     {
         //Blackman window, >66 dB OOB rejection
-        wnd[i]= 0.426591f - .496561f * cosf( (2 * M_PI * i) / 1024) + .076848f * cosf((4 * M_PI * i) / 1024);
+        //wnd[i]= 0.426591f - .496561f * cosf( (2 * M_PI * i) / NSAMPLES) + .076848f * cosf((4 * M_PI * i) / NSAMPLES);
+        wnd[i] = 1.0 - 1.93*cosf((2 * M_PI * i) / NSAMPLES) + 1.29* cosf((4 * M_PI * i) / NSAMPLES)
+                 -0.388*cosf((6 * M_PI * i) / NSAMPLES) +0.0322*cosf((8 * M_PI * i) / NSAMPLES); //Flattop window
     }
 }
 static void do_fft_audiobuf()
@@ -54,9 +56,11 @@ static void do_fft_audiobuf()
     int i;
     arm_rfft_fast_instance_f32 S;
 
+    int16_t* pBuf = &audioBuf[NDUMMY];
     for(i = 0; i < NSAMPLES; i++)
     {
-        rfft_input[i] = (float)audioBuf[(i + NDUMMY) * 2];
+        rfft_input[i] = (float)*pBuf;
+        pBuf += 2;
         rfft_input[i] *= wnd[i];
     }
 
@@ -99,8 +103,8 @@ int main(void)
     UartHandle.Init.Parity     = UART_PARITY_NONE;
     UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
     UartHandle.Init.Mode       = UART_MODE_TX_RX;
-    UartHandle.Init.OverSampling = UART_OVERSAMPLING_8;
-    UartHandle.Init.OneBitSampling = UART_ONEBIT_SAMPLING_ENABLED;
+    UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
+    //UartHandle.Init.OneBitSampling = UART_ONEBIT_SAMPLING_ENABLED;
     HAL_UART_Init(&UartHandle);
 
     /* Configure LED1 */
@@ -112,9 +116,9 @@ int main(void)
     //Touchscreen
     TOUCH_Init();
 
-    for(;;)
+    //for(;;)
     {
-        PANVSWR2_Proc();
+    //    PANVSWR2_Proc();
     }
 
     BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
@@ -133,8 +137,8 @@ int main(void)
         BSP_LCD_SetTextColor(LCD_COLOR_RED);
         BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
     }
-    audioReady = 2;
-    BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
+    //audioReady = 2;
+    //BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
 
     uint32_t ctr = 0;
     char buf[100];
@@ -162,7 +166,8 @@ int main(void)
 
         if (audioReady == 0)
         {
-            BSP_AUDIO_IN_Resume();
+            BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
+            //BSP_AUDIO_IN_Resume();
         }
         else if (audioReady == 1)
         {
@@ -182,7 +187,7 @@ int main(void)
 
             float maxmag = 0.;
             int idxmax = -1;
-            for (i = 0; i < NSAMPLES/2; i++)
+            for (i = 3; i < NSAMPLES/2 - 3; i++)
             {
                 if (rfft_mags[i] > maxmag)
                 {
@@ -190,6 +195,13 @@ int main(void)
                     idxmax = i;
                 }
             }
+
+            //Calculate magnitude considering +/-3 bins
+            float P = 0.f;
+            for (i = idxmax-3; i <= idxmax + 3; i++)
+                P += powf(rfft_mags[i], 2);
+            maxmag = sqrtf(P);
+
             sprintf(buf,"RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
             BSP_LCD_SetTextColor(LCD_COLOR_RED);
             BSP_LCD_ClearStringLine(4);
@@ -225,10 +237,10 @@ int main(void)
                 }
             }
 */
-            HAL_Delay(20);
+            HAL_Delay(50);
             audioReady = 0;
 
-            HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);
+            //HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);
         }
     }
     return 0;

@@ -28,6 +28,8 @@
 #define WY(offset) ((WHEIGHT + Y0) - (offset))
 #define WGRIDCOLOR LCD_RGB(32,32,32)
 #define WGRIDCOLORBR LCD_RGB(96,96,32)
+#define SMITH_CIRCLE_BG LCD_BLACK
+#define SMITH_LINE_FG LCD_GREEN
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -46,6 +48,7 @@
 void Sleep(uint32_t nms);
 
 //-----------------------------------------
+//STUBS (temporary)
 typedef float complex DSP_RX;
 #define BAND_FMAX 55000000ul
 #define BAND_FMIN 100000ul
@@ -186,7 +189,7 @@ static void DrawCursor()
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 305, 110, ">");
     if (grType == GRAPH_SMITH)
     {
-        DSP_RX rx = SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+        DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
         float complex g = OSL_GFromZ(rx);
         uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
         uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
@@ -216,10 +219,10 @@ static void DrawCursor()
 
 static void DrawCursorText()
 {
-    DSP_RX rx = SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+    DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
     float ga = cabsf(OSL_GFromZ(rx)); //G magnitude
 
-    FONT_Print(FONT_SDIGITS, LCD_YELLOW, LCD_BLACK, X0, Y0 + WHEIGHT + 12, "F %.3f   Z %.1f%+.1f   5 %.2f   L %.2f DB          ",
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
         ((float)(f1 + cursorPos * BSVALUES[span] / 250))/1000.,
         crealf(rx),
         cimagf(rx),
@@ -742,6 +745,7 @@ static void DrawSmith()
     LCD_FillAll(LCD_BLACK);
     sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end", (int)f1, BSSTR[span]);
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
+    LCD_FillCircle(LCD_MakePoint(cx0, cy0), 100, SMITH_CIRCLE_BG); //Chart circle
     LCD_Circle(LCD_MakePoint(cx0, cy0), 33, WGRIDCOLOR); //VSWR 2.0 circle
     LCD_Circle(LCD_MakePoint(cx0, cy0), 20, WGRIDCOLOR); //VSWR 1.5 circle
     LCD_Circle(LCD_MakePoint(cx0 - 50, cy0), 50, LCD_RGB(12,12,12)); //Constant Y circle
@@ -769,16 +773,16 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x - 20, y, "10");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "10");
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x - 15, y - 5, "25");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y - 5, "25");
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x + 3, y - 5, "100");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "100");
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x + 5, y, "200");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "200");
                         break;
                     default:
                         break;
@@ -792,19 +796,19 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x - 20, y, "-10");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "-10");
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x - 15, y + 5, "-25");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y + 5, "-25");
                         break;
                     case 2:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x - 7, y + 7, "-50");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "-50");
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x + 3, y + 5, "-100");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "-100");
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, x + 5, y, "-200");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "-200");
                         break;
                     default:
                         break;
@@ -815,11 +819,11 @@ static void DrawSmith()
     }
 
     //Draw R cirle labels
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, cx0 - 75, cy0 + 2, "10");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, cx0 - 42, cy0 + 2, "25");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, cx0 + 2, cy0 + 2, "50");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, cx0 + 34, cy0 + 2, "100");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, LCD_BLACK, cx0 + 62, cy0 + 2, "200");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "10");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "25");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "50");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "100");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "200");
 
     LCD_Circle(LCD_MakePoint(cx0, cy0), 100, WGRIDCOLORBR); //Outer circle
 
@@ -848,7 +852,7 @@ static void DrawSmith()
             uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
             if (i != 0)
             {
-                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), LCD_GREEN);
+                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), SMITH_LINE_FG);
             }
             lastx = x;
             lasty = y;
