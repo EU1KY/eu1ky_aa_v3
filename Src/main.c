@@ -17,12 +17,13 @@ void Sleep(uint32_t nms)
     HAL_Delay(nms);
 }
 
-#define NSAMPLES 2048
-#define NDUMMY 2048
+#define NSAMPLES 512
+#define NDUMMY 32
 #define FSAMPLE I2S_AUDIOFREQ_48K
+static int step = 1;
 
 static volatile int audioReady = 0;
-static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2] __attribute__((aligned(0x100))) = {0};
+static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2] = {0};
 void BSP_AUDIO_IN_TransferComplete_CallBack(void)
 {
     audioReady = 1;
@@ -70,7 +71,7 @@ static void prepare_windowing(void)
         case W_FLATTOP:
             //Flattop window
             wnd[i] = (1.0 - 1.93*cosf((2 * M_PI * i) / ns) + 1.29 * cosf((4 * M_PI * i) / ns)
-                      -0.388*cosf((6 * M_PI * i) / ns) +0.0322*cosf((8 * M_PI * i) / ns)) / 4.;
+                      -0.388*cosf((6 * M_PI * i) / ns) +0.0322*cosf((8 * M_PI * i) / ns)) / 3.f;
             break;
         }
     }
@@ -101,7 +102,10 @@ static void do_fft_audiobuf()
 void measure(void)
 {
     audioReady = 0;
-    BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
+    extern SAI_HandleTypeDef haudio_in_sai;
+    HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
+    audioReady = 1;
+    //BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
 }
 
 int main(void)
@@ -207,27 +211,47 @@ int main(void)
             BSP_LCD_ClearStringLine(3);
         }
 
+        uint32_t tmstart = HAL_GetTick();
         measure();
+        tmstart = HAL_GetTick() - tmstart;
         while (0 == audioReady);
         if (oscilloscope)
         {
             uint16_t lasty_left = 210;
             uint16_t lasty_right = 210;
-            int16_t* pData = &audioBuf[NDUMMY];
+            int16_t* pData;
+            int16_t minMag = 32767;
+            int16_t maxMag = -32767;
+            int32_t magnitude = 0;
             BSP_LCD_SetTextColor(0xFF000020);
             BSP_LCD_FillRect(0, 140, 480, 140);
 
+            //Calc magnitude for one channel only
+            for (i = NDUMMY * 2; i < (NSAMPLES + NDUMMY) * 2; i += 2)
+            {
+                if (minMag > audioBuf[i])
+                    minMag = audioBuf[i];
+                if (maxMag < audioBuf[i])
+                    maxMag = audioBuf[i];
+            }
+            magnitude = (maxMag - minMag) / 2;
+            sprintf(buf,"Sampling %d ms, Magnitude: %d", tmstart, magnitude);
+            BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
+            BSP_LCD_ClearStringLine(4);
+            BSP_LCD_DisplayStringAtLine(4, buf);
+
+            pData = &audioBuf[NDUMMY];
             for (i = 0; i < NSAMPLES; i ++)
             {
                 if (i == 0)
                 {
-                    lasty_left = 210 - (int)(*pData++ * wnd[i*4]) / 500;
+                    lasty_left = 210 - (int)(*pData++ * wnd[i*step]) / 500;
                     if (lasty_left > 279)
                         lasty_left = 279;
                     if (lasty_left < 0)
                         lasty_left = 0;
                     BSP_LCD_DrawPixel(i, lasty_left, LCD_COLOR_GREEN);
-                    lasty_right = 210 - (int)(*pData++ * wnd[i*4]) / 500;
+                    lasty_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
                     if (lasty_right > 279)
                         lasty_right = 279;
                     if (lasty_right < 140)
@@ -236,8 +260,8 @@ int main(void)
                 }
                 else
                 {
-                    uint16_t y_left = 210 - (int)(*pData++ * wnd[i*4]) / 500;
-                    uint16_t y_right = 210 - (int)(*pData++ * wnd[i*4]) / 500;
+                    uint16_t y_left = 210 - (int)(*pData++ * wnd[i*step]) / 500;
+                    uint16_t y_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
                     if (y_left > 279)
                         y_left = 279;
                     if (y_left < 140)
@@ -253,10 +277,7 @@ int main(void)
                     lasty_left = y_left;
                     lasty_right = y_right;
                 }
-                if (NSAMPLES >= 2048)
-                    pData += 6;
-                else if (NSAMPLES == 1024)
-                    pData += 2;
+                pData += (step * 2 - 2);
                 if (i >= 479)
                     break;
             }
