@@ -45,6 +45,7 @@
 #include "stm32746g_discovery_lcd.h"
 #include "stm32746g_discovery_ts.h"
 #include "stm32746g_discovery_audio.h"
+#include "stm32746g_discovery_qspi.h"
 
 /* Definition for USARTx clock resources */
 #define USARTx                           USART1

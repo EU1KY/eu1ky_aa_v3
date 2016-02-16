@@ -6,6 +6,7 @@
 #include <complex.h>
 #include <math.h>
 #include "lcd.h"
+#include "font.h"
 #include "touch.h"
 #include "panvswr2.h"
 
@@ -20,23 +21,14 @@ void Sleep(uint32_t nms)
 #define NSAMPLES 512
 #define NDUMMY 32
 #define FSAMPLE I2S_AUDIOFREQ_48K
+
 static int step = 1;
-
-static volatile int audioReady = 0;
 static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2] = {0};
-void BSP_AUDIO_IN_TransferComplete_CallBack(void)
-{
-    audioReady = 1;
-    //BSP_AUDIO_IN_Pause();
-}
-
-UART_HandleTypeDef UartHandle = {0};
-
-
+static UART_HandleTypeDef UartHandle = {0};
 static float rfft_input[NSAMPLES];
 static float rfft_output[NSAMPLES];
 static float rfft_mags[NSAMPLES/2];
-float complex *prfft   = (float complex*)rfft_output;
+static const float complex *prfft   = (float complex*)rfft_output;
 static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
 static float wnd[NSAMPLES];
 static enum {W_NONE, W_SINUS, W_HANN, W_HAMMING, W_BLACKMAN, W_FLATTOP} wndtype = W_NONE;
@@ -77,7 +69,7 @@ static void prepare_windowing(void)
     }
 }
 static void do_fft_audiobuf()
-{
+{//Only one channel
     int i;
     arm_rfft_fast_instance_f32 S;
 
@@ -101,34 +93,11 @@ static void do_fft_audiobuf()
 
 void measure(void)
 {
-    audioReady = 0;
     extern SAI_HandleTypeDef haudio_in_sai;
     HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
-    audioReady = 1;
-    //BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
 }
-
-int main(void)
+void uart_init(void)
 {
-    uint32_t oscilloscope = 1;
-    /* Enable the CPU Cache */
-    CPU_CACHE_Enable();
-
-    /* STM32F7xx HAL library initialization:
-         - Configure the Flash ART accelerator on ITCM interface
-         - Systick timer is configured by default as source of time base, but user
-           can eventually implement his proper time base source (a general purpose
-           timer for example or other time source), keeping in mind that Time base
-           duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and
-           handled in milliseconds basis.
-         - Set NVIC Group Priority to 4
-         - Low Level Initialization
-       */
-    HAL_Init();
-
-    /* Configure the system clock to 216 MHz */
-    SystemClock_Config();
-
     memset(&UartHandle, 0, sizeof(UartHandle));
     UartHandle.Instance        = USART1;
     UartHandle.Init.BaudRate   = 9600;
@@ -140,44 +109,34 @@ int main(void)
     UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
     //UartHandle.Init.OneBitSampling = UART_ONEBIT_SAMPLING_ENABLED;
     HAL_UART_Init(&UartHandle);
+}
 
-    /* Configure LED1 */
+int main(void)
+{
+    uint32_t oscilloscope = 1;
+    CPU_CACHE_Enable();
+    HAL_Init();
+    SystemClock_Config();
+    uart_init();
     BSP_LED_Init(LED1);
-
-    //LCD
     LCD_Init();
-
-    //Touchscreen
     TOUCH_Init();
+    BSP_QSPI_Init();
 
     //for(;;)
     {
         //    PANVSWR2_Proc();
     }
 
-    BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
-    BSP_LCD_DisplayStringAt(0, 0, (uint8_t*)"STM32F746G Discovery", CENTER_MODE);
-    BSP_LCD_SelectLayer(0);
-    BSP_LCD_DisplayStringAt(0, 40, (uint8_t*)"sample project", CENTER_MODE);
-
-    BSP_LCD_SelectLayer(1);
-    BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
-    BSP_LCD_SetFont(&Font16);
-
     uint8_t ret;
     ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, FSAMPLE);
     if (ret != AUDIO_OK)
     {
-        BSP_LCD_SetTextColor(LCD_COLOR_RED);
-        BSP_LCD_DisplayStringAtLine(2, "BSP_AUDIO_IN_Init failed");
+        FONT_SetAttributes(FONT_FRANBIG, LCD_RED, LCD_BLACK);
+        FONT_Printf(0, 0, "BSP_AUDIO_IN_Init failed");
     }
-    //audioReady = 2;
-    //BSP_AUDIO_IN_Record(audioBuf, (NSAMPLES + NDUMMY) * 2);
 
     uint32_t ctr = 0;
-    char buf[100];
-    int paused = 0;
-    TS_StateTypeDef ts;
     int i;
 
     prepare_windowing();
@@ -185,36 +144,34 @@ int main(void)
     while (1)
     {
         (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);
-        BSP_TS_GetState(&ts);
-        if (ts.touchDetected)
+        LCDPoint pt;
+        if (TOUCH_Poll(&pt))
         {
-            sprintf(buf, "x %d, y %d, wt %d", ts.touchX[0], ts.touchY[0], ts.touchWeight[0]);
-            BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
-            BSP_LCD_ClearStringLine(3);
-            BSP_LCD_DisplayStringAtLine(3, buf);
-            if (ts.touchY[0] > 140)
+            FONT_SetAttributes(FONT_FRANBIG, LCD_GREEN, LCD_BLACK);
+            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
+            FONT_Printf(0, 0, "x %d, y %d", pt.x, pt.y);
+            if (pt.y > 140)
                 oscilloscope = !oscilloscope;
             else
             {
                 wndtype++;
                 prepare_windowing();
-                sprintf(buf, "Windowing: %s", wndstr[wndtype]);
-                BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
-                BSP_LCD_ClearStringLine(2);
-                BSP_LCD_DisplayStringAtLine(2, buf);
+                FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
+                FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 32);
+                FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
             }
             while(TOUCH_IsPressed());
             continue;
         }
         else
         {
-            BSP_LCD_ClearStringLine(3);
+            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
         }
 
         uint32_t tmstart = HAL_GetTick();
         measure();
         tmstart = HAL_GetTick() - tmstart;
-        while (0 == audioReady);
+
         if (oscilloscope)
         {
             uint16_t lasty_left = 210;
@@ -223,8 +180,8 @@ int main(void)
             int16_t minMag = 32767;
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
-            BSP_LCD_SetTextColor(0xFF000020);
-            BSP_LCD_FillRect(0, 140, 480, 140);
+
+            LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(479, 279), 0xFF000020);
 
             //Calc magnitude for one channel only
             for (i = NDUMMY * 2; i < (NSAMPLES + NDUMMY) * 2; i += 2)
@@ -235,10 +192,10 @@ int main(void)
                     maxMag = audioBuf[i];
             }
             magnitude = (maxMag - minMag) / 2;
-            sprintf(buf,"Sampling %d ms, Magnitude: %d", tmstart, magnitude);
-            BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
-            BSP_LCD_ClearStringLine(4);
-            BSP_LCD_DisplayStringAtLine(4, buf);
+
+            FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
+            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+            FONT_Printf(0, 64, "Sampling %d ms, Magnitude: %d", tmstart, magnitude);
 
             pData = &audioBuf[NDUMMY];
             for (i = 0; i < NSAMPLES; i ++)
@@ -250,13 +207,13 @@ int main(void)
                         lasty_left = 279;
                     if (lasty_left < 0)
                         lasty_left = 0;
-                    BSP_LCD_DrawPixel(i, lasty_left, LCD_COLOR_GREEN);
+                    LCD_SetPixel(LCD_MakePoint(i, lasty_left), LCD_COLOR_GREEN);
                     lasty_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
                     if (lasty_right > 279)
                         lasty_right = 279;
                     if (lasty_right < 140)
                         lasty_right = 140;
-                    BSP_LCD_DrawPixel(i, lasty_right, LCD_COLOR_RED);
+                    LCD_SetPixel(LCD_MakePoint(i, lasty_right), LCD_COLOR_RED);
                 }
                 else
                 {
@@ -270,10 +227,8 @@ int main(void)
                         y_right = 279;
                     if (y_right < 140)
                         y_right = 140;
-                    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-                    BSP_LCD_DrawLine(i-1, lasty_left, i, y_left);
-                    BSP_LCD_SetTextColor(LCD_COLOR_RED);
-                    BSP_LCD_DrawLine(i-1, lasty_right, i, y_right);
+                    LCD_Line(LCD_MakePoint(i-1, lasty_left), LCD_MakePoint(i, y_left), LCD_RED);
+                    LCD_Line(LCD_MakePoint(i-1, lasty_right), LCD_MakePoint(i, y_right), LCD_GREEN);
                     lasty_left = y_left;
                     lasty_right = y_right;
                 }
@@ -289,13 +244,12 @@ int main(void)
             tstart = HAL_GetTick() - tstart;
 
             //Draw spectrum
-            BSP_LCD_SetTextColor(0xFF000020);
-            BSP_LCD_FillRect(0, 140, 480, 140);
-            BSP_LCD_SetTextColor(0xFF000040);
+            LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(479, 279), 0xFF000020);
+
             //Draw horizontal grid lines
             for (i = 279; i > 140; i-=10)
             {
-                BSP_LCD_DrawLine(0, i, 479, i);
+                LCD_Line(LCD_MakePoint(0, i), LCD_MakePoint(479, i), 0xFF303070);
             }
             //Calculate max magnitude bin
             float maxmag = 0.;
@@ -316,10 +270,9 @@ int main(void)
                 P += powf(rfft_mags[i], 2);
             maxmag = sqrtf(P);
 
-            sprintf(buf,"RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
-            BSP_LCD_SetTextColor(LCD_COLOR_RED);
-            BSP_LCD_ClearStringLine(4);
-            BSP_LCD_DisplayStringAtLine(4, buf);
+            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+            FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
+            FONT_Printf(0, 64, "RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
 
             //Draw spectrum
             for (int x = 0; x < NSAMPLES/2; x++)
@@ -327,17 +280,13 @@ int main(void)
                 int y = (int)(279 - 20 * log10f(rfft_mags[x]));
                 if (y <= 279)
                 {
-                    BSP_LCD_DrawLine(x, 279, x, y);
+                    LCD_Line(LCD_MakePoint(x, 279), LCD_MakePoint(x, y), LCD_RED);
                 }
                 if (x >= 479)
                     break;
             }
-        }//spectrum
-
-        HAL_Delay(50);
-        audioReady = 0;
-
-        //HAL_UART_Transmit(&UartHandle, "ABCDEF", 6, 5);
+        }
+        HAL_Delay(100);
     }
     return 0;
 }
