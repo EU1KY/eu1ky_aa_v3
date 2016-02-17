@@ -62,6 +62,8 @@
 					<Add directory="Src\STM32F7xx_HAL_Driver\Inc\Legacy" />
 					<Add directory="Src\analyzer\lcd" />
 					<Add directory="Src\analyzer\window" />
+					<Add directory="Src\fatfs" />
+					<Add directory="Src\fatfs\drivers" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--keep-locals" />
@@ -139,6 +141,8 @@
 					<Add directory="Src\STM32F7xx_HAL_Driver\Inc" />
 					<Add directory="Src\Utilities\Fonts" />
 					<Add directory="Src\STM32F7xx_HAL_Driver\Inc\Legacy" />
+					<Add directory="Src\fatfs" />
+					<Add directory="Src\fatfs\drivers" />
 				</Compiler>
 				<Linker>
 					<Add option="-u _printf_float" />
@@ -316,6 +320,30 @@
 		<Unit filename="Src\CMSIS\Include\core_cmInstr.h" />
 		<Unit filename="Src\CMSIS\Include\core_cmSimd.h" />
 		<Unit filename="Src\CMSIS\RTOS\Template\cmsis_os.h" />
+		<Unit filename="Src\fatfs\diskio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\fatfs\diskio.h" />
+		<Unit filename="Src\fatfs\drivers\sd_diskio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\fatfs\drivers\sd_diskio.h" />
+		<Unit filename="Src\fatfs\ff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\fatfs\ff.h" />
+		<Unit filename="Src\fatfs\ff_gen_drv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\fatfs\ff_gen_drv.h" />
+		<Unit filename="Src\fatfs\ffconf.h" />
+		<Unit filename="Src\fatfs\integer.h" />
+		<Unit filename="Src\fatfs\option\syscall.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\fatfs\option\unicode.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\Inc\main.h" />
 		<Unit filename="Src\Inc\stm32f7xx_hal_conf.h" />
 		<Unit filename="Src\Inc\stm32f7xx_it.h" />

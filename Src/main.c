@@ -9,7 +9,9 @@
 #include "font.h"
 #include "touch.h"
 #include "panvswr2.h"
-
+#include "ff.h"
+#include "ff_gen_drv.h"
+#include "sd_diskio.h"
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 
@@ -111,6 +113,54 @@ void uart_init(void)
     HAL_UART_Init(&UartHandle);
 }
 
+void flash_example()
+{
+    BSP_QSPI_Init();
+
+    QSPI_Info inf;
+    BSP_QSPI_GetInfo(&inf);
+    FONT_SetAttributes(FONT_FRAN, LCD_YELLOW, LCD_BLACK);
+    FONT_Printf(0, 0, "FlashSize: %d", inf.FlashSize);
+    FONT_Printf(0, 20, "EraseSectorSize: %d", inf.EraseSectorSize);
+    FONT_Printf(0, 40, "EraseSectorsNumber: %d", inf.EraseSectorsNumber);
+    FONT_Printf(0, 60, "ProgPageSize: %d", inf.ProgPageSize);
+    FONT_Printf(0, 80, "ProgPagesNumber: %d", inf.ProgPagesNumber);
+
+    uint8_t rdbuf[256] = {0};
+    //BSP_QSPI_Erase_Chip();
+    //BSP_QSPI_Erase_Block(0);
+
+    //rdbuf[0] = 0xFF;
+    //BSP_QSPI_Write(rdbuf, 100000, 1);
+
+    BSP_QSPI_Read(rdbuf, 0, 256);
+    FONT_SetAttributes(FONT_FRAN, LCD_YELLOW, LCD_BLACK);
+    uint8_t* p = rdbuf;
+    for (uint32_t i=0; i < 10; i++)
+    {
+        FONT_Printf(0, 100 + i * 14, "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+                    p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+                    p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
+        p += 16;
+    }
+}
+
+FATFS SDFatFs;  /* File system object for SD card logical drive */
+char SDPath[4]; /* SD card logical drive path */
+void sd_fs_try(void)
+{
+    assert_param(FATFS_LinkDriver(&SD_Driver, SDPath) == 0);
+    assert_param(f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) == FR_OK);
+    //assert_param(f_mkfs((TCHAR const*)SDPath, 0, 0) == FR_OK); //Format FS
+    FIL f;
+    assert_param(f_open(&f, "EU1KY.txt", FA_CREATE_ALWAYS | FA_WRITE) == FR_OK);
+    static const char txt[] = "Test string\n";
+    uint32_t byteswritten = 0;
+    FRESULT res = f_write(&f, txt, sizeof(txt)-1, (void *)&byteswritten);
+    assert_param(res == FR_OK && byteswritten != 0);
+    f_close(&f);
+}
+
 int main(void)
 {
     uint32_t oscilloscope = 1;
@@ -121,9 +171,8 @@ int main(void)
     BSP_LED_Init(LED1);
     LCD_Init();
     TOUCH_Init();
-    BSP_QSPI_Init();
-
-    //for(;;)
+    sd_fs_try();
+    for(;;)
     {
         //    PANVSWR2_Proc();
     }
@@ -181,7 +230,7 @@ int main(void)
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
 
-            LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(479, 279), 0xFF000020);
+            LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
             //Calc magnitude for one channel only
             for (i = NDUMMY * 2; i < (NSAMPLES + NDUMMY) * 2; i += 2)
@@ -203,14 +252,14 @@ int main(void)
                 if (i == 0)
                 {
                     lasty_left = 210 - (int)(*pData++ * wnd[i*step]) / 500;
-                    if (lasty_left > 279)
-                        lasty_left = 279;
+                    if (lasty_left > LCD_GetHeight()-1)
+                        lasty_left = LCD_GetHeight()-1;
                     if (lasty_left < 0)
                         lasty_left = 0;
                     LCD_SetPixel(LCD_MakePoint(i, lasty_left), LCD_COLOR_GREEN);
                     lasty_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
-                    if (lasty_right > 279)
-                        lasty_right = 279;
+                    if (lasty_right > LCD_GetHeight()-1)
+                        lasty_right = LCD_GetHeight()-1;
                     if (lasty_right < 140)
                         lasty_right = 140;
                     LCD_SetPixel(LCD_MakePoint(i, lasty_right), LCD_COLOR_RED);
@@ -219,12 +268,12 @@ int main(void)
                 {
                     uint16_t y_left = 210 - (int)(*pData++ * wnd[i*step]) / 500;
                     uint16_t y_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
-                    if (y_left > 279)
-                        y_left = 279;
+                    if (y_left > LCD_GetHeight()-1)
+                        y_left = LCD_GetHeight()-1;
                     if (y_left < 140)
                         y_left = 140;
-                    if (y_right > 279)
-                        y_right = 279;
+                    if (y_right > LCD_GetHeight()-1)
+                        y_right = LCD_GetHeight()-1;
                     if (y_right < 140)
                         y_right = 140;
                     LCD_Line(LCD_MakePoint(i-1, lasty_left), LCD_MakePoint(i, y_left), LCD_RED);
@@ -233,7 +282,7 @@ int main(void)
                     lasty_right = y_right;
                 }
                 pData += (step * 2 - 2);
-                if (i >= 479)
+                if (i >= LCD_GetWidth()-1)
                     break;
             }
         }
@@ -244,12 +293,12 @@ int main(void)
             tstart = HAL_GetTick() - tstart;
 
             //Draw spectrum
-            LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(479, 279), 0xFF000020);
+            LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
             //Draw horizontal grid lines
-            for (i = 279; i > 140; i-=10)
+            for (i = LCD_GetHeight()-1; i > 140; i-=10)
             {
-                LCD_Line(LCD_MakePoint(0, i), LCD_MakePoint(479, i), 0xFF303070);
+                LCD_Line(LCD_MakePoint(0, i), LCD_MakePoint(LCD_GetWidth()-1, i), 0xFF303070);
             }
             //Calculate max magnitude bin
             float maxmag = 0.;
@@ -277,12 +326,12 @@ int main(void)
             //Draw spectrum
             for (int x = 0; x < NSAMPLES/2; x++)
             {
-                int y = (int)(279 - 20 * log10f(rfft_mags[x]));
-                if (y <= 279)
+                int y = (int)(LCD_GetHeight()-1 - 20 * log10f(rfft_mags[x]));
+                if (y <= LCD_GetHeight()-1)
                 {
-                    LCD_Line(LCD_MakePoint(x, 279), LCD_MakePoint(x, y), LCD_RED);
+                    LCD_Line(LCD_MakePoint(x, LCD_GetHeight()-1), LCD_MakePoint(x, y), LCD_RED);
                 }
-                if (x >= 479)
+                if (x >= LCD_GetWidth()-1)
                     break;
             }
         }
