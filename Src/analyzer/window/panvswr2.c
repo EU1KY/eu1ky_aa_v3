@@ -307,7 +307,7 @@ static void DrawGrid(int drawSwr)
             {
                 char s[10];
                 sprintf(s, "%.1f", swrs[i]);
-                FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 12, WY(yofs) - 2, s);
+                FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 15, WY(yofs) - 2, s);
             }
             LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
         }
@@ -691,7 +691,7 @@ static void DrawRX()
     for (labelValue = graphmin; labelValue < graphmax + (.5 * d); labelValue += d)
     {
         sprintf(buf, str, labelValue); //Get label string in buf
-        FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 30, WY(yofs) - 2, buf);
+        FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 25, WY(yofs) - 2, buf);
         if (roundf(labelValue) == 0)
             LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLORBR);
         else
