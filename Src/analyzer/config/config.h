@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define AAVERSION "3.0d"
+
 typedef enum
 {
     CFG_PARAM_PAN_F1, //Initial frequency for panoramic window

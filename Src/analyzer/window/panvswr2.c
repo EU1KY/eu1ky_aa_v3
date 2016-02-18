@@ -12,11 +12,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
-//#include "config.h"
+#include <string.h>
+
 #include "LCD.h"
 #include "touch.h"
 #include "font.h"
 #include "config.h"
+#include "ff.h"
+#include "crash.h"
 //#include "dsp.h"
 //#include "gen.h"
 //#include "osl.h"
@@ -99,7 +102,7 @@ static uint32_t fff = 0;
 static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
 {
     fff = freqHz;
-    Sleep(15);
+    Sleep(2);
 }
 
 static void GEN_SetMeasurementFreq(uint32_t f)
@@ -144,6 +147,9 @@ static const HAM_BANDS hamBands[] =
 static const uint32_t hamBandsNum = sizeof(hamBands) / sizeof(*hamBands);
 static const uint32_t cx0 = 240; //Smith chart center
 static const uint32_t cy0 = 120; //Smith chart center
+static const char *modstr = "EU1KY AA v." AAVERSION;
+
+static uint32_t modstrw = 70;
 
 static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "32 MHz"};
 static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 32000};
@@ -155,6 +161,7 @@ static DSP_RX values[WWIDTH];
 static int isMeasured = 0;
 static uint32_t cursorPos = WWIDTH / 2;
 static GRAPHTYPE grType = GRAPH_VSWR;
+static uint32_t isSaved = 0;
 
 static void DrawRX();
 static void DrawSmith();
@@ -232,6 +239,30 @@ static void DrawCursorText()
     );
 }
 
+static void DrawSaveText(void)
+{
+    static const char* txt = "  Save snapshot  ";
+    FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_YELLOW, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+               Y0 + WHEIGHT + 16 + 16, txt);
+}
+
+static void DrawSavingText(void)
+{
+    static const char* txt = "  Saving snapshot...  ";
+    FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLUE, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+               Y0 + WHEIGHT + 16 + 16, txt);
+}
+
+static void DrawSavedText(void)
+{
+    static const char* txt = "  Snapshot saved  ";
+    FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+               Y0 + WHEIGHT + 16 + 16, txt);
+}
+
 static void DecrCursor()
 {
     if (!isMeasured)
@@ -260,11 +291,14 @@ static void DrawGrid(int drawSwr)
 {
     int i;
     LCD_FillAll(LCD_BLACK);
+
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
+
     if (drawSwr)
         sprintf(buf, "VSWR graph: %d kHz + %s", (int)f1, BSSTR[span]);
     else
         sprintf(buf, "R/X graph: %d kHz + %s", (int)f1, BSSTR[span]);
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, X0, 0, buf);
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, modstrw + 10, 0, buf);
 
     //Mark ham bands with colored background
     for (i = 0; i < WWIDTH; i++)
@@ -876,6 +910,7 @@ static void DrawSmith()
 
 static void RedrawWindow()
 {
+    isSaved = 0;
     if (grType == GRAPH_VSWR)
     {
         DrawGrid(1);
@@ -890,12 +925,150 @@ static void RedrawWindow()
         DrawSmith();
     DrawCursor();
     if (isMeasured)
+    {
         DrawCursorText();
+        DrawSaveText();
+    }
+}
+
+static const uint8_t bmp_hdr[] =
+{
+    0x42, 0x4D,             //"BM"
+    0x36, 0xFA, 0x05, 0x00, //size in bytes
+    0x00, 0x00, 0x00, 0x00, //reserved
+    0x36, 0x00, 0x00, 0x00, //offset to image in bytes
+    0x28, 0x00, 0x00, 0x00, //info size in bytes
+    0xE0, 0x01, 0x00, 0x00, //width
+    0x10, 0x01, 0x00, 0x00, //height
+    0x01, 0x00,             //planes
+    0x18, 0x00,             //bits per pixel
+    0x00, 0x00, 0x00, 0x00, //compression
+    0x00, 0xfa, 0x05, 0x00, //image size
+    0x00, 0x00, 0x00, 0x00, //x resolution
+    0x00, 0x00, 0x00, 0x00, //y resolution
+    0x00, 0x00, 0x00, 0x00, // colours
+    0x00, 0x00, 0x00, 0x00  //important colours
+};
+
+
+static void save_snapshot(void)
+{
+    static const TCHAR *sndir = "/aa/snapshot";
+    char path[64];
+    char wbuf[256];
+
+    if (!isMeasured || isSaved)
+        return;
+
+    DrawSavingText();
+
+    f_mkdir(sndir);
+
+    //Scan dir for snapshot files
+    uint32_t fmax = 0;
+    uint32_t fmin = 0xFFFFFFFFul;
+    DIR dir = { 0 };
+    FILINFO fno = { 0 };
+    FRESULT fr = f_opendir(&dir, sndir);
+    uint32_t numfiles = 0;
+    int i;
+    if (fr == FR_OK)
+    {
+        for (;;)
+        {
+            fr = f_readdir(&dir, &fno); //Iterate through the directory
+            if (fr != FR_OK || !fno.fname[0])
+                break; //Nothing to do
+            if (_FS_RPATH && fno.fname[0] == '.')
+                continue; //bypass hidden files
+            if (fno.fattrib & AM_DIR)
+                continue; //bypass subdirs
+            int len = strlen(fno.fname);
+            if (len != 12) //Bypass filenames with unexpected name length
+                continue;
+            if (0 != strcasecmp(&fno.fname[8], ".s1p"))
+                continue; //Bypass files that are not s1p
+            for (i = 0; i < 8; i++)
+                if (!isxdigit(fno.fname[i]))
+                    break;
+            if (i != 8)
+                continue; //Bypass file names that are not 8-digit hex numbers
+            numfiles++;
+            //Now convert file name to hex number
+            uint32_t hexn = 0;
+            char* endptr;
+            hexn = strtoul(fno.fname, &endptr, 16);
+            if (hexn < fmin)
+                fmin = hexn;
+            if (hexn > fmax)
+                fmax = hexn;
+        }
+        f_closedir(&dir);
+    }
+    else
+    {
+        CRASHF("Failed to open directory %s", sndir);
+    }
+    //Erase one oldest file if needed
+    if (numfiles >= 100)
+    {
+        sprintf(path, "%s/%08X.s1p", sndir, fmin);
+        f_unlink(path);
+        sprintf(path, "%s/%08X.bmp", sndir, fmin);
+        f_unlink(path);
+    }
+
+    //Now write measured data to file fmax+1 in s1p format
+    sprintf(path, "%s/%08X.s1p", sndir, fmax+1);
+    FIL fo = { 0 };
+    UINT bw;
+    fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
+    if (FR_OK != fr)
+        CRASHF("Failed to open file %s", path);
+    sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
+                  "# MHz S RI R %d\r\n"
+                  "! Format: Frequency S-real S-imaginary (normalized to %d Ohm)\r\n", (int)R0, (int)R0);
+    fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
+    if (FR_OK != fr) goto CRASH_WR;
+    for (i = 0; i < WWIDTH; i++)
+    {
+        float complex g = OSL_GFromZ(values[i]);
+        float fmhz = (float)(f1 + i * BSVALUES[span] / WWIDTH) / 1000.0f;
+        sprintf(wbuf, "%.3f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
+        fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
+        if (FR_OK != fr) goto CRASH_WR;
+    }
+    f_close(&fo);
+
+    //Now write screenshot as bitmap
+    sprintf(path, "%s/%08X.bmp", sndir, fmax+1);
+    fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
+    if (FR_OK != fr)
+        CRASHF("Failed to open file %s", path);
+    fr = f_write(&fo, bmp_hdr, sizeof(bmp_hdr), &bw);
+    if (FR_OK != fr) goto CRASH_WR;
+    int x = 0;
+    int y = 0;
+    for (y = 271; y >= 0; y--)
+    {
+        for (x = 0; x < 480; x++)
+        {
+            uint32_t color = LCD_ReadPixel(LCD_MakePoint(x, y));
+            fr = f_write(&fo, &color, 3, &bw);
+            if (FR_OK != fr) goto CRASH_WR;
+        }
+    }
+    f_close(&fo);
+
+    isSaved = 1;
+    DrawSavedText();
+    return;
+CRASH_WR:
+    CRASHF("Failed to write to file %s", path);
 }
 
 void PANVSWR2_Proc(void)
 {
-
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 100, "Panoramic scan mode");
     Sleep(500);
@@ -905,6 +1078,8 @@ void PANVSWR2_Proc(void)
 
     grType = GRAPH_VSWR;
     isMeasured = 0;
+    isSaved = 0;
+    modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
     DrawGrid(1);
     DrawHelp();
 
@@ -941,19 +1116,26 @@ void PANVSWR2_Proc(void)
                     continue;
                 }
             }
-            else if (pt.y > 180)
+            else if (pt.y > 180 && pt.y < 240)
             {
-                if (pt.x < 220)
+                if (pt.x < 140)
                 {// Lower left corner
                     while(TOUCH_IsPressed());
                     Sleep(100);
                     return;
                 }
-                else if (pt.x > 260)
+                else if (pt.x > 340)
                 {//Lower right corner: perform scan
                     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
                     ScanRX();
                     RedrawWindow();
+                }
+            }
+            else
+            {
+                if (pt.x > 140 && pt.x < 340 && isMeasured && !isSaved)
+                {
+                    save_snapshot();
                 }
             }
             while(TOUCH_IsPressed())
