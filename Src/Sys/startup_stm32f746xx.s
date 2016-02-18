@@ -125,9 +125,36 @@ LoopFillZerobss:
 */
     .section  .text.Default_Handler,"ax",%progbits
 Default_Handler:
-Infinite_Loop:
-  b  Infinite_Loop
+    // Load the address of the interrupt control register into r3.
+    ldr r3,=0xe000ed04 //The address of the NVIC interrupt control register
+    // Load the value of the interrupt control register into r2 from the address held in r3.
+    ldr r2, [r3, #0]
+    // The interrupt number is in the least significant byte - clear all other bits.
+    uxtb r2, r2
+    // Now sit in an infinite loop - the number of the executing interrupt is held in r2.
+    b  .
   .size  Default_Handler, .-Default_Handler
+
+/************************************************************************************
+ *  HardFault_Handler()
+ ************************************************************************************/
+    .text
+    .thumb
+    .thumb_func
+    .align 2
+    .global    HardFault_Handler
+    .type    HardFault_Handler, %function
+HardFault_Handler:
+    tst lr, #4
+    ite eq
+    mrseq r0, msp
+    mrsne r0, psp
+    ldr r1, [r0, #24] //R1 points to array of 8 registers? r0 r1 r2 r3 r12 lr pc psr
+    //ldr r2,=GetRegistersFromStack
+    //bx r2
+    b .
+    .pool
+    .size  HardFault_Handler, .-HardFault_Handler
 /******************************************************************************
 *
 * The minimal vector table for a Cortex M7. Note that the proper constructs
@@ -269,8 +296,8 @@ g_pfnVectors:
    .weak      NMI_Handler
    .thumb_set NMI_Handler,Default_Handler
 
-   .weak      HardFault_Handler
-   .thumb_set HardFault_Handler,Default_Handler
+   //.weak      HardFault_Handler
+   //.thumb_set HardFault_Handler,Default_Handler
 
    .weak      MemManage_Handler
    .thumb_set MemManage_Handler,Default_Handler

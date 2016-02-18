@@ -16,14 +16,14 @@
 #include "LCD.h"
 #include "touch.h"
 #include "font.h"
-//#include "bkup.h"
+#include "config.h"
 //#include "dsp.h"
 //#include "gen.h"
 //#include "osl.h"
 
 #define X0 40
 #define Y0 20
-#define WWIDTH  250
+#define WWIDTH  400
 #define WHEIGHT 200
 #define WY(offset) ((WHEIGHT + Y0) - (offset))
 #define WGRIDCOLOR LCD_RGB(32,32,32)
@@ -99,6 +99,7 @@ static uint32_t fff = 0;
 static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
 {
     fff = freqHz;
+    Sleep(15);
 }
 
 static void GEN_SetMeasurementFreq(uint32_t f)
@@ -113,7 +114,7 @@ DSP_RX DSP_MeasuredZ(void)
 
 typedef enum
 {
-    BS250, BS500, BS1250, BS2500, BS5M, BS10M, BS25M
+    BS400, BS800, BS1600, BS4M, BS8M, BS16M, BS32M
 } BANDSPAN;
 
 typedef enum
@@ -141,18 +142,18 @@ static const HAM_BANDS hamBands[] =
 };
 
 static const uint32_t hamBandsNum = sizeof(hamBands) / sizeof(*hamBands);
-static const uint32_t cx0 = 160; //Smith chart center
+static const uint32_t cx0 = 240; //Smith chart center
 static const uint32_t cy0 = 120; //Smith chart center
 
-static const char* BSSTR[] = {"250 kHz", "500 kHz", "1.25 MHz", "2.5 MHz", "5 MHz", "10 MHz", "25 MHz"};
-static const uint32_t BSVALUES[] = {250, 500, 1250, 2500, 5000, 10000, 25000};
+static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "32 MHz"};
+static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 32000};
 static uint32_t f1 = 14000;
-static BANDSPAN span = BS500;
+static BANDSPAN span = BS800;
 static char buf[64];
 static LCDPoint pt;
 static DSP_RX values[WWIDTH];
 static int isMeasured = 0;
-static uint32_t cursorPos = 125;
+static uint32_t cursorPos = WWIDTH / 2;
 static GRAPHTYPE grType = GRAPH_VSWR;
 
 static void DrawRX();
@@ -186,7 +187,7 @@ static void DrawCursor()
     if (!isMeasured)
         return;
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 2, 110, "<");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 305, 110, ">");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 465, 110, ">");
     if (grType == GRAPH_SMITH)
     {
         DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
@@ -223,7 +224,7 @@ static void DrawCursorText()
     float ga = cabsf(OSL_GFromZ(rx)); //G magnitude
 
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
-        ((float)(f1 + cursorPos * BSVALUES[span] / 250))/1000.,
+        ((float)(f1 + cursorPos * BSVALUES[span] / WWIDTH))/1000.,
         crealf(rx),
         cimagf(rx),
         DSP_CalcVSWR(rx),
@@ -247,7 +248,7 @@ static void AdvCursor()
 {
     if (!isMeasured)
         return;
-    if (cursorPos == 249)
+    if (cursorPos == WWIDTH-1)
         return;
     DrawCursor();
     cursorPos++;
@@ -276,13 +277,13 @@ static void DrawGrid(int drawSwr)
     }
 
     //Draw F grid and labels
-    for (i = 0; i <= 25; i++)
+    for (i = 0; i <= WWIDTH/10; i++)
     {
         int x = X0 + i * 10;
         if (i % 5 == 0)
         {
             char f[10];
-            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / 25))/1000.);
+            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/10)))/1000.);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
             FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, x - w / 2, Y0 + WHEIGHT + 5, f);
             LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLORBR);
@@ -306,7 +307,7 @@ static void DrawGrid(int drawSwr)
             {
                 char s[10];
                 sprintf(s, "%.1f", swrs[i]);
-                FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 15, WY(yofs) - 2, s);
+                FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 12, WY(yofs) - 2, s);
             }
             LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
         }
@@ -334,9 +335,9 @@ static void print_f1(uint32_t f)
 
 static void nextspan(BANDSPAN *sp)
 {
-    if (*sp == BS25M)
+    if (*sp == BS32M)
     {
-        *sp = BS250;
+        *sp = BS400;
     }
     else
     {
@@ -346,9 +347,9 @@ static void nextspan(BANDSPAN *sp)
 
 static void prevspan(BANDSPAN *sp)
 {
-    if (*sp == BS250)
+    if (*sp == BS400)
     {
-        *sp = BS25M;
+        *sp = BS32M;
     }
     else
     {
@@ -427,7 +428,7 @@ static void SELFREQ_Proc(void)
             {
                 f1tmp = 143000;
                 print_f1(f1tmp);
-                spantmp = BS5M;
+                spantmp = BS4M;
                 print_span(spantmp);
             }
             else if (pt.y > 200)
@@ -437,7 +438,9 @@ static void SELFREQ_Proc(void)
                 {//OK
                     f1 = f1tmp;
                     span = spantmp;
-                    //BKUP_SaveF1Span(f1, span);
+                    CFG_SetParam(CFG_PARAM_PAN_F1, f1);
+                    CFG_SetParam(CFG_PARAM_SPAN, span);
+                    CFG_Flush();
                     while(TOUCH_IsPressed());
                     Sleep(100);
                     isMeasured = 0;
@@ -571,8 +574,8 @@ static void DrawVSWR()
 
 static void LoadBkups()
 {
-    //Load saved frequency and span values from BKUP registers
-    uint32_t fbkup = 0; //= BKUP_LoadPanF1();
+    //Load saved frequency and span values from config file
+    uint32_t fbkup = CFG_GetParam(CFG_PARAM_PAN_F1);
     if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && (fbkup <= BAND_FMAX/1000 || fbkup == 143000) && (fbkup % 100) == 0)
     {
         f1 = fbkup;
@@ -580,29 +583,33 @@ static void LoadBkups()
     else
     {
         f1 = 14000;
-        //BKUP_SaveF1Span(f1, BS500);
+        CFG_SetParam(CFG_PARAM_PAN_F1, f1);
+        CFG_SetParam(CFG_PARAM_SPAN, BS800);
+        CFG_Flush();
     }
-    int spbkup = 0; //(int)BKUP_LoadSpan();
-    if (spbkup <= BS25M)
+
+    int spbkup = CFG_GetParam(CFG_PARAM_SPAN);
+    if (spbkup <= BS32M)
     {
         if (f1 == 143000)
-            span = BS5M;
+            span = BS4M;
         else
             span = (BANDSPAN)spbkup;
     }
     else
     {
-        span = BS500;
-        //BKUP_SaveF1Span(f1, BS500);
+        span = BS800;
+        CFG_SetParam(CFG_PARAM_SPAN, span);
+        CFG_Flush();
     }
 }
 
 static void DrawHelp()
 {
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 80, 15, "(Tap here to set F and Span)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 15, "(Tap here to set F and Span)");
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 10, 190, "(Tap for next window)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 120, 110, "(Tap to change graph)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 200, 190, "(Tap to run scan)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to change graph)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 360, 190, "(Tap to run scan)");
 }
 
 /*
@@ -890,7 +897,7 @@ void PANVSWR2_Proc(void)
 {
 
     LCD_FillAll(LCD_BLACK);
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 20, 60, "Panoramic scan mode");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 100, "Panoramic scan mode");
     Sleep(500);
     while(TOUCH_IsPressed());
 
@@ -918,7 +925,7 @@ void PANVSWR2_Proc(void)
                     DecrCursor();
                     continue;
                 }
-                else if (pt.x > 70 && pt.x < 250)
+                else if (pt.x > 70 && pt.x < 410)
                 {
                     if (grType == GRAPH_VSWR)
                         grType = GRAPH_RX;
@@ -928,7 +935,7 @@ void PANVSWR2_Proc(void)
                         grType = GRAPH_VSWR;
                     RedrawWindow();
                 }
-                else if (pt.x > 270)
+                else if (pt.x > 430)
                 {
                     AdvCursor();
                     continue;
@@ -936,15 +943,15 @@ void PANVSWR2_Proc(void)
             }
             else if (pt.y > 180)
             {
-                if (pt.x < 140)
+                if (pt.x < 220)
                 {// Lower left corner
                     while(TOUCH_IsPressed());
                     Sleep(100);
                     return;
                 }
-                else if (pt.x > 180)
+                else if (pt.x > 260)
                 {//Lower right corner: perform scan
-                    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 100, 100, "  Scanning...  ");
+                    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
                     ScanRX();
                     RedrawWindow();
                 }

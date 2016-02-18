@@ -12,6 +12,9 @@
 #include "ff.h"
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
+#include "config.h"
+#include "crash.h"
+
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 
@@ -71,7 +74,8 @@ static void prepare_windowing(void)
     }
 }
 static void do_fft_audiobuf()
-{//Only one channel
+{
+    //Only one channel
     int i;
     arm_rfft_fast_instance_f32 S;
 
@@ -145,21 +149,8 @@ void flash_example()
     }
 }
 
-FATFS SDFatFs;  /* File system object for SD card logical drive */
-char SDPath[4]; /* SD card logical drive path */
-void sd_fs_try(void)
-{
-    assert_param(FATFS_LinkDriver(&SD_Driver, SDPath) == 0);
-    assert_param(f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) == FR_OK);
-    //assert_param(f_mkfs((TCHAR const*)SDPath, 0, 0) == FR_OK); //Format FS
-    FIL f;
-    assert_param(f_open(&f, "EU1KY.txt", FA_CREATE_ALWAYS | FA_WRITE) == FR_OK);
-    static const char txt[] = "Test string\n";
-    uint32_t byteswritten = 0;
-    FRESULT res = f_write(&f, txt, sizeof(txt)-1, (void *)&byteswritten);
-    assert_param(res == FR_OK && byteswritten != 0);
-    f_close(&f);
-}
+static FATFS SDFatFs;  // File system object for SD card logical drive
+static char SDPath[4];        // SD card logical drive path
 
 int main(void)
 {
@@ -171,10 +162,17 @@ int main(void)
     BSP_LED_Init(LED1);
     LCD_Init();
     TOUCH_Init();
-    sd_fs_try();
+
+    HAL_Delay(500);
+    if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
+        CRASH("FATFS_LinkDriver failed");
+    if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
+        CRASH("f_mount failed");
+    CFG_Init();
+
     for(;;)
     {
-        //    PANVSWR2_Proc();
+        PANVSWR2_Proc();
     }
 
     uint8_t ret;
@@ -423,16 +421,21 @@ static void CPU_CACHE_Enable(void)
     SCB_EnableDCache();
 }
 
-#ifdef  USE_FULL_ASSERT
+void CRASH(const char *text)
+{
+    FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, 0, text);
+    FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, 14, "SYSTEM HALTED ");
+    for(;;);
+}
 
+#ifdef  USE_FULL_ASSERT
 void assert_failed(uint8_t* file, uint32_t line)
 {
-    /* User can add his own implementation to report the file name and line number,
-       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
-    /* Infinite loop */
-    while (1)
-    {
-    }
+    static uint32_t in_assert = 0;
+    if (in_assert) return;
+    in_assert = 1;
+    char txt[256];
+    sprintf(txt, "ASSERT @ %s:%d", file, line);
+    CRASH(txt);
 }
 #endif
