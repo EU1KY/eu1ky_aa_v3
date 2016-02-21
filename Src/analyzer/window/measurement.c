@@ -8,25 +8,134 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <math.h>
+#include <complex.h>
 #include "config.h"
 #include "LCD.h"
-#include "dsp.h"
+//#include "dsp.h"
 #include "font.h"
 #include "touch.h"
-#include "bkup.h"
-#include "gen.h"
-#include "osl.h"
+//#include "bkup.h"
+//#include "gen.h"
+//#include "osl.h"
 
 void Sleep(uint32_t ms);
 
+//==============================================================================
+//Temporary stubs
+
+typedef float complex DSP_RX;
+#define BAND_FMAX 55000000ul
+#define BAND_FMIN 100000ul
+typedef float complex COMPLEX;
+#define R0 50.0f
+#define Z0 R0+0.0fi
+
+static COMPLEX OSL_GFromZ(COMPLEX Z)
+{
+    COMPLEX G = (Z - Z0) / (Z + Z0);
+    if (isnan(crealf(G)) || isnan(cimagf(G)))
+    {
+        return 0.99999999f+0.0fi;
+    }
+    return G;
+}
+
+static COMPLEX OSL_ZFromG(COMPLEX G)
+{
+    float gr2  = powf(crealf(G), 2);
+    float gi2  = powf(cimagf(G), 2);
+    float dg = powf((1.0f - crealf(G)), 2) + gi2;
+    float r = R0 * (1.0f - gr2 - gi2) / dg;
+    if (r < 0.0f) //Sometimes it overshoots a little due to limited calculation accuracy
+        r = 0.0f;
+    float x = R0 * 2.0f * cimagf(G) / dg;
+    return r + x * I;
+}
+
+static float DSP_CalcVSWR(DSP_RX Z)
+{
+    float X2 = powf(cimagf(Z), 2);
+    float R = crealf(Z);
+    if(R < 0.0)
+    {
+        R = 0.0;
+    }
+    float ro = sqrtf((powf((R - Z0), 2) + X2) / (powf((R + Z0), 2) + X2));
+    if(ro > .999)
+    {
+        ro = 0.999;
+    }
+    X2 = (1.0 + ro) / (1.0 - ro);
+    return X2;
+}
+
+static uint32_t fff = 0;
+static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
+{
+    fff = freqHz;
+    Sleep(2);
+}
+
+static uint32_t lastfreq = 100000;
+static void GEN_SetMeasurementFreq(uint32_t f)
+{
+    lastfreq = f;
+}
+static uint32_t GEN_GetLastFreq(void)
+{
+    return lastfreq;
+}
+static DSP_RX DSP_MeasuredZ(void)
+{
+    return (((float)fff) / 100000.f) + 23.0fi;
+}
+
+static float DSP_MeasuredDiffdB(void)
+{
+    return 0.f;
+}
+
+static int32_t OSL_GetSelected(void)
+{
+    return -1;
+}
+
+uint32_t DSP_MeasuredMagImv(void)
+{
+    return 700;
+}
+
+uint32_t DSP_MeasuredMagQmv(void)
+{
+    return 700;
+}
+//==============================================================================
+
 static uint32_t MeasurementFreq = 14000000;
 static float vswr500[21];
+
+#define SCAN_ORIGIN_X 20
+#define SCAN_ORIGIN_Y 209
 
 static void ShowF()
 {
     char str[50];
     sprintf(str, "F: %u kHz        ", (unsigned int)(MeasurementFreq / 1000));
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
+}
+
+static void DrawSmallSmith(int X0, int Y0, int R, float complex G)
+{
+    LCD_FillCircle(LCD_MakePoint(X0, Y0), R, LCD_BLACK);
+    LCD_Circle(LCD_MakePoint(X0, Y0), R, LCD_RGB(64, 64, 64));
+    LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, LCD_RGB(64, 64, 64));
+    LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, LCD_RGB(64, 64, 64));
+    LCD_Line(LCD_MakePoint(X0 - R, Y0), LCD_MakePoint(X0 + R, Y0), LCD_RGB(64, 64, 64));
+
+    int x = (int)(crealf(G) * R) + X0;
+    int y = Y0 - (int)(cimagf(G) * R);
+    LCD_Line(LCD_MakePoint(x - 3, y), LCD_MakePoint(x + 3, y), LCD_GREEN);
+    LCD_Line(LCD_MakePoint(x, y - 3), LCD_MakePoint(x, y + 3), LCD_GREEN);
 }
 
 //Scan VSWR in +/- 500 kHz range around measurement frequency with 100 kHz step, to draw a small graph below the measurement
@@ -45,12 +154,12 @@ static int Scan500(void)
     {
         vswr500[i] = 9999.0;
     }
-    LCD_Line(LCD_MakePoint(60, 209), LCD_MakePoint(60 + i * 10, 209), LCD_GREEN);
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + i * 10, SCAN_ORIGIN_Y), LCD_GREEN);
     i++;
     if (i == 21)
     {
         i = 0;
-        LCD_Line(LCD_MakePoint(59, 209), LCD_MakePoint(261, 209), LCD_BLUE);
+        LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y), LCD_BLUE);
         return 1;
     }
     return 0;
@@ -104,6 +213,7 @@ static void MeasurementModeDraw(DSP_RX rx)
         FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 158, str);
     }
 
+    DrawSmallSmith(380, 180, 80, OSL_GFromZ(rx));
 }
 
 //Draw a small (100x20 pixels) VSWR graph for data collected by Scan500()
@@ -111,11 +221,11 @@ static void MeasurementModeGraph(DSP_RX in)
 {
     int idx = 0;
     float prev = 3.0;
-    LCD_FillRect(LCD_MakePoint(60, 210), LCD_MakePoint(260, 230), LCD_RGB(0, 0, 48)); // Graph rectangle
-    LCD_Line(LCD_MakePoint(160, 210), LCD_MakePoint(160, 230), LCD_RGB(48, 48, 48));  // Measurement frequency line
-    LCD_Line(LCD_MakePoint(110, 210), LCD_MakePoint(110, 230), LCD_RGB(48, 48, 48));
-    LCD_Line(LCD_MakePoint(210, 210), LCD_MakePoint(210, 230), LCD_RGB(48, 48, 48));
-    LCD_Line(LCD_MakePoint(60, 220), LCD_MakePoint(260, 220), LCD_RGB(48, 48, 48));   // VSWR 2.0 line
+    LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+100, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+100, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));  // Measurement frequency line
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+50, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+50, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+150, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+150, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y + 11), LCD_MakePoint(SCAN_ORIGIN_X+200, SCAN_ORIGIN_Y + 11), LCD_RGB(48, 48, 48));   // VSWR 2.0 line
     for (idx = 0; idx <= 20; idx++)
     {
         float vswr;
@@ -129,8 +239,8 @@ static void MeasurementModeGraph(DSP_RX in)
 
         if (idx > 0)
         {
-            LCD_Line( LCD_MakePoint(60 + (idx - 1) * 10, 230 - ((int)(prev * 10) - 10)),
-                      LCD_MakePoint(60 + idx * 10, 230 - ((int)(vswr * 10) - 10)),
+            LCD_Line( LCD_MakePoint(SCAN_ORIGIN_X + (idx - 1) * 10, SCAN_ORIGIN_Y + 21 - ((int)(prev * 10) - 10)),
+                      LCD_MakePoint(SCAN_ORIGIN_X + idx * 10, SCAN_ORIGIN_Y + 21 - ((int)(vswr * 10) - 10)),
                       LCD_YELLOW);
         }
         prev = vswr;
@@ -149,11 +259,11 @@ static int Touch(void)
             return 1;    //request to change window
         }
 
-        if(pt.x < 40 || pt.x > 280)
+        if(pt.x < 80 || pt.x > 400)
         {
             step = 500000;
         }
-        else if(pt.x < 90 || pt.x > 230)
+        else if(pt.x < 160 || pt.x > 320)
         {
             step = 100000;
         }
@@ -170,7 +280,7 @@ static int Touch(void)
         {
             currF = BAND_FMIN;
         }
-        if(pt.x > 160)
+        if(pt.x > 240)
         {
             if(currF <= BAND_FMAX)
             {
@@ -179,7 +289,7 @@ static int Touch(void)
                 else
                     MeasurementFreq = currF + step;
                 GEN_SetMeasurementFreq(MeasurementFreq);
-                BKUP_SaveFMeas(MeasurementFreq);
+                CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
             }
             else
             {
@@ -194,7 +304,7 @@ static int Touch(void)
                 {
                     MeasurementFreq = currF - step;
                     GEN_SetMeasurementFreq(MeasurementFreq);
-                    BKUP_SaveFMeas(MeasurementFreq);
+                    CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
                 }
                 else
                 {
@@ -207,6 +317,7 @@ static int Touch(void)
             }
         }
         ShowF();
+        CFG_Flush();
     }
     return 0; //no request to change window
 }
@@ -221,7 +332,7 @@ void MEASUREMENT_Proc(void)
     //Load saved middle frequency value from BKUP registers 2, 3
     //to MeasurementFreq
     {
-        uint32_t fbkup = BKUP_LoadFMeas();
+        uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
         if (fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 10000) == 0)
         {
             MeasurementFreq = fbkup;
@@ -229,30 +340,36 @@ void MEASUREMENT_Proc(void)
         else
         {
             MeasurementFreq = 14000000ul;
-            BKUP_SaveFMeas(MeasurementFreq);
+            CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+            CFG_Flush();
         }
     }
 
     LCD_FillAll(LCD_BLACK);
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 40, 60, "Measurement mode");
-    Sleep(250);
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 60, "Measurement mode");
+    if (-1 == OSL_GetSelected())
+    {
+        FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 80, 120, "No calibration file selected!");
+        Sleep(500);
+    }
+    Sleep(500);
     while(TOUCH_IsPressed());
 
     LCD_FillAll(LCD_BLACK);
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 40, 184, "VSWR (1.0 ... 3.0), F +/- 500 KHz, step 50:");
-    LCD_FillRect(LCD_MakePoint(60, 210), LCD_MakePoint(260, 230), LCD_RGB(0, 0, 48)); // Graph rectangle
-    LCD_Rectangle(LCD_MakePoint(59, 209), LCD_MakePoint(261, 231), LCD_BLUE);
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 25, "VSWR (1.0 ... 3.0), F +/- 500 KHz, step 50:");
+    LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
+    LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
 
     //Draw freq change areas bar
     uint16_t y;
     for (y = 0; y <2; y++)
     {
-        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(39,y), LCD_RGB(15,15,63));
-        LCD_Line(LCD_MakePoint(40,y), LCD_MakePoint(89,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(90,y), LCD_MakePoint(155,y),  LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(165,y), LCD_MakePoint(230,y), LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(231,y), LCD_MakePoint(280,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(281,y), LCD_MakePoint(319,y), LCD_RGB(15,15,63));
+        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
+        LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
+        LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
+        LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
+        LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
+        LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
     }
 
     DSP_RX rx;
@@ -274,11 +391,11 @@ void MEASUREMENT_Proc(void)
 
         if (DSP_MeasuredMagImv() < 100. && DSP_MeasuredMagQmv() < 100.)
         {
-            FONT_Write(FONT_FRAN, LCD_BLACK, LCD_RED, 270, 2, "No signal  ");
+            FONT_Write(FONT_FRAN, LCD_BLACK, LCD_RED, 380, 2, "No signal  ");
         }
         else
         {
-            FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 270, 2, "Signal OK");
+            FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK");
         }
 
         if(Touch())

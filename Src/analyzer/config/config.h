@@ -7,9 +7,9 @@
 
 typedef enum
 {
-    CFG_PARAM_PAN_F1, //Initial frequency for panoramic window
-    CFG_PARAM_SPAN,   //Span for panoramic window
-    CFG_PARAM_3,
+    CFG_PARAM_PAN_F1,   //Initial frequency for panoramic window
+    CFG_PARAM_PAN_SPAN, //Span for panoramic window
+    CFG_PARAM_MEAS_F,   //Measurement window frequency
 
     //---------------------
     CFG_NUM_PARAMS

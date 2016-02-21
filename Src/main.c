@@ -9,6 +9,7 @@
 #include "font.h"
 #include "touch.h"
 #include "panvswr2.h"
+#include "measurement.h"
 #include "ff.h"
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
@@ -173,6 +174,7 @@ int main(void)
     for(;;)
     {
         PANVSWR2_Proc();
+        MEASUREMENT_Proc();
     }
 
     uint8_t ret;

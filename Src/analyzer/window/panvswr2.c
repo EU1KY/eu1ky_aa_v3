@@ -109,7 +109,7 @@ static void GEN_SetMeasurementFreq(uint32_t f)
 {
 }
 
-DSP_RX DSP_MeasuredZ(void)
+static DSP_RX DSP_MeasuredZ(void)
 {
     return (((float)fff) / 100000.f) + 23.0fi;
 }
@@ -473,7 +473,7 @@ static void SELFREQ_Proc(void)
                     f1 = f1tmp;
                     span = spantmp;
                     CFG_SetParam(CFG_PARAM_PAN_F1, f1);
-                    CFG_SetParam(CFG_PARAM_SPAN, span);
+                    CFG_SetParam(CFG_PARAM_PAN_SPAN, span);
                     CFG_Flush();
                     while(TOUCH_IsPressed());
                     Sleep(100);
@@ -618,11 +618,11 @@ static void LoadBkups()
     {
         f1 = 14000;
         CFG_SetParam(CFG_PARAM_PAN_F1, f1);
-        CFG_SetParam(CFG_PARAM_SPAN, BS800);
+        CFG_SetParam(CFG_PARAM_PAN_SPAN, BS800);
         CFG_Flush();
     }
 
-    int spbkup = CFG_GetParam(CFG_PARAM_SPAN);
+    int spbkup = CFG_GetParam(CFG_PARAM_PAN_SPAN);
     if (spbkup <= BS32M)
     {
         if (f1 == 143000)
@@ -633,7 +633,7 @@ static void LoadBkups()
     else
     {
         span = BS800;
-        CFG_SetParam(CFG_PARAM_SPAN, span);
+        CFG_SetParam(CFG_PARAM_PAN_SPAN, span);
         CFG_Flush();
     }
 }
