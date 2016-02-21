@@ -1116,7 +1116,7 @@ void PANVSWR2_Proc(void)
                     continue;
                 }
             }
-            else if (pt.y > 180 && pt.y < 240)
+            else if (pt.y > 180 && pt.y < 255)
             {
                 if (pt.x < 140)
                 {// Lower left corner
@@ -1131,9 +1131,9 @@ void PANVSWR2_Proc(void)
                     RedrawWindow();
                 }
             }
-            else
+            else if (pt.y > 260)
             {
-                if (pt.x > 140 && pt.x < 340 && isMeasured && !isSaved)
+                if (pt.x > 160 && pt.x < 320 && isMeasured && !isSaved)
                 {
                     save_snapshot();
                 }
