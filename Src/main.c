@@ -74,13 +74,13 @@ static void prepare_windowing(void)
         }
     }
 }
-static void do_fft_audiobuf()
+static void do_fft_audiobuf(int ch)
 {
     //Only one channel
     int i;
     arm_rfft_fast_instance_f32 S;
 
-    int16_t* pBuf = &audioBuf[NDUMMY];
+    int16_t* pBuf = &audioBuf[NDUMMY + (ch != 0)];
     for(i = 0; i < NSAMPLES; i++)
     {
         rfft_input[i] = (float)*pBuf;
@@ -164,19 +164,6 @@ int main(void)
     LCD_Init();
     TOUCH_Init();
 
-    HAL_Delay(500);
-    if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
-        CRASH("FATFS_LinkDriver failed");
-    if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
-        CRASH("f_mount failed");
-    CFG_Init();
-
-    for(;;)
-    {
-        PANVSWR2_Proc();
-        MEASUREMENT_Proc();
-    }
-
     uint8_t ret;
     ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, FSAMPLE);
     if (ret != AUDIO_OK)
@@ -184,10 +171,28 @@ int main(void)
         CRASH("BSP_AUDIO_IN_Init failed");
     }
 
+    HAL_Delay(500);
+    if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
+        CRASH("FATFS_LinkDriver failed");
+    if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
+        CRASH("f_mount failed");
+    CFG_Init();
+
+    //for(;;)
+    {
+        PANVSWR2_Proc();
+        MEASUREMENT_Proc();
+    }
+
     uint32_t ctr = 0;
     int i;
 
     prepare_windowing();
+    LCD_FillAll(LCD_BLACK);
+    prepare_windowing();
+    FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
+    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 32);
+    FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
 
     while (1)
     {
@@ -229,6 +234,7 @@ int main(void)
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
 
+            while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
             //Calc magnitude for one channel only
@@ -287,10 +293,7 @@ int main(void)
         }
         else //Spectrum
         {
-            uint32_t tstart = HAL_GetTick();
-            do_fft_audiobuf();
-            tstart = HAL_GetTick() - tstart;
-
+            while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
             //Draw spectrum
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
@@ -299,39 +302,50 @@ int main(void)
             {
                 LCD_Line(LCD_MakePoint(0, i), LCD_MakePoint(LCD_GetWidth()-1, i), 0xFF303070);
             }
-            //Calculate max magnitude bin
-            float maxmag = 0.;
-            int idxmax = -1;
-            for (i = 3; i < NSAMPLES/2 - 3; i++)
+
+            for (int ch = 0; ch < 2; ch++)
             {
-                if (rfft_mags[i] > maxmag)
+                uint32_t tstart = HAL_GetTick();
+                do_fft_audiobuf(ch);
+                tstart = HAL_GetTick() - tstart;
+
+                //Calculate max magnitude bin
+                float maxmag = 0.;
+                int idxmax = -1;
+                for (i = 5; i < NSAMPLES/2 - 5; i++)
                 {
-                    maxmag = rfft_mags[i];
-                    idxmax = i;
+                    if (rfft_mags[i] > maxmag)
+                    {
+                        maxmag = rfft_mags[i];
+                        idxmax = i;
+                    }
                 }
-            }
 
-            //Calculate magnitude value considering +/-3 bins from maximum
+                //Calculate magnitude value considering +/-2 bins from maximum
+                float P = 0.f;
+                for (i = idxmax - 2; i <= idxmax + 2; i++)
+                    P += powf(rfft_mags[i], 2);
+                maxmag = sqrtf(P);
 
-            float P = 0.f;
-            for (i = idxmax-1; i <= idxmax + 1; i++)
-                P += powf(rfft_mags[i], 2);
-            maxmag = sqrtf(P);
-
-            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
-            FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
-            FONT_Printf(0, 64, "RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
-
-            //Draw spectrum
-            for (int x = 0; x < NSAMPLES/2; x++)
-            {
-                int y = (int)(LCD_GetHeight()-1 - 20 * log10f(rfft_mags[x]));
-                if (y <= LCD_GetHeight()-1)
+                if (0 == ch)
                 {
-                    LCD_Line(LCD_MakePoint(x, LCD_GetHeight()-1), LCD_MakePoint(x, y), LCD_RED);
+                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+                    FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
+                    FONT_Printf(0, 64, "RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
                 }
-                if (x >= LCD_GetWidth()-1)
-                    break;
+
+                //Draw spectrum
+                for (int x = 0; x < 240; x++)
+                {
+                    int y = (int)(LCD_GetHeight()- 1 - 20 * log10f(rfft_mags[x]));
+                    if (y <= LCD_GetHeight()-1)
+                    {
+                        uint32_t clr = ch ? LCD_GREEN : LCD_RED;
+                        LCD_Line(LCD_MakePoint(x + ch*240, LCD_GetHeight()-1), LCD_MakePoint(x + ch*240, y), clr);
+                    }
+                    if (x >= LCD_GetWidth()-1)
+                        break;
+                }
             }
         }
         HAL_Delay(100);
