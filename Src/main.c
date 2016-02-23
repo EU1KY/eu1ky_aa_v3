@@ -181,8 +181,7 @@ int main(void)
     ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, FSAMPLE);
     if (ret != AUDIO_OK)
     {
-        FONT_SetAttributes(FONT_FRANBIG, LCD_RED, LCD_BLACK);
-        FONT_Printf(0, 0, "BSP_AUDIO_IN_Init failed");
+        CRASH("BSP_AUDIO_IN_Init failed");
     }
 
     uint32_t ctr = 0;

@@ -198,7 +198,7 @@ uint8_t BSP_LCD_Init(void)
 #endif
 
   /* Initialize the font */
-  BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
+  //BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
 
   return LCD_OK;
 }
@@ -292,7 +292,7 @@ void BSP_LCD_LayerDefaultInit(uint16_t LayerIndex, uint32_t FB_Address)
   HAL_LTDC_ConfigLayer(&hLtdcHandler, &layer_cfg, LayerIndex);
 
   DrawProp[LayerIndex].BackColor = LCD_COLOR_WHITE;
-  DrawProp[LayerIndex].pFont     = &Font24;
+//  DrawProp[LayerIndex].pFont     = &Font24;
   DrawProp[LayerIndex].TextColor = LCD_COLOR_BLACK;
 }
 
@@ -326,7 +326,7 @@ void BSP_LCD_LayerRgb565Init(uint16_t LayerIndex, uint32_t FB_Address)
   HAL_LTDC_ConfigLayer(&hLtdcHandler, &layer_cfg, LayerIndex);
 
   DrawProp[LayerIndex].BackColor = LCD_COLOR_WHITE;
-  DrawProp[LayerIndex].pFont     = &Font24;
+  //DrawProp[LayerIndex].pFont     = &Font24;
   DrawProp[LayerIndex].TextColor = LCD_COLOR_BLACK;
 }
 

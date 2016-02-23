@@ -627,22 +627,6 @@
 		<Unit filename="Src\Sys\system_stm32f7xx.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Src\Utilities\Fonts\font12.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Utilities\Fonts\font16.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Utilities\Fonts\font20.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Utilities\Fonts\font24.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Utilities\Fonts\font8.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\Utilities\Fonts\fonts.h" />
 		<Extensions>
 			<projectwizard TargetDevice="STM32F437ZG" />
 			<code_completion />

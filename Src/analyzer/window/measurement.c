@@ -17,6 +17,7 @@
 //#include "bkup.h"
 //#include "gen.h"
 //#include "osl.h"
+#include "stm32f746xx.h"
 
 void Sleep(uint32_t ms);
 
@@ -168,6 +169,8 @@ static int Scan500(void)
 //Display measured data
 static void MeasurementModeDraw(DSP_RX rx)
 {
+    while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
+
     char str[50] = "";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, 36);
     sprintf(str, "Magnitude diff %.2f dB", DSP_MeasuredDiffdB());
