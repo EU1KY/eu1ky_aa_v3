@@ -24,6 +24,8 @@
 				<Compiler>
 					<Add option="-mfloat-abi=hard" />
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
 					<Add option="-O0" />
 					<Add option="-g" />
 					<Add option="-mthumb" />
@@ -109,6 +111,8 @@
 					<Add option="-fgcse" />
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
 					<Add option="-Os" />
 					<Add option="-g" />
 					<Add option="-mthumb" />
@@ -153,7 +157,7 @@
 					<Add option="-u _printf_float" />
 					<Add option="-eb_lib=n" />
 					<Add option="-eb_start_files" />
-					<Add option="-flto" />
+					<Add option="-Wl,--gc-sections" />
 					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
 					<Add library="m" />
 				</Linker>
@@ -233,18 +237,10 @@
 		<Unit filename="Src\BSP\Components\Common\magneto.h" />
 		<Unit filename="Src\BSP\Components\Common\ts.h" />
 		<Unit filename="Src\BSP\Components\Common\tsensor.h" />
-		<Unit filename="Src\BSP\Components\exc7200\exc7200.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\BSP\Components\exc7200\exc7200.h" />
 		<Unit filename="Src\BSP\Components\ft5336\ft5336.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\BSP\Components\ft5336\ft5336.h" />
-		<Unit filename="Src\BSP\Components\mfxstm32l152\mfxstm32l152.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\BSP\Components\mfxstm32l152\mfxstm32l152.h" />
 		<Unit filename="Src\BSP\Components\n25q128a\n25q128a.h" />
 		<Unit filename="Src\BSP\Components\n25q512a\n25q512a.h" />
 		<Unit filename="Src\BSP\Components\ov9655\ov9655.c">
@@ -256,14 +252,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\BSP\Components\s5k5cag\s5k5cag.h" />
-		<Unit filename="Src\BSP\Components\stmpe811\stmpe811.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\BSP\Components\stmpe811\stmpe811.h" />
-		<Unit filename="Src\BSP\Components\ts3510\ts3510.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\BSP\Components\ts3510\ts3510.h" />
 		<Unit filename="Src\BSP\Components\wm8994\wm8994.c">
 			<Option compilerVar="CC" />
 		</Unit>

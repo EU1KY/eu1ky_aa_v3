@@ -449,8 +449,6 @@ void assert_failed(uint8_t* file, uint32_t line)
     static uint32_t in_assert = 0;
     if (in_assert) return;
     in_assert = 1;
-    char txt[256];
-    sprintf(txt, "ASSERT @ %s:%d", file, line);
-    CRASH(txt);
+    CRASHF("ASSERT @ %s:%d", file, line);
 }
 #endif
