@@ -149,7 +149,7 @@ static const uint32_t cx0 = 240; //Smith chart center
 static const uint32_t cy0 = 120; //Smith chart center
 static const char *modstr = "EU1KY AA v." AAVERSION;
 
-static uint32_t modstrw = 70;
+static uint32_t modstrw = 0;
 
 static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "32 MHz"};
 static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 32000};
@@ -162,6 +162,7 @@ static int isMeasured = 0;
 static uint32_t cursorPos = WWIDTH / 2;
 static GRAPHTYPE grType = GRAPH_VSWR;
 static uint32_t isSaved = 0;
+static uint32_t cursorChangeCount = 0;
 
 static void DrawRX();
 static void DrawSmith();
@@ -273,6 +274,8 @@ static void DecrCursor()
     cursorPos--;
     DrawCursor();
     DrawCursorText();
+    if (cursorChangeCount++ < 10)
+        Sleep(100); //Slow down at first steps
 }
 
 static void AdvCursor()
@@ -285,6 +288,8 @@ static void AdvCursor()
     cursorPos++;
     DrawCursor();
     DrawCursorText();
+    if (cursorChangeCount++ < 10)
+        Sleep(100); //Slow down at first steps
 }
 
 static void DrawGrid(int drawSwr)
@@ -1077,11 +1082,21 @@ void PANVSWR2_Proc(void)
     LoadBkups();
 
     grType = GRAPH_VSWR;
-    isMeasured = 0;
-    isSaved = 0;
-    modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
-    DrawGrid(1);
-    DrawHelp();
+    if (!isMeasured)
+    {
+        isSaved = 0;
+    }
+    if (0 == modstrw)
+    {
+        modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
+    }
+    if (!isMeasured)
+    {
+        DrawGrid(1);
+        DrawHelp();
+    }
+    else
+        RedrawWindow();
 
     for(;;)
     {
@@ -1142,6 +1157,10 @@ void PANVSWR2_Proc(void)
             {
                 Sleep(50);
             }
+        }
+        else
+        {
+            cursorChangeCount = 0;
         }
     }
 }
