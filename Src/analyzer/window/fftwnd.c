@@ -14,6 +14,7 @@
 #include "font.h"
 #include "touch.h"
 #include "hit.h"
+#include "crash.h"
 
 #define NSAMPLES 512
 #define NDUMMY 32
@@ -55,9 +56,10 @@ static void FFTWND_SwitchDispMode(void)
 
 static const struct HitRect hitArr[] =
 {
-    HITRECT(0, 0, 479, 140, FFTWND_SwitchWindowing),
-    HITRECT(0, 160, 50, 279, FFTWND_ExitWnd),
-    HITRECT(0, 140, 479, 279, FFTWND_SwitchDispMode),
+    //        x0,   y0, width,  height, callback
+    HITRECT(   0,  200,   100,      80, FFTWND_ExitWnd),
+    HITRECT(   0,    0,   480,     140, FFTWND_SwitchWindowing),
+    HITRECT(   0,  140,   480,     140, FFTWND_SwitchDispMode),
     HITEND
 };
 
@@ -122,10 +124,14 @@ static void do_fft_audiobuf(int ch)
     }
 }
 
-void measure(void)
+static void measure(void)
 {
     extern SAI_HandleTypeDef haudio_in_sai;
-    HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
+    HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
+    if (HAL_OK != res)
+    {
+        CRASHF("HAL_SAI_Receive failed, err %d", res);
+    }
 }
 
 void FFTWND_Proc(void)
@@ -174,6 +180,7 @@ void FFTWND_Proc(void)
 
             while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
+            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
 
             //Calc magnitude for one channel only
             for (i = NDUMMY * 2; i < (NSAMPLES + NDUMMY) * 2; i += 2)
@@ -243,9 +250,7 @@ void FFTWND_Proc(void)
 
             for (int ch = 0; ch < 2; ch++)
             {
-                uint32_t tstart = HAL_GetTick();
                 do_fft_audiobuf(ch);
-                tstart = HAL_GetTick() - tstart;
 
                 //Calculate max magnitude bin
                 float maxmag = 0.;
@@ -268,8 +273,14 @@ void FFTWND_Proc(void)
                 if (0 == ch)
                 {
                     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
-                    FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
-                    FONT_Printf(0, 64, "RFFT: %d ms Mag %.0f @ %.0f Hz", tstart, maxmag, binwidth * idxmax);
+                    FONT_SetAttributes(FONT_FRANBIG, LCD_RED, LCD_BLACK);
+                    FONT_Printf(0, 64, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
+                }
+                else
+                {
+                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
+                    FONT_SetAttributes(FONT_FRANBIG, LCD_GREEN, LCD_BLACK);
+                    FONT_Printf(0, 100, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
                 }
 
                 //Draw spectrum

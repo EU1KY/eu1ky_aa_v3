@@ -2,9 +2,6 @@
 #include "stm32f7xx_hal_uart.h"
 #include <stdio.h>
 #include <string.h>
-#include "arm_math.h"
-#include <complex.h>
-#include <math.h>
 #include "lcd.h"
 #include "font.h"
 #include "touch.h"

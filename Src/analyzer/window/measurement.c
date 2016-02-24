@@ -11,10 +11,10 @@
 #include <complex.h>
 #include "config.h"
 #include "LCD.h"
-//#include "dsp.h"
 #include "font.h"
 #include "touch.h"
-//#include "bkup.h"
+#include "hit.h"
+//#include "dsp.h"
 //#include "gen.h"
 //#include "osl.h"
 #include "stm32f746xx.h"
@@ -114,7 +114,8 @@ uint32_t DSP_MeasuredMagQmv(void)
 
 static uint32_t MeasurementFreq = 14000000;
 static float vswr500[21];
-
+static uint32_t rqExit = 0;
+static uint32_t fChanged = 0;
 #define SCAN_ORIGIN_X 20
 #define SCAN_ORIGIN_Y 209
 
@@ -250,81 +251,98 @@ static void MeasurementModeGraph(DSP_RX in)
     }
 }
 
-//Handle touch screen in measurement mode
-static int Touch(void)
+static void MEASUREMENT_SwitchWindowing(void)
 {
-    LCDPoint pt;
-    uint32_t step = 100000;
-    if(TOUCH_Poll(&pt))
-    {
-        if(pt.y > 120)
-        {
-            return 1;    //request to change window
-        }
-
-        if(pt.x < 80 || pt.x > 400)
-        {
-            step = 500000;
-        }
-        else if(pt.x < 160 || pt.x > 320)
-        {
-            step = 100000;
-        }
-        else
-        {
-            step = 10000;
-        }
-        uint32_t currF = MeasurementFreq;
-        if(currF > step && currF % step != 0)
-        {
-            currF -= (currF % step);
-        }
-        if(currF < BAND_FMIN)
-        {
-            currF = BAND_FMIN;
-        }
-        if(pt.x > 240)
-        {
-            if(currF <= BAND_FMAX)
-            {
-                if ((currF + step) > BAND_FMAX)
-                    MeasurementFreq = BAND_FMAX;
-                else
-                    MeasurementFreq = currF + step;
-                GEN_SetMeasurementFreq(MeasurementFreq);
-                CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
-            }
-            else
-            {
-                GEN_SetMeasurementFreq(currF);
-            }
-        }
-        else
-        {
-            if(currF > BAND_FMIN)
-            {
-                if(currF > step && (currF - step) >= BAND_FMIN)
-                {
-                    MeasurementFreq = currF - step;
-                    GEN_SetMeasurementFreq(MeasurementFreq);
-                    CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
-                }
-                else
-                {
-                    GEN_SetMeasurementFreq(currF);
-                }
-            }
-            else
-            {
-                GEN_SetMeasurementFreq(currF);
-            }
-        }
-        ShowF();
-        CFG_Flush();
-    }
-    return 0; //no request to change window
+    rqExit = 1;
 }
 
+static void FDecr(uint32_t step)
+{
+    if(MeasurementFreq > step && MeasurementFreq % step != 0)
+    {
+        MeasurementFreq -= (MeasurementFreq % step);
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq < BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq > BAND_FMIN)
+    {
+        if(MeasurementFreq > step && (MeasurementFreq - step) >= BAND_FMIN)
+        {
+            MeasurementFreq = MeasurementFreq - step;
+            CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+            fChanged = 1;
+        }
+    }
+}
+
+static void FIncr(uint32_t step)
+{
+    if(MeasurementFreq > step && MeasurementFreq % step != 0)
+    {
+        MeasurementFreq -= (MeasurementFreq % step);
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq < BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq < BAND_FMAX)
+    {
+        if ((MeasurementFreq + step) > BAND_FMAX)
+            MeasurementFreq = BAND_FMAX;
+        else
+            MeasurementFreq = MeasurementFreq + step;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged = 1;
+    }
+}
+
+static void MEASUREMENT_FDecr_500k(void)
+{
+    FDecr(500000);
+}
+static void MEASUREMENT_FDecr_100k(void)
+{
+    FDecr(100000);
+}
+static void MEASUREMENT_FDecr_10k(void)
+{
+    FDecr(10000);
+}
+static void MEASUREMENT_FIncr_10k(void)
+{
+    FIncr(10000);
+}
+static void MEASUREMENT_FIncr_100k(void)
+{
+    FIncr(100000);
+}
+static void MEASUREMENT_FIncr_500k(void)
+{
+    FIncr(500000);
+}
+
+static const struct HitRect hitArr[] =
+{
+    //        x0,  y0, width, height, callback
+    HITRECT(   0, 200,   100,     79, MEASUREMENT_SwitchWindowing),
+    HITRECT(   0,   0,  80, 150, MEASUREMENT_FDecr_500k),
+    HITRECT(  80,   0,  80, 150, MEASUREMENT_FDecr_100k),
+    HITRECT( 160,   0,  70, 150, MEASUREMENT_FDecr_10k),
+    HITRECT( 250,   0,  70, 150, MEASUREMENT_FIncr_10k),
+    HITRECT( 320,   0,  80, 150, MEASUREMENT_FIncr_100k),
+    HITRECT( 400,   0,  80, 150, MEASUREMENT_FIncr_500k),
+    HITEND
+};
 
 //Measurement mode window. To change it to VSWR tap the lower part of display.
 //To change frequency, in steps of +/- 500, 100 and 10 kHz, tap top part of the display,
@@ -334,28 +352,29 @@ void MEASUREMENT_Proc(void)
 {
     //Load saved middle frequency value from BKUP registers 2, 3
     //to MeasurementFreq
+    uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
+    if (fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 10000) == 0)
     {
-        uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
-        if (fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 10000) == 0)
-        {
-            MeasurementFreq = fbkup;
-        }
-        else
-        {
-            MeasurementFreq = 14000000ul;
-            CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
-            CFG_Flush();
-        }
+        MeasurementFreq = fbkup;
     }
+    else
+    {
+        MeasurementFreq = 14000000ul;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        CFG_Flush();
+    }
+
+    rqExit = 0;
+    fChanged = 0;
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 60, "Measurement mode");
     if (-1 == OSL_GetSelected())
     {
         FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 80, 120, "No calibration file selected!");
-        Sleep(500);
+        Sleep(200);
     }
-    Sleep(500);
+    Sleep(300);
     while(TOUCH_IsPressed());
 
     LCD_FillAll(LCD_BLACK);
@@ -375,18 +394,16 @@ void MEASUREMENT_Proc(void)
         LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
     }
 
+    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "  Next window  ");
+    ShowF();
     DSP_RX rx;
     for(;;)
     {
-        ShowF();
         int scanres = Scan500();
         GEN_SetMeasurementFreq(MeasurementFreq);
         Sleep(10);
-#ifdef FAVOR_PRECISION
-        DSP_Measure(MeasurementFreq, 1, 1, 13);
-#else
         DSP_Measure(MeasurementFreq, 1, 1, 7);
-#endif
+
         rx = DSP_MeasuredZ();
         MeasurementModeDraw(rx);
         if (scanres)
@@ -401,20 +418,28 @@ void MEASUREMENT_Proc(void)
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK");
         }
 
-        if(Touch())
+        LCDPoint pt;
+        while (TOUCH_Poll(&pt))
         {
-            return; //change window
-        }
-        else
-        {
-            while(TOUCH_IsPressed())
+            HitTest(hitArr, pt.x, pt.y);
+            if (rqExit)
             {
-                Sleep(50);
-                if(Touch())
-                    return; //change window
+                while(TOUCH_IsPressed());
+                return;
+            }
+            if (fChanged)
+                ShowF();
+            Sleep(50);
+            if (!TOUCH_IsPressed())
+            {
+                if (fChanged)
+                {
+                    CFG_Flush();
+                    fChanged = 0;
+                }
+                break;
             }
         }
         Sleep(50);
     }
 };
-
