@@ -217,6 +217,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\lcd\touch.h" />
+		<Unit filename="Src\analyzer\osl\oslfile.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\osl\oslfile.h" />
 		<Unit filename="Src\analyzer\window\fftwnd.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -628,8 +632,11 @@
 			<projectwizard TargetDevice="STM32F437ZG" />
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Debug" active_interface="ST-link">
-					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="200" options="10" reg_filter="0" active_family="STMicroelectronics">
+				<target_debugging_settings target="Release" active_interface="ST-link">
+					<debug_interface interface_id="Generic" ip_address="" ip_port="" path="" executable="" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="" options="10" reg_filter="0" active_family="All">
+						<family_options family_id="All" />
+					</debug_interface>
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="" dont_start_server="false" backoff_time="200" options="0" reg_filter="0" active_family="STMicroelectronics">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
@@ -645,11 +652,8 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="Release" active_interface="ST-link">
-					<debug_interface interface_id="Generic" ip_address="" ip_port="" path="" executable="" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="" options="10" reg_filter="0" active_family="All">
-						<family_options family_id="All" />
-					</debug_interface>
-					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="" dont_start_server="false" backoff_time="200" options="0" reg_filter="0" active_family="STMicroelectronics">
+				<target_debugging_settings target="Debug" active_interface="ST-link">
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="200" options="10" reg_filter="0" active_family="STMicroelectronics">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
