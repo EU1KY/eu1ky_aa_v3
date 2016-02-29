@@ -25,8 +25,6 @@ void Sleep(uint32_t ms);
 //Temporary stubs
 
 typedef float complex DSP_RX;
-#define BAND_FMAX 55000000ul
-#define BAND_FMIN 100000ul
 typedef float complex COMPLEX;
 #define R0 50.0f
 #define Z0 R0+0.0fi
