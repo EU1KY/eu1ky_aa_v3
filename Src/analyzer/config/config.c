@@ -6,6 +6,7 @@ static uint32_t g_cfg_array[CFG_NUM_PARAMS] = { 0 };
 static const TCHAR *g_aa_dir = "aa";
 static const TCHAR *g_cfg_dir = "aa/config/";
 static const TCHAR *g_cfg_fpath = "/aa/config/config.bin";
+const TCHAR *g_cfg_osldir = "/aa/osl";
 
 void CFG_Init(void)
 {
