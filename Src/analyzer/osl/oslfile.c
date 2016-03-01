@@ -8,9 +8,7 @@
 #include "LCD.h"
 
 #define MAX_OSLFILES 16
-#define R0 50.0f
-#define Z0 R0+0.0fi
-#define OSL_NSCANS 5
+#define OSL_BASE_R0 50.0f //All OSL calibration coefficients are calculated using G calculted from OSL_BASE_R0
 
 extern void Sleep(uint32_t);
 
@@ -73,13 +71,11 @@ static COMPLEX DSP_MeasuredZ(void)
 
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
 static S_OSLDATA osl_data[OSL_NUM_FILE_ENTRIES]; //36 kilobytes
-const float OSL_RLOAD = R0;
-float OSL_RSHORT = 5.0f;   //can be changed via configuration menu
-float OSL_ROPEN = 500.0f;  //can be changed via configuration menu
-static int32_t osl_selected = -1;
+
 static COMPLEX gammaShort;// = (OSL_RSHORT - R0)/(OSL_RSHORT + R0) + 0.0fi;
-static const COMPLEX gammaLoad = 0.0 + 0.0fi;
+static COMPLEX gammaLoad = 0.0 + 0.0fi;
 static COMPLEX gammaOpen;// = (OSL_ROPEN - R0)/(OSL_ROPEN + R0) + 0.0fi;
+
 static const COMPLEX cmplus1 = 1.0f + 0.0fi;
 static const COMPLEX cmminus1 = -1.0f + 0.0fi;
 
@@ -138,12 +134,12 @@ static uint32_t GetCalFreqByIdx(int32_t idx)
 
 int32_t OSL_GetSelected(void)
 {
-    return osl_selected;
+    return (int32_t)CFG_GetParam(CFG_PARAM_OSL_SELECTED);
 }
 
 int32_t OSL_IsSelectedValid(void)
 {
-    if (-1 == osl_selected || osl_file_status != OSL_FILE_VALID)
+    if (-1 == OSL_GetSelected() || osl_file_status != OSL_FILE_VALID)
         return 0;
     return 1;
 }
@@ -151,21 +147,22 @@ int32_t OSL_IsSelectedValid(void)
 const char* OSL_GetSelectedName(void)
 {
     static char* fn = " ";
-    if (osl_selected < 0 || osl_selected >= MAX_OSLFILES)
+    if (OSL_GetSelected() < 0 || OSL_GetSelected() >= MAX_OSLFILES)
         return "None";
-    fn[0] = (char)(osl_selected + (int)"A");
+    fn[0] = (char)(OSL_GetSelected() + (int32_t)"A");
     fn[1] = '\0';
     return fn;
 }
 
 void OSL_Select(int32_t index)
 {
-    if (index != osl_selected)
+    if (index != OSL_GetSelected())
     {
         if (index >= 0 && index < MAX_OSLFILES)
-            osl_selected = index;
+            CFG_SetParam(CFG_PARAM_OSL_SELECTED, index);
         else
-            osl_selected = -1;
+            CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0);
+        CFG_Flush();
         OSL_LoadFromFile();
     }
 }
@@ -173,8 +170,12 @@ void OSL_Select(int32_t index)
 //Called when loads changed in config menu
 void OSL_RecalcLoads(void)
 {
-    gammaShort = (OSL_RSHORT - R0)/(OSL_RSHORT + R0) + 0.0fi;
-    gammaOpen = (OSL_ROPEN - R0)/(OSL_ROPEN + R0) + 0.0fi;
+    float r = CFG_GetParam(CFG_PARAM_OSL_RLOAD);
+    gammaLoad = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
+    r = CFG_GetParam(CFG_PARAM_OSL_RSHORT);
+    gammaShort = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
+    r = CFG_GetParam(CFG_PARAM_OSL_ROPEN);
+    gammaOpen = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
 }
 
 void OSL_ScanShort(void)
@@ -193,15 +194,15 @@ void OSL_ScanShort(void)
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 1, 0, OSL_NSCANS); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
         FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
         FONT_Print(FONT_FRANBIG, LCD_PURPLE, LCD_BLACK, 0, 100, "%d kHz", oslCalFreqHz/1000);
 
-        DSP_Measure(oslCalFreqHz, 1, 0, OSL_NSCANS);
+        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
-        COMPLEX gamma = OSL_GFromZ(rx);
+        COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
 
         osl_data[i].gshort = gamma;
     }
@@ -225,15 +226,15 @@ void OSL_ScanLoad(void)
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 1, 0, OSL_NSCANS); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
         FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
         FONT_Print(FONT_FRANBIG, LCD_PURPLE, LCD_BLACK, 0, 100, "%d kHz", oslCalFreqHz / 1000);
 
-        DSP_Measure(oslCalFreqHz, 1, 0, OSL_NSCANS);
+        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
-        COMPLEX gamma = OSL_GFromZ(rx);
+        COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
 
         osl_data[i].gload = gamma;
     }
@@ -257,15 +258,15 @@ void OSL_ScanOpen(void)
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 1, 0, OSL_NSCANS); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
         FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
         FONT_Print(FONT_FRANBIG, LCD_PURPLE, LCD_BLACK, 0, 100, "%d kHz", oslCalFreqHz / 1000);
 
-        DSP_Measure(oslCalFreqHz, 1, 0, OSL_NSCANS);
+        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
-        COMPLEX gamma = OSL_GFromZ(rx);
+        COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
 
         osl_data[i].gopen = gamma;
     }
@@ -300,7 +301,7 @@ static int32_t OSL_LoadFromFile(void)
     TCHAR path[64];
     if (-1 == OSL_GetSelected())
     {
-         osl_file_status = OSL_FILE_EMPTY;
+        osl_file_status = OSL_FILE_EMPTY;
         return -1;
     }
     sprintf(path, "%s/%s.osl", g_cfg_osldir, OSL_GetSelectedName());
@@ -361,31 +362,31 @@ void OSL_Calculate(void)
     osl_file_status = OSL_FILE_VALID;
 }
 
-float complex OSL_GFromZ(float complex Z)
+float complex OSL_GFromZ(float complex Z, float Rbase)
 {
+    float complex Z0 = Rbase + 0.0 * I;
     float complex G = (Z - Z0) / (Z + Z0);
     if (isnan(crealf(G)) || isnan(cimagf(G)))
     {
-        //DBGPRINT("OSL_GFromZ NaN\n");
         return 0.99999999f+0.0fi;
     }
     return G;
 }
 
-float complex OSL_ZFromG(float complex G)
+float complex OSL_ZFromG(float complex G, float Rbase)
 {
     float gr2  = powf(crealf(G), 2);
     float gi2  = powf(cimagf(G), 2);
     float dg = powf((1.0f - crealf(G)), 2) + gi2;
-    float r = R0 * (1.0f - gr2 - gi2) / dg;
+    float r = Rbase * (1.0f - gr2 - gi2) / dg;
     if (r < 0.0f) //Sometimes it overshoots a little due to limited calculation accuracy
         r = 0.0f;
-    float x = R0 * 2.0f * cimagf(G) / dg;
+    float x = Rbase * 2.0f * cimagf(G) / dg;
     return r + x * I;
 }
 
-//Correct measured G using selected OSL calibration file
-float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
+//Correct measured G (vs OSL_BASE_R0) using selected OSL calibration file
+static float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
 {
     if (fhz < BAND_FMIN || fhz > BAND_FMAX) //We can't do anything with frequencies beyond the range
     {
@@ -431,7 +432,7 @@ float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
 
 float complex OSL_CorrectZ(uint32_t fhz, float complex zMeasured)
 {
-    COMPLEX g = OSL_GFromZ(zMeasured);
+    COMPLEX g = OSL_GFromZ(zMeasured, OSL_BASE_R0);
     g = OSL_CorrectG(fhz, g);
     if (crealf(g) > 1.0f)
         g = 1.0f + cimagf(g)*I;
@@ -441,6 +442,6 @@ float complex OSL_CorrectZ(uint32_t fhz, float complex zMeasured)
         g = crealf(g) + 1.0f * I;
     else if (cimagf(g) < -1.0f)
         g = crealf(g) - 1.0f * I;
-    g = OSL_ZFromG(g);
+    g = OSL_ZFromG(g, OSL_BASE_R0);
     return g;
 }

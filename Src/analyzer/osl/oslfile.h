@@ -4,14 +4,9 @@
 #include <complex.h>
 #include <stdint.h>
 
-const float OSL_RLOAD;
-float OSL_RSHORT;   //can be changed via configuration menu
-float OSL_ROPEN;  //can be changed via configuration menu
-
-float complex OSL_ZFromG(float complex G);
-float complex OSL_GFromZ(float complex Z);
+float complex OSL_GFromZ(float complex Z, float Rbase);
+float complex OSL_GFromZ(float complex Z, float Rbase);
 float complex OSL_CorrectZ(uint32_t fhz, float complex zMeasured);
-float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured);
 
 int32_t OSL_GetSelected(void);
 const char* OSL_GetSelectedName(void);
