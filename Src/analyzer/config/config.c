@@ -63,7 +63,7 @@ void CFG_Flush(void)
 {
     FRESULT res;
     FIL fo = { 0 };
-    res = f_open(&fo, g_cfg_fpath, FA_OPEN_EXISTING | FA_WRITE);
+    res = f_open(&fo, g_cfg_fpath, FA_OPEN_ALWAYS | FA_WRITE);
     if (FR_OK == res)
     {
         UINT bw;
