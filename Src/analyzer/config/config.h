@@ -41,6 +41,8 @@ typedef enum
     CFG_PARAM_OSL_RSHORT,            //RSHORT for OSL calibration
     CFG_PARAM_OSL_ROPEN,             //ROPEN for OSL calibration
     CFG_PARAM_OSL_NSCANS,            //Number of scans to average during OSL
+    CFG_PARAM_MEAS_NSCANS,           //Number of scans to average in measurement window
+    CFG_PARAM_PAN_NSCANS,            //Number of scans to average in panoramic window
 
     //---------------------
     CFG_NUM_PARAMS
@@ -53,5 +55,6 @@ void CFG_Init(void);
 uint32_t CFG_GetParam(CFG_PARAM_t param);
 void CFG_SetParam(CFG_PARAM_t param, uint32_t value);
 void CFG_Flush(void);
+void CFG_ParamWnd(void);
 
 #endif // _CONFIG_H_

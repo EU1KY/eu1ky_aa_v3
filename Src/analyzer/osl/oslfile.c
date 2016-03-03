@@ -72,10 +72,6 @@ static COMPLEX DSP_MeasuredZ(void)
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
 static S_OSLDATA osl_data[OSL_NUM_FILE_ENTRIES]; //36 kilobytes
 
-static COMPLEX gammaShort;// = (OSL_RSHORT - R0)/(OSL_RSHORT + R0) + 0.0fi;
-static COMPLEX gammaLoad = 0.0 + 0.0fi;
-static COMPLEX gammaOpen;// = (OSL_ROPEN - R0)/(OSL_ROPEN + R0) + 0.0fi;
-
 static const COMPLEX cmplus1 = 1.0f + 0.0fi;
 static const COMPLEX cmminus1 = -1.0f + 0.0fi;
 
@@ -165,17 +161,6 @@ void OSL_Select(int32_t index)
         CFG_Flush();
         OSL_LoadFromFile();
     }
-}
-
-//Called when loads changed in config menu
-void OSL_RecalcLoads(void)
-{
-    float r = CFG_GetParam(CFG_PARAM_OSL_RLOAD);
-    gammaLoad = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
-    r = CFG_GetParam(CFG_PARAM_OSL_RSHORT);
-    gammaShort = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
-    r = CFG_GetParam(CFG_PARAM_OSL_ROPEN);
-    gammaOpen = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
 }
 
 void OSL_ScanShort(void)
@@ -335,6 +320,13 @@ void OSL_Calculate(void)
     {
         CRASH("OSL_Calculate called without scanning all loads");
     }
+
+    float r = (float)CFG_GetParam(CFG_PARAM_OSL_RLOAD);
+    COMPLEX gammaLoad = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
+    r = CFG_GetParam(CFG_PARAM_OSL_RSHORT);
+    COMPLEX gammaShort = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
+    r = CFG_GetParam(CFG_PARAM_OSL_ROPEN);
+    COMPLEX gammaOpen = (r - OSL_BASE_R0) / (r + OSL_BASE_R0) + 0.0fi;
 
     //Calculate calibration coefficients from measured reflection coefficients
     int i;

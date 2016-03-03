@@ -104,6 +104,8 @@ int main(void)
         CRASH("f_mount failed");
     CFG_Init();
 
+    //CFG_ParamWnd();
+
     for(;;)
     {
         PANVSWR2_Proc();

@@ -1,6 +1,7 @@
 #include "config.h"
 #include "ff.h"
 #include "crash.h"
+#include <string.h>
 
 static uint32_t g_cfg_array[CFG_NUM_PARAMS] = { 0 };
 const char *g_aa_dir = "/aa";
@@ -8,6 +9,140 @@ static const char *g_cfg_dir = "/aa/config/";
 static const char *g_cfg_fpath = "/aa/config/config.bin";
 const char *g_cfg_osldir = "/aa/osl";
 
+typedef enum
+{
+    CFG_PARAM_T_U8,  //8-bit unsigned
+    CFG_PARAM_T_U16, //16-bit unsigned
+    CFG_PARAM_T_U32, //32-bit unsigned
+    CFG_PARAM_T_S8,  //8-bit signed
+    CFG_PARAM_T_S16, //16-bit signed
+    CFG_PARAM_T_S32, //32-bit signed
+    CFG_PARAM_T_F32, //32-bit float
+    CFG_PARAM_T_CH,  //char**[]
+} CFG_PARAM_TYPE_t;
+
+#pragma pack(push,1)
+typedef struct
+{
+    CFG_PARAM_t id;
+    const char *idstring;
+    uint32_t nvalues;
+    const int32_t *values;
+    const char **strvalues;
+    uint32_t type;
+    const char *dstring;
+} CFG_CHANGEABLE_PARAM_DESCR_t;
+#pragma pack(pop)
+
+#define CFG_IARR(...) (const int32_t[]){__VA_ARGS__}
+#define CFG_SARR(...) (const char*[]){__VA_ARGS__}
+
+static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
+{
+    {
+        .id = CFG_PARAM_SYNTH_TYPE,
+        .idstring = "SYNTH_TYPE",
+        .nvalues = 1,
+        .values = CFG_IARR(   0),
+        .strvalues = CFG_SARR("Si5351A"),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Frequency synthesizer type used"
+    },
+    {
+        .id = CFG_PARAM_SI5351_XTAL_FREQ,
+        .idstring = "SI5351_XTAL_FREQ",
+        .nvalues = 2,
+        .values = CFG_IARR(25000000ul, 27000000ul),
+        .strvalues = 0,
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Si5351 XTAL frequency, Hz"
+    },
+    {
+        .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
+        .idstring = "SI5351_BUS_BASE_ADDR",
+        .nvalues = 2,
+        .values = CFG_IARR(   0xC0,   0xCE),
+        .strvalues = CFG_SARR("0xC0", "0xCE"),
+        .type = CFG_PARAM_T_U8,
+        .dstring = "Si5351 i2c bus base address (default 0xC0)"
+    },
+    {
+        .id = CFG_PARAM_SI5351_CORR,
+        .idstring = "SI5351_CORR",
+        .type = CFG_PARAM_T_S16,
+        .dstring = "Si5351 Xtal frequency correction, Hz"
+    },
+    {
+        .id = CFG_PARAM_OSL_SELECTED,
+        .idstring = "OSL_SELECTED",
+        .nvalues = 17,
+        .values = CFG_IARR(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1),
+        .strvalues = CFG_SARR("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","None"),
+        .type = CFG_PARAM_T_S32,
+        .dstring = "Selected OSL file"
+    },
+    {
+        .id = CFG_PARAM_R0,
+        .idstring = "R0",
+        .nvalues = 4,
+        .values = CFG_IARR(28, 50, 75, 150, 300),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Selected base impedance (R0) for Smith Chart"
+    },
+    {
+        .id = CFG_PARAM_OSL_RLOAD,
+        .idstring = "OSL_RLOAD",
+        .nvalues = 4,
+        .values = CFG_IARR(50, 75, 100, 150),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "LOAD R for OSL calibration, Ohm"
+    },
+    {
+        .id = CFG_PARAM_OSL_RSHORT,
+        .idstring = "OSL_RSHORT",
+        .nvalues = 3,
+        .values = CFG_IARR(0, 5, 10),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "SHORT R for OSL calibration, Ohm"
+    },
+    {
+        .id = CFG_PARAM_OSL_ROPEN,
+        .idstring = "OSL_ROPEN",
+        .nvalues = 6,
+        .values = CFG_IARR(    300,   333,   500,   750,   1000,   999999),
+        .strvalues = CFG_SARR("300", "333", "500", "750", "1000", "Open"),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "OPEN R for OSL calibration, Ohm"
+    },
+    {
+        .id = CFG_PARAM_OSL_NSCANS,
+        .idstring = "OSL_NSCANS",
+        .nvalues = 7,
+        .values = CFG_IARR(1, 3, 5, 7, 9, 11, 15),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Number of scans to average during OSL calibration at each F"
+    },
+    {
+        .id = CFG_PARAM_MEAS_NSCANS,
+        .idstring = "MEAS_NSCANS",
+        .nvalues = 7,
+        .values = CFG_IARR(1, 3, 5, 7, 9, 11, 15),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Number of scans to average in measurement window"
+    },
+    {
+        .id = CFG_PARAM_PAN_NSCANS,
+        .idstring = "PAN_NSCANS",
+        .nvalues = 7,
+        .values = CFG_IARR(1, 3, 5, 7, 9, 11, 15),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Number of scans to average in panoramic window"
+    },
+};
+
+static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
+
+//CFG module initialization
 void CFG_Init(void)
 {
     //Set defaults for parameters
@@ -25,6 +160,8 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_OSL_RSHORT, 5);
     CFG_SetParam(CFG_PARAM_OSL_ROPEN, 500);
     CFG_SetParam(CFG_PARAM_OSL_NSCANS, 5);
+    CFG_SetParam(CFG_PARAM_MEAS_NSCANS, 5);
+    CFG_SetParam(CFG_PARAM_PAN_NSCANS, 5);
 
     //Load params from SD
     FRESULT res;
@@ -95,4 +232,133 @@ void CFG_Flush(void)
     {
         CRASHF("CFG_Flush: Failed to open config file. Err = %d", res);
     }
+}
+
+static uint32_t CFG_GetNextValue(uint32_t param_idx, uint32_t param_value)
+{
+    if (param_idx >= cfg_ch_descr_table_num)
+        return param_value + 1;
+
+    const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
+    if (0 == pd->nvalues)
+    {//If no default values specified:
+        return param_value + 1;
+    }
+
+    uint32_t i;
+    for (i = 0; i < pd->nvalues; i++)
+    {
+        if (param_value == pd->values[i])
+        {//Value is among the defaults
+            if (i == pd->nvalues - 1)
+                return pd->values[0]; //Wrap around the last one
+            return pd->values[i + 1];
+        }
+    }
+    //Oops, if we get here then the value is not among default ones
+    //Just return the last default value
+    return pd->values[pd->nvalues - 1];
+}
+
+static uint32_t CFG_GetPrevValue(uint32_t param_idx, uint32_t param_value)
+{
+    if (param_idx >= cfg_ch_descr_table_num)
+        return param_value - 1;
+
+    const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
+    if (0 == pd->nvalues)
+    {//If no default values specified:
+        return param_value - 1;
+    }
+
+    uint32_t i;
+    for (i = 0; i < pd->nvalues; i++)
+    {
+        if (param_value == pd->values[i])
+        {//Value is among the defaults
+            if (i == 0)
+                return pd->values[pd->nvalues - 1]; //Wrap around 0
+            return pd->values[i - 1];
+        }
+    }
+    //Oops, if we get here then the value is not among default ones
+    //Just return the first default value
+    return pd->values[0];
+}
+
+//Get string representation of parameter
+const char * CFG_GetStringValue(uint32_t param_idx)
+{
+    if (param_idx >= cfg_ch_descr_table_num)
+        return "";
+
+    const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
+
+    uint32_t uval = CFG_GetParam(pd->id); //Current parameter value
+    uint32_t i;
+
+    for (i = 0; i < pd->nvalues; i++)
+    {
+        if (uval == pd->values[i])
+            return pd->strvalues[i]; //Found string for default value
+    }
+
+    //Print value to the static buffer and return it
+    static char tstr[32];
+
+    switch (pd->type)
+    {
+        case CFG_PARAM_T_U8:
+            sprintf(tstr, "%u", (unsigned int)((uint8_t)uval));
+            break;
+        case CFG_PARAM_T_U16:
+            sprintf(tstr, "%u", (unsigned int)((uint16_t)uval));
+            break;
+        case CFG_PARAM_T_U32:
+            sprintf(tstr, "%u", (unsigned int)((uint32_t)uval));
+            break;
+        case CFG_PARAM_T_S8:
+            sprintf(tstr, "%d", (int)((int8_t)uval));
+            break;
+        case CFG_PARAM_T_S16:
+            sprintf(tstr, "%d", (int)((int16_t)uval));
+            break;
+        case CFG_PARAM_T_S32:
+            sprintf(tstr, "%d", (int)((int32_t)uval));
+            break;
+        case CFG_PARAM_T_F32:
+            sprintf(tstr, "%f", *(float*)&uval);
+            break;
+        case CFG_PARAM_T_CH:
+            memcpy(tstr, &uval, 4);
+            tstr[5] = '\0';
+            break;
+        default:
+            return "";
+    }
+    return tstr;
+}
+
+//===============================================================================
+// Configuration parameters setting window
+//===============================================================================
+#include "LCD.h"
+#include "touch.h"
+#include "font.h"
+#include "hit.h"
+
+//Changeable parameters setting window
+//TODO!!!
+void CFG_ParamWnd(void)
+{
+    uint32_t param_idx = 0;
+
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, "Configuration edit");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, " < Prev param ");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, " Next param > ");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, " Set ");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, " Exit ");
+    FONT_Print(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, "Param: %s", cfg_ch_descr_table[param_idx].idstring);
+    FONT_Print(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, "Value: %s", CFG_GetStringValue(param_idx));
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, 0, cfg_ch_descr_table[param_idx].dstring);
 }
