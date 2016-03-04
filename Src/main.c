@@ -108,6 +108,8 @@ int main(void)
 
     for(;;)
     {
+        extern void CFG_WndTest(void);
+        CFG_WndTest();
         PANVSWR2_Proc();
         MEASUREMENT_Proc();
         FFTWND_Proc();

@@ -71,6 +71,23 @@ static void FONT_GetParams(FONTS fnt, struct _fontparams* pRes)
     }
 }
 
+uint16_t FONT_GetHeight(FONTS fnt)
+{
+    switch (fnt)
+    {
+    default:
+    case FONT_FRAN:
+        return fran_height;
+    case FONT_FRANBIG:
+        return franbig_height;
+    case FONT_CONSBIG:
+        return consbig_height;
+    case FONT_SDIGITS:
+        return sdigits_height;
+    }
+    return 0;
+}
+
 int FONT_Write(FONTS fnt, LCDColor fg, LCDColor bg, uint16_t x, uint16_t y, const char* pStr)
 {
     return FONT_Write_N(fnt, fg, bg, x, y, pStr, strlen(pStr));

@@ -345,7 +345,53 @@ const char * CFG_GetStringValue(uint32_t param_idx)
 #include "LCD.h"
 #include "touch.h"
 #include "font.h"
-#include "hit.h"
+#include "textbox.h"
+extern void Sleep(uint32_t);
+
+static uint32_t rqExit = 0;
+
+void _hit_prev(void)
+{
+    LCD_FillRect(LCD_MakePoint(100, 100), LCD_MakePoint(140, 140), LCD_RED);
+}
+void _hit_next(void)
+{
+    LCD_FillRect(LCD_MakePoint(100, 100), LCD_MakePoint(140, 140), LCD_GREEN);
+}
+void _hit_ex(void)
+{
+    rqExit = 1;
+}
+
+void CFG_WndTest(void)
+{
+    rqExit = 0;
+
+    LCD_FillAll(LCD_BLACK);
+
+    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 10, .text = " < Prev param ", .font = FONT_FRAN,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_prev };
+    TEXTBOX_t hbNextParam = {.x0 = 150, .y0 = 10, .text = " Next param > ", .font = FONT_FRAN,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_next };
+    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
+
+    TEXTBOX_CTX_t ctx = {0};
+    TEXTBOX_Append(&ctx, &hbPrevParam);
+    TEXTBOX_Append(&ctx, &hbNextParam);
+    TEXTBOX_Append(&ctx, &hbEx);
+    TEXTBOX_DrawContext(&ctx);
+
+    for(;;)
+    {
+        if (TEXTBOX_HitTest(&ctx))
+        {
+            if (rqExit)
+                return;
+            Sleep(50);
+        }
+    }
+}
 
 //Changeable parameters setting window
 //TODO!!!
