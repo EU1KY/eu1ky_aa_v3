@@ -4,19 +4,27 @@
 #include <stdint.h>
 #include "font.h"
 
+typedef enum
+{
+    TEXTBOX_TYPE_TEXT = 0,
+    TEXTBOX_TYPE_HITRECT, //Invisible hit rectangle
+} TEXTBOX_TYPE_t;
+
+#pragma pack(push,1)
 typedef struct
 {
+    uint8_t type;      //TEXTBOX_TYPE_t
+    uint8_t nowait;    //Set to 1 to bypass waiting for touch release and to return 0 from hit test func
     uint16_t x0;       //Origin x
     uint16_t y0;       //Origin y
-    const char* text;  //Text of the box
-    FONTS font;        //Font of the box
-    uint32_t fgcolor;  //Foreground color
-    uint32_t bgcolor;  //Background color
+    const char* text;  //Text of the box for TEXTBOX_TYPE_TEXT
+    FONTS font;        //Font of the box for TEXTBOX_TYPE_TEXT
+    uint32_t fgcolor;  //Foreground color for TEXTBOX_TYPE_TEXT
+    uint32_t bgcolor;  //Background color for TEXTBOX_TYPE_TEXT
     void (*cb)(void);  //Callback function to be called
-    //These are filled automatically:
-    uint16_t width;
-    uint16_t height;
-    void *next;
+    uint16_t width;    //Filled automatically for TEXTBOX_TYPE_TEXT
+    uint16_t height;   //Filled automatically for TEXTBOX_TYPE_TEXT
+    void *next;        //Filled automatically in TEXTBOX_Append
 } TEXTBOX_t;
 
 typedef struct

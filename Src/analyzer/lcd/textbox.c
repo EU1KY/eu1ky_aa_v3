@@ -46,10 +46,13 @@ uint32_t TEXTBOX_Append(TEXTBOX_CTX_t* ctx, TEXTBOX_t* hbox)
         pbox->next = hbox;
         hbox->next = 0;
     }
-    if (0 == hbox->width)
-        hbox->width = FONT_GetStrPixelWidth(hbox->font, hbox->text);
-    if (0 == pbox->height)
-        hbox->height = FONT_GetHeight(hbox->font);
+    if (TEXTBOX_TYPE_TEXT == hbox->type)
+    {
+        if (0 == hbox->width)
+            hbox->width = FONT_GetStrPixelWidth(hbox->font, hbox->text);
+        if (0 == pbox->height)
+            hbox->height = FONT_GetHeight(hbox->font);
+    }
     return idx;
 }
 
@@ -57,6 +60,8 @@ void TEXTBOX_Clear(TEXTBOX_CTX_t *ctx, uint32_t idx)
 {
     TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
     if (0 == tb)
+        return;
+    if (TEXTBOX_TYPE_HITRECT == tb->type)
         return;
     LCD_FillRect(LCD_MakePoint(tb->x0, tb->y0), LCD_MakePoint(tb->x0 + tb->width, tb->y0 + tb->height), tb->bgcolor);
 }
@@ -67,6 +72,8 @@ void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char* txt)
         return;
     TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
     if (0 == tb)
+        return;
+    if (TEXTBOX_TYPE_HITRECT == tb->type)
         return;
     TEXTBOX_Clear(ctx, idx);
     tb->text = txt;
@@ -80,7 +87,8 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
     TEXTBOX_t* pbox = ctx->start;
     while (pbox)
     {
-        FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
+        if (TEXTBOX_TYPE_TEXT == pbox->type)
+            FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
         pbox = pbox->next;
     }
 }
@@ -93,23 +101,30 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
     TEXTBOX_t* pbox = ctx->start;
     while (pbox)
     {
-        if (0 == pbox->width)
-            pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
-        if (0 == pbox->height)
-            pbox->height = FONT_GetHeight(pbox->font);
+        if (TEXTBOX_TYPE_TEXT == pbox->type)
+        {
+            if (0 == pbox->width)
+                pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+            if (0 == pbox->height)
+                pbox->height = FONT_GetHeight(pbox->font);
+        }
         if (coord.x >= pbox->x0 && coord.x < pbox->x0 + pbox->width)
         {
             if (coord.y >= pbox->y0 && coord.y < pbox->y0 + pbox->height)
             {
                 if (pbox->cb)
                     pbox->cb();
-                FONT_Write(pbox->font, pbox->bgcolor, pbox->fgcolor, pbox->x0, pbox->y0, pbox->text);
+                if (pbox->nowait)
+                    return 0;
+                if (TEXTBOX_TYPE_TEXT == pbox->type)
+                    FONT_Write(pbox->font, pbox->bgcolor, pbox->fgcolor, pbox->x0, pbox->y0, pbox->text);
                 while (TOUCH_IsPressed());
-                FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
+                if (TEXTBOX_TYPE_TEXT == pbox->type)
+                    FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
                 return 1;
             }
         }
         pbox = pbox->next;
     }
-    return 1;
+    return 0;
 }

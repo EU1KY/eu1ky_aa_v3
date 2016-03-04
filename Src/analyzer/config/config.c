@@ -375,11 +375,13 @@ void CFG_WndTest(void)
                             .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_next };
     TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
-
+    TEXTBOX_t hbInvis = { .type = TEXTBOX_TYPE_HITRECT, .x0 = 300, .y0 = 140, .width = 179,
+                          .height = 139, .cb = _hit_prev };
     TEXTBOX_CTX_t ctx = {0};
     TEXTBOX_Append(&ctx, &hbPrevParam);
     TEXTBOX_Append(&ctx, &hbNextParam);
     TEXTBOX_Append(&ctx, &hbEx);
+    TEXTBOX_Append(&ctx, &hbInvis);
     TEXTBOX_DrawContext(&ctx);
 
     for(;;)
