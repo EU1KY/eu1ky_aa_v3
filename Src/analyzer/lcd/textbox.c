@@ -45,6 +45,7 @@ uint32_t TEXTBOX_Append(TEXTBOX_CTX_t* ctx, TEXTBOX_t* hbox)
         }
         pbox->next = hbox;
         hbox->next = 0;
+        idx++;
     }
     if (TEXTBOX_TYPE_TEXT == hbox->type)
     {

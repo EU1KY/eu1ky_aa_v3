@@ -316,13 +316,13 @@ static void DrawGrid(int drawSwr)
     }
 
     //Draw F grid and labels
-    #define FLINEDIV 8    //Draw vertical line every FLINEDIV pixels
+    #define FLINEDIV 10    //Draw vertical line every FLINEDIV pixels
     int lmod = (BS32M == span) ? 4 : 5; //For 32 MHz span, frequency is labeled for every 4th vertical line,
                                         //for others spans - every 5th line.
     for (i = 0; i <= WWIDTH/FLINEDIV; i++)
     {
         int x = X0 + i * FLINEDIV;
-        if (i % lmod == 0)
+        if ((i % lmod) == 0)
         {
             char f[10];
             sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/FLINEDIV)))/1000.);
@@ -416,8 +416,6 @@ static void SELFREQ_Proc(void)
     print_span(span);
     print_f1(f1);
 
-    FONT_Write(FONT_CONSBIG, LCD_BLUE, LCD_BLACK, 80, 150, "Set 144 MHz");
-
     FONT_Write(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 40, 200, "OK");
     FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 200, "Cancel");
 
@@ -428,18 +426,15 @@ static void SELFREQ_Proc(void)
             if (pt.y < 90)
             { //Span
                 speedcnt = 0;
-                if (f1tmp != 143000)
-                {
-                    if (pt.x < 140)
-                    { //minus
-                        prevspan(&spantmp);
-                        print_span(spantmp);
-                    }
-                    else if (pt.x > 180)
-                    {//plus
-                        nextspan(&spantmp);
-                        print_span(spantmp);
-                    }
+                if (pt.x < 140)
+                { //minus
+                    prevspan(&spantmp);
+                    print_span(spantmp);
+                }
+                else if (pt.x > 180)
+                {//plus
+                    nextspan(&spantmp);
+                    print_span(spantmp);
                 }
                 Sleep(100); //slow down span cycling
             }
@@ -465,13 +460,6 @@ static void SELFREQ_Proc(void)
                         f1tmp = BAND_FMAX/1000;
                     print_f1(f1tmp);
                 }
-            }
-            else if (pt.y > 150 && pt.y < 182)
-            {
-                f1tmp = 143000;
-                print_f1(f1tmp);
-                spantmp = BS4M;
-                print_span(spantmp);
             }
             else if (pt.y > 200)
             {
