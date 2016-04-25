@@ -140,6 +140,8 @@ static const HAM_BANDS hamBands[] =
     {21000ul, 21450ul},
     {24890ul, 24990ul},
     {28000ul, 29700ul},
+    {50000ul, 52000ul},
+    {144000ul, 146000ul},
 };
 
 static const uint32_t hamBandsNum = sizeof(hamBands) / sizeof(*hamBands);
@@ -314,13 +316,16 @@ static void DrawGrid(int drawSwr)
     }
 
     //Draw F grid and labels
-    for (i = 0; i <= WWIDTH/10; i++)
+    #define FLINEDIV 8    //Draw vertical line every FLINEDIV pixels
+    int lmod = (BS32M == span) ? 4 : 5; //For 32 MHz span, frequency is labeled for every 4th vertical line,
+                                        //for others spans - every 5th line.
+    for (i = 0; i <= WWIDTH/FLINEDIV; i++)
     {
-        int x = X0 + i * 10;
-        if (i % 5 == 0)
+        int x = X0 + i * FLINEDIV;
+        if (i % lmod == 0)
         {
             char f[10];
-            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/10)))/1000.);
+            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/FLINEDIV)))/1000.);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
             FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, x - w / 2, Y0 + WHEIGHT + 5, f);
             LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLORBR);
