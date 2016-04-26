@@ -297,10 +297,13 @@ const char * CFG_GetStringValue(uint32_t param_idx)
     uint32_t uval = CFG_GetParam(pd->id); //Current parameter value
     uint32_t i;
 
-    for (i = 0; i < pd->nvalues; i++)
+    if (0 != pd->strvalues)
     {
-        if (uval == pd->values[i])
-            return pd->strvalues[i]; //Found string for default value
+        for (i = 0; i < pd->nvalues; i++)
+        {
+            if (uval == pd->values[i])
+                return pd->strvalues[i]; //Found string for default value
+        }
     }
 
     //Print value to the static buffer and return it
@@ -343,16 +346,14 @@ const char * CFG_GetStringDescr(uint32_t param_idx)
 {
     if (param_idx >= cfg_ch_descr_table_num)
         return "";
-    const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
-    return pd->dstring;
+    return cfg_ch_descr_table[param_idx].dstring;
 }
 
 const char * CFG_GetStringName(uint32_t param_idx)
 {
     if (param_idx >= cfg_ch_descr_table_num)
         return "";
-    const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
-    return pd->idstring;
+    return cfg_ch_descr_table[param_idx].idstring;
 }
 
 //===============================================================================
@@ -373,8 +374,7 @@ static uint32_t hbValIdx = 0;
 
 static void _hit_prev(void)
 {
-    selected_param--;
-    if (selected_param >= cfg_ch_descr_table_num)
+    if (--selected_param >= cfg_ch_descr_table_num)
         selected_param = cfg_ch_descr_table_num - 1;
 
     TEXTBOX_SetText(pctx, hbNameIdx, CFG_GetStringName(selected_param));
@@ -392,9 +392,31 @@ static void _hit_next(void)
     TEXTBOX_SetText(pctx, hbDescrIdx, CFG_GetStringDescr(selected_param));
 }
 
+static void _hit_save(void)
+{
+    CFG_Flush();
+    rqExit = 1;
+}
+
 static void _hit_ex(void)
 {
     rqExit = 1;
+}
+
+static void _hit_prev_value(void)
+{
+    uint32_t currentValue = CFG_GetParam(cfg_ch_descr_table[selected_param].id);
+    uint32_t prevValue = CFG_GetPrevValue(selected_param, currentValue);
+    CFG_SetParam(cfg_ch_descr_table[selected_param].id, prevValue);
+    TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
+}
+
+static void _hit_next_value(void)
+{
+    uint32_t currentValue = CFG_GetParam(cfg_ch_descr_table[selected_param].id);
+    uint32_t nextValue = CFG_GetNextValue(selected_param, currentValue);
+    CFG_SetParam(cfg_ch_descr_table[selected_param].id, nextValue);
+    TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
 }
 
 //Changeable parameters setting window
@@ -402,24 +424,31 @@ static void _hit_ex(void)
 void CFG_ParamWnd(void)
 {
     rqExit = 0;
+    selected_param = 0;
 
     LCD_FillAll(LCD_BLACK);
 
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, "Configuration edit");
 
-    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 32, .text = " < Prev param ", .font = FONT_FRAN,
+    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 36, .text = " < Prev param ", .font = FONT_FRAN,
                             .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_prev };
-    TEXTBOX_t hbNextParam = {.x0 = 150, .y0 = 32, .text = " Next param > ", .font = FONT_FRAN,
+    TEXTBOX_t hbNextParam = {.x0 = 380, .y0 = 36, .text = " Next param > ", .font = FONT_FRAN,
                             .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_next };
-    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG,
+    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
+    TEXTBOX_t hbSave = {.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLUE, .bgcolor = LCD_GREEN, .cb = _hit_save };
 
     TEXTBOX_t hbParamName = {.x0 = 10, .y0 = 64, .text = "    ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_GREEN, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
     TEXTBOX_t hbParamDescr = {.x0 = 10, .y0 = 100, .text = "    ", .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
-    TEXTBOX_t hbValue = {.x0 = 10, .y0 = 120, .text = "    ", .font = FONT_FRANBIG,
+    TEXTBOX_t hbValue = {.x0 = 50, .y0 = 120, .text = "    ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
+    TEXTBOX_t hbPrevValue = {.x0 = 10, .y0 = 120, .text = "  <  ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_prev_value };
+    TEXTBOX_t hbNextValue = {.x0 = 400, .y0 = 120, .text = "  >  ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_next_value };
 
     TEXTBOX_CTX_t ctx = {0};
     pctx = &ctx;
@@ -427,6 +456,9 @@ void CFG_ParamWnd(void)
     TEXTBOX_Append(pctx, &hbPrevParam);
     TEXTBOX_Append(pctx, &hbNextParam);
     TEXTBOX_Append(pctx, &hbEx);
+    TEXTBOX_Append(pctx, &hbSave);
+    TEXTBOX_Append(pctx, &hbPrevValue);
+    TEXTBOX_Append(pctx, &hbNextValue);
     hbNameIdx = TEXTBOX_Append(pctx, &hbParamName);
     hbDescrIdx = TEXTBOX_Append(pctx, &hbParamDescr);
     hbValIdx = TEXTBOX_Append(pctx, &hbValue);
@@ -441,7 +473,10 @@ void CFG_ParamWnd(void)
         if (TEXTBOX_HitTest(&ctx))
         {
             if (rqExit)
+            {
+                CFG_Init();
                 return;
+            }
             Sleep(50);
         }
     }

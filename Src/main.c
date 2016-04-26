@@ -104,7 +104,7 @@ int main(void)
         CRASH("f_mount failed");
     CFG_Init();
 
-    //CFG_ParamWnd();
+    CFG_ParamWnd();
 
     for(;;)
     {
