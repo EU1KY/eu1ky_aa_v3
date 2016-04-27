@@ -8,7 +8,7 @@
 #include "LCD.h"
 
 #define MAX_OSLFILES 16
-#define OSL_BASE_R0 50.0f //All OSL calibration coefficients are calculated using G calculted from OSL_BASE_R0
+#define OSL_BASE_R0 50.0f // Note: all OSL calibration coefficients are calculated using G based on 50 Ohms, not on OSL_BASE_R0 !!!
 
 extern void Sleep(uint32_t);
 
@@ -316,7 +316,7 @@ void OSL_Calculate(void)
         CRASH("OSL_Calculate called without OSL file selected");
     }
 
-    if (osl_file_status & OSL_FILE_SCANNED_ALL != OSL_FILE_SCANNED_ALL)
+    if ((osl_file_status & OSL_FILE_SCANNED_ALL) != OSL_FILE_SCANNED_ALL)
     {
         CRASH("OSL_Calculate called without scanning all loads");
     }
