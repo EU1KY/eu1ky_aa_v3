@@ -92,7 +92,7 @@ static DSP_RX DSP_MeasuredZ(void)
 
 typedef enum
 {
-    BS400, BS800, BS1600, BS4M, BS8M, BS16M, BS32M
+    BS400, BS800, BS1600, BS4M, BS8M, BS16M, BS20M, BS40M
 } BANDSPAN;
 
 typedef enum
@@ -128,8 +128,8 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
 
-static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "32 MHz"};
-static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 32000};
+static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
+static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 20000, 40000};
 static uint32_t f1 = 14000;
 static BANDSPAN span = BS800;
 static char buf[64];
@@ -293,16 +293,15 @@ static void DrawGrid(int drawSwr)
     }
 
     //Draw F grid and labels
-    #define FLINEDIV 10    //Draw vertical line every FLINEDIV pixels
-    int lmod = (BS32M == span) ? 4 : 5; //For 32 MHz span, frequency is labeled for every 4th vertical line,
-                                        //for others spans - every 5th line.
-    for (i = 0; i <= WWIDTH/FLINEDIV; i++)
+    int lmod = (BS20M == span) || (BS40M == span) || (BS16M == span) || (BS1600 == span) ? 4 : 5;
+    int linediv = 10; //Draw vertical line every linediv pixels
+    for (i = 0; i <= WWIDTH/linediv; i++)
     {
-        int x = X0 + i * FLINEDIV;
-        if ((i % lmod) == 0)
+        int x = X0 + i * linediv;
+        if ((i % lmod) == 0 || i == WWIDTH/linediv)
         {
             char f[10];
-            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/FLINEDIV)))/1000.);
+            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
             FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, x - w / 2, Y0 + WHEIGHT + 5, f);
             LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLORBR);
@@ -354,7 +353,7 @@ static void print_f1(uint32_t f)
 
 static void nextspan(BANDSPAN *sp)
 {
-    if (*sp == BS32M)
+    if (*sp == BS40M)
     {
         *sp = BS400;
     }
@@ -368,7 +367,7 @@ static void prevspan(BANDSPAN *sp)
 {
     if (*sp == BS400)
     {
-        *sp = BS32M;
+        *sp = BS40M;
     }
     else
     {
@@ -583,7 +582,7 @@ static void LoadBkups()
 {
     //Load saved frequency and span values from config file
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_PAN_F1);
-    if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && (fbkup <= BAND_FMAX/1000 || fbkup == 143000) && (fbkup % 100) == 0)
+    if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && fbkup <= BAND_FMAX/1000 && (fbkup % 100) == 0)
     {
         f1 = fbkup;
     }
@@ -596,12 +595,9 @@ static void LoadBkups()
     }
 
     int spbkup = CFG_GetParam(CFG_PARAM_PAN_SPAN);
-    if (spbkup <= BS32M)
+    if (spbkup <= BS40M)
     {
-        if (f1 == 143000)
-            span = BS4M;
-        else
-            span = (BANDSPAN)spbkup;
+        span = (BANDSPAN)spbkup;
     }
     else
     {

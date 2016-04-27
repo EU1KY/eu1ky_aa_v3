@@ -16,8 +16,8 @@
 #include "hit.h"
 //#include "dsp.h"
 //#include "gen.h"
-//#include "osl.h"
 #include "stm32f746xx.h"
+#include "oslfile.h"
 
 void Sleep(uint32_t ms);
 
@@ -26,43 +26,20 @@ void Sleep(uint32_t ms);
 
 typedef float complex DSP_RX;
 typedef float complex COMPLEX;
-#define R0 50.0f
-#define Z0 R0+0.0fi
-
-static COMPLEX OSL_GFromZ(COMPLEX Z)
-{
-    COMPLEX G = (Z - Z0) / (Z + Z0);
-    if (isnan(crealf(G)) || isnan(cimagf(G)))
-    {
-        return 0.99999999f+0.0fi;
-    }
-    return G;
-}
-
-static COMPLEX OSL_ZFromG(COMPLEX G)
-{
-    float gr2  = powf(crealf(G), 2);
-    float gi2  = powf(cimagf(G), 2);
-    float dg = powf((1.0f - crealf(G)), 2) + gi2;
-    float r = R0 * (1.0f - gr2 - gi2) / dg;
-    if (r < 0.0f) //Sometimes it overshoots a little due to limited calculation accuracy
-        r = 0.0f;
-    float x = R0 * 2.0f * cimagf(G) / dg;
-    return r + x * I;
-}
 
 static float DSP_CalcVSWR(DSP_RX Z)
 {
     float X2 = powf(cimagf(Z), 2);
     float R = crealf(Z);
+    float complex Z0 = (float)CFG_GetParam(CFG_PARAM_R0) + 0.0fi;
     if(R < 0.0)
     {
         R = 0.0;
     }
     float ro = sqrtf((powf((R - Z0), 2) + X2) / (powf((R + Z0), 2) + X2));
-    if(ro > .999)
+    if(ro > .999f)
     {
-        ro = 0.999;
+        ro = 0.999f;
     }
     X2 = (1.0 + ro) / (1.0 - ro);
     return X2;
@@ -92,11 +69,6 @@ static DSP_RX DSP_MeasuredZ(void)
 static float DSP_MeasuredDiffdB(void)
 {
     return 0.f;
-}
-
-static int32_t OSL_GetSelected(void)
-{
-    return -1;
 }
 
 uint32_t DSP_MeasuredMagImv(void)
@@ -181,7 +153,7 @@ static void MeasurementModeDraw(DSP_RX rx)
 
     float VSWR = DSP_CalcVSWR(rx);
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 92);
-    sprintf(str, "VSWR: %.1f", VSWR);
+    sprintf(str, "VSWR: %.1f (Z0 %d)", VSWR, CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRANBIG, LCD_CYAN, LCD_BLACK, 0, 92, str);
 
     float XX = cimagf(rx);
@@ -205,7 +177,7 @@ static void MeasurementModeDraw(DSP_RX rx)
 
     //Calculated matched cable loss at this frequency
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, 158);
-    float ga = cabsf(OSL_GFromZ(rx)); //G amplitude
+    float ga = cabsf(OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0))); //G amplitude
     if (ga > 0.01)
     {
         float cl = -10. * log10f(ga);
@@ -215,7 +187,7 @@ static void MeasurementModeDraw(DSP_RX rx)
         FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 158, str);
     }
 
-    DrawSmallSmith(380, 180, 80, OSL_GFromZ(rx));
+    DrawSmallSmith(380, 180, 80, OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0)));
 }
 
 //Draw a small (100x20 pixels) VSWR graph for data collected by Scan500()
@@ -428,15 +400,11 @@ void MEASUREMENT_Proc(void)
             if (fChanged)
                 ShowF();
             Sleep(50);
-            if (!TOUCH_IsPressed())
-            {
-                if (fChanged)
-                {
-                    CFG_Flush();
-                    fChanged = 0;
-                }
-                break;
-            }
+        }
+        if (fChanged)
+        {
+            CFG_Flush();
+            fChanged = 0;
         }
         Sleep(50);
     }
