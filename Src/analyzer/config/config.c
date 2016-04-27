@@ -34,7 +34,9 @@ typedef struct
 } CFG_CHANGEABLE_PARAM_DESCR_t;
 #pragma pack(pop)
 
+//Integer array macro
 #define CFG_IARR(...) (const int32_t[]){__VA_ARGS__}
+//Character array macro
 #define CFG_SARR(...) (const char*[]){__VA_ARGS__}
 
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
@@ -87,7 +89,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 4,
         .values = CFG_IARR(28, 50, 75, 150, 300),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Selected base impedance (R0) for Smith Chart"
+        .dstring = "Selected base impedance (Z0) for Smith Chart and VSWR"
     },
     {
         .id = CFG_PARAM_OSL_RLOAD,
@@ -184,6 +186,8 @@ void CFG_Init(void)
             UINT br;
             f_read(&fo, g_cfg_array, finfo.fsize, &br);
             f_close(&fo);
+            //Replace version to current
+            CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
             //And write extended file
             CFG_Flush();
         }
@@ -192,6 +196,8 @@ void CFG_Init(void)
             UINT br;
             f_read(&fo, g_cfg_array, sizeof(g_cfg_array), &br);
             f_close(&fo);
+            //Replace version to current
+            CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
         }
 
     }

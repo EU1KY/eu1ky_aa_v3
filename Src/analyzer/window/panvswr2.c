@@ -22,7 +22,7 @@
 #include "crash.h"
 //#include "dsp.h"
 //#include "gen.h"
-//#include "osl.h"
+#include "oslfile.h"
 
 #define X0 40
 #define Y0 20
@@ -54,43 +54,20 @@ void Sleep(uint32_t nms);
 //STUBS (temporary)
 typedef float complex DSP_RX;
 typedef float complex COMPLEX;
-#define R0 50.0f
-#define Z0 R0+0.0fi
-
-static COMPLEX OSL_GFromZ(COMPLEX Z)
-{
-    COMPLEX G = (Z - Z0) / (Z + Z0);
-    if (isnan(crealf(G)) || isnan(cimagf(G)))
-    {
-        return 0.99999999f+0.0fi;
-    }
-    return G;
-}
-
-static COMPLEX OSL_ZFromG(COMPLEX G)
-{
-    float gr2  = powf(crealf(G), 2);
-    float gi2  = powf(cimagf(G), 2);
-    float dg = powf((1.0f - crealf(G)), 2) + gi2;
-    float r = R0 * (1.0f - gr2 - gi2) / dg;
-    if (r < 0.0f) //Sometimes it overshoots a little due to limited calculation accuracy
-        r = 0.0f;
-    float x = R0 * 2.0f * cimagf(G) / dg;
-    return r + x * I;
-}
 
 static float DSP_CalcVSWR(DSP_RX Z)
 {
     float X2 = powf(cimagf(Z), 2);
     float R = crealf(Z);
+    float complex Z0 = (float)CFG_GetParam(CFG_PARAM_R0) + 0.0fi;
     if(R < 0.0)
     {
         R = 0.0;
     }
     float ro = sqrtf((powf((R - Z0), 2) + X2) / (powf((R + Z0), 2) + X2));
-    if(ro > .999)
+    if(ro > .999f)
     {
-        ro = 0.999;
+        ro = 0.999f;
     }
     X2 = (1.0 + ro) / (1.0 - ro);
     return X2;
@@ -199,7 +176,7 @@ static void DrawCursor()
     if (grType == GRAPH_SMITH)
     {
         DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
-        float complex g = OSL_GFromZ(rx);
+        float complex g = OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0));
         uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
         uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
         p = LCD_MakePoint(x, y);
@@ -229,7 +206,7 @@ static void DrawCursor()
 static void DrawCursorText()
 {
     DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
-    float ga = cabsf(OSL_GFromZ(rx)); //G magnitude
+    float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
 
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
         ((float)(f1 + cursorPos * BSVALUES[span] / WWIDTH))/1000.,
@@ -300,7 +277,7 @@ static void DrawGrid(int drawSwr)
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
 
     if (drawSwr)
-        sprintf(buf, "VSWR graph: %d kHz + %s", (int)f1, BSSTR[span]);
+        sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
     else
         sprintf(buf, "R/X graph: %d kHz + %s", (int)f1, BSSTR[span]);
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, modstrw + 10, 0, buf);
@@ -780,7 +757,7 @@ static void DrawSmith()
     int i;
 
     LCD_FillAll(LCD_BLACK);
-    sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end", (int)f1, BSSTR[span]);
+    sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
     LCD_FillCircle(LCD_MakePoint(cx0, cy0), 100, SMITH_CIRCLE_BG); //Chart circle
     LCD_Circle(LCD_MakePoint(cx0, cy0), 33, WGRIDCOLOR); //VSWR 2.0 circle
@@ -801,7 +778,7 @@ static void DrawSmith()
             float j;
             for (j = 1.; j < 1000.; j *= 1.3)
             {
-                float complex g = OSL_GFromZ(j + xx[i] * I);
+                float complex g = OSL_GFromZ(j + xx[i] * I, 50.f); //Intentoionally using 50 Ohms to calc arcs from the xx[] values
                 uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
                 uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
                 LCD_SetPixel(LCD_MakePoint(x, y), WGRIDCOLOR);
@@ -810,16 +787,16 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "10");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "0.2");
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y - 5, "25");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y - 5, "0.5");
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "100");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "2");
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "200");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "4");
                         break;
                     default:
                         break;
@@ -833,19 +810,19 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "-10");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "-0.2");
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y + 5, "-25");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y + 5, "-0.5");
                         break;
                     case 2:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "-50");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "-1");
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "-100");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "-2");
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "-200");
+                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "-4");
                         break;
                     default:
                         break;
@@ -856,11 +833,11 @@ static void DrawSmith()
     }
 
     //Draw R cirle labels
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "10");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "25");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "50");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "100");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "200");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "0.2");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "0.5");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "1");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "2");
+    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "4");
 
     LCD_Circle(LCD_MakePoint(cx0, cy0), 100, WGRIDCOLORBR); //Outer circle
 
@@ -870,7 +847,7 @@ static void DrawSmith()
         uint32_t lasty = 0;
         for(i = 0; i < WWIDTH; i++)
         {
-            float complex g = OSL_GFromZ(values[i]);
+            float complex g = OSL_GFromZ(values[i], (float)CFG_GetParam(CFG_PARAM_R0));
             uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
             uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
             if (i != 0)
@@ -884,7 +861,7 @@ static void DrawSmith()
         lastx = lasty = 0;
         for(i = 0; i < WWIDTH; i++)
         {
-            float complex g = OSL_GFromZ(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0));
+            float complex g = OSL_GFromZ(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0), (float)CFG_GetParam(CFG_PARAM_R0));
             uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
             uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
             if (i != 0)
@@ -1022,13 +999,13 @@ static void save_snapshot(void)
     if (FR_OK != fr)
         CRASHF("Failed to open file %s", path);
     sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
-                  "# MHz S RI R %d\r\n"
-                  "! Format: Frequency S-real S-imaginary (normalized to %d Ohm)\r\n", (int)R0, (int)R0);
+                  "# MHz S RI R 50\r\n"
+                  "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
     fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
     if (FR_OK != fr) goto CRASH_WR;
     for (i = 0; i < WWIDTH; i++)
     {
-        float complex g = OSL_GFromZ(values[i]);
+        float complex g = OSL_GFromZ(values[i], 50.f);
         float fmhz = (float)(f1 + i * BSVALUES[span] / WWIDTH) / 1000.0f;
         sprintf(wbuf, "%.3f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
         fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
