@@ -67,6 +67,8 @@
 					<Add directory="Src\fatfs" />
 					<Add directory="Src\fatfs\drivers" />
 					<Add directory="Src\config" />
+					<Add directory="Src\gen" />
+					<Add directory="Src\dsp" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--keep-locals" />
@@ -149,6 +151,8 @@
 					<Add directory="Src\fatfs" />
 					<Add directory="Src\fatfs\drivers" />
 					<Add directory="Src\config" />
+					<Add directory="Src\gen" />
+					<Add directory="Src\dsp" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--gdwarf-2" />
@@ -189,6 +193,22 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\config\config.h" />
+		<Unit filename="Src\analyzer\dsp\dsp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\dsp\dsp.h" />
+		<Unit filename="Src\analyzer\gen\gen.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\gen\gen.h" />
+		<Unit filename="Src\analyzer\gen\i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\gen\i2c.h" />
+		<Unit filename="Src\analyzer\gen\si5351.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\gen\si5351.h" />
 		<Unit filename="Src\analyzer\lcd\consbig.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -71,12 +71,12 @@ static float DSP_MeasuredDiffdB(void)
     return 0.f;
 }
 
-uint32_t DSP_MeasuredMagImv(void)
+static uint32_t DSP_MeasuredMagImv(void)
 {
     return 700;
 }
 
-uint32_t DSP_MeasuredMagQmv(void)
+static uint32_t DSP_MeasuredMagQmv(void)
 {
     return 700;
 }
