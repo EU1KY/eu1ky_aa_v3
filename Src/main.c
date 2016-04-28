@@ -90,13 +90,6 @@ int main(void)
     LCD_Init();
     TOUCH_Init();
 
-    uint8_t ret;
-    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100, FSAMPLE);
-    if (ret != AUDIO_OK)
-    {
-        CRASH("BSP_AUDIO_IN_Init failed");
-    }
-
     HAL_Delay(500);
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
         CRASH("FATFS_LinkDriver failed");
@@ -105,6 +98,13 @@ int main(void)
     CFG_Init();
 
     CFG_ParamWnd();
+
+    uint8_t ret;
+    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION), FSAMPLE);
+    if (ret != AUDIO_OK)
+    {
+        CRASH("BSP_AUDIO_IN_Init failed");
+    }
 
     for(;;)
     {

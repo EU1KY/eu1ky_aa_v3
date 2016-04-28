@@ -265,7 +265,7 @@ static void OSL_StoreFile(void)
     FIL fp;
     TCHAR path[64];
 
-    if (-1 == OSL_GetSelected())
+    if ((-1 == OSL_GetSelected()) || (osl_file_status != OSL_FILE_VALID))
         return;
     sprintf(path, "%s/%s.osl", g_cfg_osldir, OSL_GetSelectedName());
     f_mkdir(g_cfg_osldir);
@@ -350,8 +350,8 @@ void OSL_Calculate(void)
     }
 
     //Now store calculated data to file
-    OSL_StoreFile();
     osl_file_status = OSL_FILE_VALID;
+    OSL_StoreFile();
 }
 
 float complex OSL_GFromZ(float complex Z, float Rbase)

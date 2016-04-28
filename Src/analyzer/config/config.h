@@ -43,6 +43,7 @@ typedef enum
     CFG_PARAM_OSL_NSCANS,            //Number of scans to average during OSL
     CFG_PARAM_MEAS_NSCANS,           //Number of scans to average in measurement window
     CFG_PARAM_PAN_NSCANS,            //Number of scans to average in panoramic window
+    CFG_PARAM_LIN_ATTENUATION,       //Linear audio input attenuation, dB
 
     //---------------------
     CFG_NUM_PARAMS

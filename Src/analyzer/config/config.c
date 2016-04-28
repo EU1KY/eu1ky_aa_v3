@@ -85,9 +85,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     },
     {
         .id = CFG_PARAM_R0,
-        .idstring = "R0",
-        .nvalues = 4,
-        .values = CFG_IARR(28, 50, 75, 150, 300),
+        .idstring = "Z0",
+        .nvalues = 6,
+        .values = CFG_IARR(28, 50, 75, 100, 150, 300),
         .type = CFG_PARAM_T_U32,
         .dstring = "Selected base impedance (Z0) for Smith Chart and VSWR"
     },
@@ -140,6 +140,14 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Number of scans to average in panoramic window"
     },
+    {
+        .id = CFG_PARAM_LIN_ATTENUATION,
+        .idstring = "LIN_ATTENUATION",
+        .nvalues = 11,
+        .values = CFG_IARR(0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30),
+        .type = CFG_PARAM_T_U8,
+        .dstring = "Linar audio inputs attenuation, dB."
+    },
 };
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
@@ -164,6 +172,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_OSL_NSCANS, 5);
     CFG_SetParam(CFG_PARAM_MEAS_NSCANS, 5);
     CFG_SetParam(CFG_PARAM_PAN_NSCANS, 5);
+    CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 15);
 
     //Load params from SD
     FRESULT res;
@@ -434,27 +443,27 @@ void CFG_ParamWnd(void)
 
     LCD_FillAll(LCD_BLACK);
 
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, "Configuration edit");
+    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 100, 0, "Configuration editor");
 
-    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 36, .text = " < Prev param ", .font = FONT_FRAN,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_prev };
-    TEXTBOX_t hbNextParam = {.x0 = 380, .y0 = 36, .text = " Next param > ", .font = FONT_FRAN,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_next };
+    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 34, .text = " < Prev param ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev };
+    TEXTBOX_t hbNextParam = {.x0 = 300, .y0 = 34, .text = " Next param > ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next };
     TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
     TEXTBOX_t hbSave = {.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_GREEN, .cb = _hit_save };
 
-    TEXTBOX_t hbParamName = {.x0 = 10, .y0 = 64, .text = "    ", .font = FONT_FRANBIG,
+    TEXTBOX_t hbParamName = {.x0 = 10, .y0 = 70, .text = "    ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_GREEN, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
-    TEXTBOX_t hbParamDescr = {.x0 = 10, .y0 = 100, .text = "    ", .font = FONT_FRAN,
+    TEXTBOX_t hbParamDescr = {.x0 = 10, .y0 = 110, .text = "    ", .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
-    TEXTBOX_t hbValue = {.x0 = 50, .y0 = 120, .text = "    ", .font = FONT_FRANBIG,
+    TEXTBOX_t hbValue = {.x0 = 80, .y0 = 130, .text = "    ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
-    TEXTBOX_t hbPrevValue = {.x0 = 10, .y0 = 120, .text = "  <  ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_prev_value };
-    TEXTBOX_t hbNextValue = {.x0 = 400, .y0 = 120, .text = "  >  ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_WHITE, .cb = _hit_next_value };
+    TEXTBOX_t hbPrevValue = {.x0 = 10, .y0 = 130, .text = "  <  ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev_value };
+    TEXTBOX_t hbNextValue = {.x0 = 400, .y0 = 130, .text = "  >  ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next_value };
 
     TEXTBOX_CTX_t ctx = {0};
     pctx = &ctx;
