@@ -68,8 +68,10 @@ void si5351_init(void)
 {
     CAMERA_IO_Init();
 
+    si5351_write(SI5351_OUTPUT_ENABLE_CTRL, 0xFF); //Disable all outputs
+
     // Set crystal load capacitance
-    si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_8PF);
+    si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_10PF | 0x12); //Bits 5:0 should be written as 0x12
 
     //Disable spread spectrum (value after reset is unknown)
     si5351_write(SI5351_SSC_PARAM0, 0);
@@ -450,10 +452,9 @@ static void si5351_set_clk_control(enum si5351_clock clk, enum si5351_pll pll, i
     si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
-uint8_t si5351_read_device_status(void)
+uint8_t si5351_read_device_reg(uint8_t reg)
 {
-    uint8_t status = 0;
-    si5351_read(0, &status);
-    return status;
-
+    uint8_t data = 0;
+    si5351_read(reg, &data);
+    return data;
 }

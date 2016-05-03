@@ -36,7 +36,7 @@ int g_favor_precision = 0; //Nonzero value increases number of retries in case o
 //Considering ADC clock 9 MHz, 1.5 ADC clocks for sampling, and 12.5 clocks for
 //conversion, we obtain sampling frequency for our DSP algorithms:
 static const float fSample = (9000.f / 14.f) * 1000.f;
-static const float targetFreq = 10045.f; //Falls exactly in the middle of bin
+static const float targetFreq = 10031.f; //Falls exactly in the middle of bin
 
 //Goertzel algorithm constants
 #define BIN 8 //(int)roundf(((0.5f + NSAMPLES) * targetFreq) / fSample);

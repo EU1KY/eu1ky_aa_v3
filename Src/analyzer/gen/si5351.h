@@ -240,7 +240,7 @@ extern "C" {
 void si5351_init(void);
 void si5351_set_freq(uint32_t, enum si5351_clock);
 void si5351_clock_enable(enum si5351_clock clk, uint8_t enable);
-uint8_t si5351_read_device_status(void);
+uint8_t si5351_read_device_reg(uint8_t reg);
 
 #ifdef __cplusplus
 }

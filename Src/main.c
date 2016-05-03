@@ -13,6 +13,8 @@
 #include "sd_diskio.h"
 #include "config.h"
 #include "crash.h"
+#include "gen.h"
+#include "si5351.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -98,6 +100,8 @@ int main(void)
     CFG_Init();
 
     CFG_ParamWnd();
+
+    si5351_init();
 
     uint8_t ret;
     ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION), FSAMPLE);
