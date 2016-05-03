@@ -27,9 +27,8 @@
 #include <math.h>
 
 #include "si5351.h"
-#include "i2c.h"
+#include "config.h"
 
-static uint32_t si5351_XTAL_FREQ = SI5351_XTAL_FREQ;
 struct Si5351Status dev_status;
 struct Si5351IntStatus dev_int_status;
 
@@ -48,6 +47,13 @@ static uint8_t si5351_read(uint8_t, uint8_t *);
 static void si5351_set_clk_control(enum si5351_clock, enum si5351_pll, int isIntegerMode, enum si5351_drive drive);
 static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum si5351_clock clk);
 
+//Ext I2C port used for camera is wired to Arduino UNO connector when SB4 and SB1 jumpers are set instead of SB5 and SB3.
+extern void     CAMERA_IO_Init(void);
+extern void     CAMERA_IO_Write(uint8_t addr, uint8_t reg, uint8_t value);
+extern uint8_t  CAMERA_IO_Read(uint8_t addr, uint8_t reg);
+extern void     CAMERA_Delay(uint32_t delay);
+extern void     CAMERA_IO_WriteBulk(uint8_t addr, uint8_t reg, uint8_t* values, uint16_t nvalues);
+
 /******************************/
 /* Suggested public functions */
 /******************************/
@@ -60,8 +66,7 @@ static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum
  */
 void si5351_init(void)
 {
-    si5351_XTAL_FREQ = (uint32_t)((int)SI5351_XTAL_FREQ + BKUP_LoadXtalCorr());
-    i2c_init();
+    CAMERA_IO_Init();
 
     // Set crystal load capacitance
     si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_8PF);
@@ -305,6 +310,8 @@ static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
     double divpll, divms, fpll, k;
     uint8_t rdiv = SI5351_OUTPUT_CLK_DIV_1;
 
+    uint32_t si5351_XTAL_FREQ = (uint32_t)((int)CFG_GetParam(CFG_PARAM_SI5351_XTAL_FREQ) + (int)CFG_GetParam(CFG_PARAM_SI5351_CORR));
+
     if (freq < SI5351_MULTISYNTH_MIN_FREQ / 128)
         freq = SI5351_MULTISYNTH_MIN_FREQ / 128;
     else if (freq > SI5351_MULTISYNTH_MAX_FREQ)
@@ -390,7 +397,7 @@ static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
         si5351_set_ms(a, b, c, rdiv, clk);
         si5351_set_clk_control(clk, SI5351_PLLB, (a == 4) || (a == 6), SI5351_DRIVE_8MA);
     }
-    #if DEBUG
+    #if 0
     {
         //Calculate and print actual frequency
         double fpll_actual;
@@ -409,40 +416,19 @@ static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
 
 static uint8_t si5351_write_bulk(uint8_t addr, uint8_t bytes, uint8_t *data)
 {
-    int i;
-
-    i2c_start();
-    i2c_write(SI5351_BUS_BASE_ADDR);
-    i2c_write(addr);
-    for(i = 0; i < bytes; i++)
-    {
-        i2c_write(data[i]);
-    }
-    i2c_stop();
+    CAMERA_IO_WriteBulk(CFG_GetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR), addr, data, (uint16_t)bytes);
     return 0;
 }
 
 static uint8_t si5351_write(uint8_t addr, uint8_t data)
 {
-    i2c_start();
-    i2c_write(SI5351_BUS_BASE_ADDR);
-    i2c_write(addr);
-    i2c_write(data);
-    i2c_stop();
+    CAMERA_IO_Write(CFG_GetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR), addr, data);
     return 0;
 }
 
 static uint8_t si5351_read(uint8_t addr, uint8_t *data)
 {
-    i2c_start();
-    i2c_write(SI5351_BUS_BASE_ADDR);
-    i2c_write(addr);
-    i2c_stop();
-    i2c_start();
-    i2c_write(SI5351_BUS_BASE_ADDR | 1);
-
-    *data = i2c_read_nack();
-    i2c_stop();
+    *data = CAMERA_IO_Read(CFG_GetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR), addr);
     return 0;
 }
 

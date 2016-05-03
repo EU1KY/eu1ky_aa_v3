@@ -44,6 +44,7 @@ typedef enum
     CFG_PARAM_MEAS_NSCANS,           //Number of scans to average in measurement window
     CFG_PARAM_PAN_NSCANS,            //Number of scans to average in panoramic window
     CFG_PARAM_LIN_ATTENUATION,       //Linear audio input attenuation, dB
+    CFG_PARAM_F_LO_DIV_BY_TWO,       //LO frequency is divided by two in quadrature mixer
 
     //---------------------
     CFG_NUM_PARAMS

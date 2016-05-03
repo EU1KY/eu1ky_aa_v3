@@ -23,7 +23,6 @@
  */
 
 #include <stdint.h>
-#include "i2c.h"
 #include "config.h"
 
 #ifndef SI5351_H_
@@ -31,6 +30,7 @@
 
 /* Define definitions */
 
+/*
 #ifndef SI5351_BUS_BASE_ADDR
 #define SI5351_BUS_BASE_ADDR                0xC0
 #endif
@@ -38,6 +38,7 @@
 #ifndef SI5351_XTAL_FREQ
 #define SI5351_XTAL_FREQ                    27000000
 #endif
+*/
 
 #define SI5351_PLL_FIXED                    900000000
 

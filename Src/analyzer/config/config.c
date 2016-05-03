@@ -75,6 +75,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Si5351 Xtal frequency correction, Hz"
     },
     {
+        .id = CFG_PARAM_F_LO_DIV_BY_TWO,
+        .idstring = "F_LO_DIV_BY_TWO",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .values = CFG_IARR(    0,     1),
+        .strvalues = CFG_SARR("No", "Yes"),
+        .dstring = "Set to Yes if quadrature mixer is used that divides LO frequency by 2",
+    },
+    {
         .id = CFG_PARAM_OSL_SELECTED,
         .idstring = "OSL_SELECTED",
         .nvalues = 17,
@@ -173,6 +182,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_MEAS_NSCANS, 5);
     CFG_SetParam(CFG_PARAM_PAN_NSCANS, 5);
     CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 15);
+    CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 1);
 
     //Load params from SD
     FRESULT res;
