@@ -21,24 +21,30 @@ typedef enum
     CFG_PARAM_T_CH,  //char**[]
 } CFG_PARAM_TYPE_t;
 
-#pragma pack(push,1)
 typedef struct
 {
-    CFG_PARAM_t id;
-    const char *idstring;
-    uint32_t nvalues;
-    const int32_t *values;
-    const char **strvalues;
-    uint32_t type;
-    const char *dstring;
+    CFG_PARAM_t id;                    //ID of the configuration parameter, see CFG_PARAM_t
+    const char *idstring;              //Short parameter name to be displayed
+    uint32_t nvalues;                  //Number of values in allowed values array. Can be 0 if not relevant.
+    const int32_t *values;             //Array of integer values that can be selected for parameter. Length is specified in .values
+    const char **strvalues;            //Array of alternative string representations for values that can be selected for parameter. Length of the array must be in .values
+    CFG_PARAM_TYPE_t type;             //Parameter value type, see CFG_PARAM_TYPE_t
+    const char *dstring;               //Detailed description of the parameter
+    uint32_t (*isvalid)(void);         //Optional callback that can be defined. This function should return zero if parameter should not be displayed.
 } CFG_CHANGEABLE_PARAM_DESCR_t;
-#pragma pack(pop)
 
 //Integer array macro
 #define CFG_IARR(...) (const int32_t[]){__VA_ARGS__}
 //Character array macro
 #define CFG_SARR(...) (const char*[]){__VA_ARGS__}
 
+//Callback that returns nonzero if Si5351 frequency synthesizer is selected
+static uint32_t isSi5351(void)
+{
+    return (uint32_t)(0 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
+}
+
+//Array of user changeable parameters descriptors
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 {
     {
@@ -55,24 +61,26 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .idstring = "SI5351_XTAL_FREQ",
         .nvalues = 2,
         .values = CFG_IARR(25000000ul, 27000000ul),
-        .strvalues = 0,
         .type = CFG_PARAM_T_U32,
-        .dstring = "Si5351 XTAL frequency, Hz"
+        .dstring = "Si5351 XTAL frequency, Hz",
+        .isvalid = isSi5351,
     },
     {
         .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
         .idstring = "SI5351_BUS_BASE_ADDR",
         .nvalues = 2,
         .values = CFG_IARR(   0xC0,   0xCE),
-        .strvalues = CFG_SARR("0xC0", "0xCE"),
+        .strvalues = CFG_SARR("C0h", "CEh"),
         .type = CFG_PARAM_T_U8,
-        .dstring = "Si5351 i2c bus base address (default 0xC0)"
+        .dstring = "Si5351 i2c bus base address (default C0h)",
+        .isvalid = isSi5351,
     },
     {
         .id = CFG_PARAM_SI5351_CORR,
         .idstring = "SI5351_CORR",
         .type = CFG_PARAM_T_S16,
-        .dstring = "Si5351 Xtal frequency correction, Hz"
+        .dstring = "Si5351 XTAL frequency correction, Hz",
+        .isvalid = isSi5351,
     },
     {
         .id = CFG_PARAM_F_LO_DIV_BY_TWO,
@@ -81,7 +89,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 2,
         .values = CFG_IARR(    0,     1),
         .strvalues = CFG_SARR("No", "Yes"),
-        .dstring = "Set to Yes if quadrature mixer is used that divides LO frequency by 2",
+        .dstring = "Set to Yes if LO frequency is divided by 2 (e.g. quadrature mixer is used)",
     },
     {
         .id = CFG_PARAM_OSL_SELECTED,
@@ -164,7 +172,7 @@ static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / size
 //CFG module initialization
 void CFG_Init(void)
 {
-    //Set defaults for parameters
+    //Set defaults for all parameters
     CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
     CFG_SetParam(CFG_PARAM_PAN_F1, 14000000ul);
     CFG_SetParam(CFG_PARAM_PAN_SPAN, 1ul);
@@ -184,7 +192,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 15);
     CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 1);
 
-    //Load params from SD
+    //Load parameters from file on SD card
     FRESULT res;
     FIL fo = { 0 };
 
@@ -194,34 +202,41 @@ void CFG_Init(void)
         CRASH("No SD card");
     if (FR_OK == res)
     {
+        //Configuration file has been found on the SD card
         if (0 == finfo.fsize)
         {
+            //Configuration file is empty - flush default configuration to it
             CFG_Flush();
         }
+        //Open configuration file for reading
         res = f_open(&fo, g_cfg_fpath, FA_READ);
         if (finfo.fsize < sizeof(g_cfg_array))
         {
+            //The configuration file on the SD card is smaller than configuration structure
             //Read partially
             UINT br;
             f_read(&fo, g_cfg_array, finfo.fsize, &br);
             f_close(&fo);
-            //Replace version to current
+            //Replace configuration version to current
             CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
             //And write extended file
             CFG_Flush();
         }
         else
         {
+            //The configuration file on the SD card is equal or bigger in size than configuration structure
+            //Read the whole structure
             UINT br;
             f_read(&fo, g_cfg_array, sizeof(g_cfg_array), &br);
             f_close(&fo);
-            //Replace version to current
+            //Replace configuration version to current, but don't flush it
             CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
         }
 
     }
     else
     {
+        //Configuration file has not been found on the SD card
         res = f_mkdir(g_aa_dir);
         res = f_mkdir(g_cfg_dir);
         CFG_Flush();
@@ -399,9 +414,19 @@ static uint32_t hbValIdx = 0;
 
 static void _hit_prev(void)
 {
-    if (--selected_param >= cfg_ch_descr_table_num)
-        selected_param = cfg_ch_descr_table_num - 1;
-
+    for(;;)
+    {
+        if (--selected_param >= cfg_ch_descr_table_num)
+            selected_param = cfg_ch_descr_table_num - 1;
+        //Bypass changeable parameters for which isvalid() is defined and it returns zero
+        if (cfg_ch_descr_table[selected_param].isvalid != 0)
+        {
+            if (cfg_ch_descr_table[selected_param].isvalid())
+                break;
+        }
+        else
+            break;
+    }
     TEXTBOX_SetText(pctx, hbNameIdx, CFG_GetStringName(selected_param));
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
     TEXTBOX_SetText(pctx, hbDescrIdx, CFG_GetStringDescr(selected_param));
@@ -409,9 +434,20 @@ static void _hit_prev(void)
 
 static void _hit_next(void)
 {
-    selected_param++;
-    if (selected_param >= cfg_ch_descr_table_num)
-        selected_param = 0;
+    for (;;)
+    {
+        selected_param++;
+        if (selected_param >= cfg_ch_descr_table_num)
+            selected_param = 0;
+        //Bypass changeable parameters for which isvalid() is defined and it returns zero
+        if (cfg_ch_descr_table[selected_param].isvalid != 0)
+        {
+            if (cfg_ch_descr_table[selected_param].isvalid())
+                break;
+        }
+        else
+            break;
+    }
     TEXTBOX_SetText(pctx, hbNameIdx, CFG_GetStringName(selected_param));
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
     TEXTBOX_SetText(pctx, hbDescrIdx, CFG_GetStringDescr(selected_param));
@@ -444,14 +480,15 @@ static void _hit_next_value(void)
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
 }
 
-//Changeable parameters setting window
-//TODO!!!
+// Changeable parameters editor window
+// See these parameters described in cfg_ch_descr_table
 void CFG_ParamWnd(void)
 {
     rqExit = 0;
     selected_param = 0;
 
     LCD_FillAll(LCD_BLACK);
+    while (TOUCH_IsPressed());
 
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 100, 0, "Configuration editor");
 
