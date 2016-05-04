@@ -33,17 +33,14 @@ static UART_HandleTypeDef UartHandle = {0};
 
 void uart_init(void)
 {
-    memset(&UartHandle, 0, sizeof(UartHandle));
-    UartHandle.Instance        = USART1;
-    UartHandle.Init.BaudRate   = 9600;
+    UartHandle.Init.BaudRate = 921600;
     UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-    UartHandle.Init.StopBits   = UART_STOPBITS_1;
-    UartHandle.Init.Parity     = UART_PARITY_NONE;
-    UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
-    UartHandle.Init.Mode       = UART_MODE_TX_RX;
-    UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
-    //UartHandle.Init.OneBitSampling = UART_ONEBIT_SAMPLING_ENABLED;
-    HAL_UART_Init(&UartHandle);
+    UartHandle.Init.StopBits = UART_STOPBITS_1;
+    UartHandle.Init.Parity = UART_PARITY_NONE;
+    UartHandle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    UartHandle.Init.Mode = UART_MODE_TX_RX;
+
+    BSP_COM_Init(COM1, &UartHandle);
 }
 
 void flash_example()
@@ -78,6 +75,13 @@ void flash_example()
     }
 }
 
+_ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
+{
+    HAL_UART_Transmit(&UartHandle, (uint8_t*)ptr, len, 0xFFFFFFFF);
+    return len;
+}
+
+
 static FATFS SDFatFs;  // File system object for SD card logical drive
 static char SDPath[4];        // SD card logical drive path
 
@@ -109,6 +113,22 @@ int main(void)
     {
         CRASH("BSP_AUDIO_IN_Init failed");
     }
+
+    #if 0
+    int i = 0;
+    for(;;)
+    {
+        uint8_t rxb[4];
+        if (HAL_OK == HAL_UART_Receive(&UartHandle, rxb, 1, 100))
+        {
+            printf("%02X\r\n", rxb[0]);
+        }
+        else
+        {
+            printf("%f\r\n", ((float)i++)/ 100.f);
+        }
+    }
+    #endif
 
     for(;;)
     {

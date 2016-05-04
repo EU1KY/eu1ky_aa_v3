@@ -21,7 +21,7 @@
 #include "ff.h"
 #include "crash.h"
 //#include "dsp.h"
-//#include "gen.h"
+#include "gen.h"
 #include "oslfile.h"
 
 #define X0 40
@@ -73,20 +73,15 @@ static float DSP_CalcVSWR(DSP_RX Z)
     return X2;
 }
 
-static uint32_t fff = 0;
 static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
 {
-    fff = freqHz;
-    Sleep(2);
-}
-
-static void GEN_SetMeasurementFreq(uint32_t f)
-{
+    GEN_SetMeasurementFreq(freqHz);
+    Sleep(10);
 }
 
 static DSP_RX DSP_MeasuredZ(void)
 {
-    return (((float)fff) / 100000.f) + 23.0fi;
+    return (((float)GEN_GetLastFreq()) / 100000.f) + 23.0fi;
 }
 //-------------------------------------------
 

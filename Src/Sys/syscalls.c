@@ -34,6 +34,7 @@ char *heap_end = NULL;
 * Purpose
 *   Reentrant write function. Outputs the data to Stimulus port 0.
 */
+#if 0
 _ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
 {
     int i;
@@ -58,6 +59,7 @@ _ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
     }
     return len;
 }
+#endif
 
 /*********************************************************************
 *       _sbrk_r()

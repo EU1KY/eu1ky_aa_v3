@@ -152,7 +152,7 @@ void HAL_LTDC_MspDeInit(LTDC_HandleTypeDef *hltdc)
   __HAL_RCC_LTDC_RELEASE_RESET();
 }
 
-void HAL_UART_MspInit(UART_HandleTypeDef *huart)
+void _HAL_UART_MspInit(UART_HandleTypeDef *huart)
 {
     GPIO_InitTypeDef  GPIO_InitStruct;
 
