@@ -8,6 +8,6 @@
 #ifndef GENERATOR_H_
 #define GENERATOR_H_
 
-void GENERATOR_Proc(void);
+void GENERATOR_Window_Proc(void);
 
 #endif

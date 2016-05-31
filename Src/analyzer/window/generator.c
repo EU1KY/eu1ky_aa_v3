@@ -11,146 +11,177 @@
 #include "dsp.h"
 #include "font.h"
 #include "touch.h"
-#include "bkup.h"
 #include "gen.h"
+#include "config.h"
+#include "hit.h"
 
-#define GEN_BAND_FMIN 100000ul
-#define GEN_BAND_FMAX 148000000ul
+static uint32_t fChanged = 0;
+static uint32_t rqExit = 0;
 
 void Sleep(uint32_t ms);
-
-static uint32_t GenFreq = 10000000;
 
 static void ShowF()
 {
     char str[50];
-    sprintf(str, "F: %u kHz", (unsigned int)(GenFreq / 1000));
+    sprintf(str, "F: %u kHz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) / 1000));
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 40);
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 160 - FONT_GetStrPixelWidth(FONT_FRANBIG, str) / 2, 40, str);
 }
 
-//Handle touch screen in generator mode
-static int Touch()
+static void GENERATOR_SwitchWindow(void)
 {
-    LCDPoint pt;
-    uint32_t step = 100000;
-    while(TOUCH_Poll(&pt))
-    {
-        if(pt.y > 120)
-        {
-            return 1;    //request to change window
-        }
-
-        if(pt.x < 40 || pt.x > 280)
-        {
-            step = 500000;
-        }
-        else if(pt.x < 90 || pt.x > 230)
-        {
-            step = 100000;
-        }
-        else
-        {
-            step = 5000;
-        }
-        uint32_t currF = GenFreq;
-        if(currF > step && currF % step != 0)
-        {
-            currF -= (currF % step);
-        }
-        if(currF < GEN_BAND_FMIN)
-        {
-            currF = GEN_BAND_FMIN;
-        }
-        if(pt.x > 160)
-        {
-            if(currF <= GEN_BAND_FMAX)
-            {
-                if ((currF + step) > GEN_BAND_FMAX)
-                    GenFreq = GEN_BAND_FMAX;
-                else
-                    GenFreq = currF + step;
-                GEN_SetMeasurementFreq(GenFreq);
-                BKUP_SaveFGen(GenFreq);
-            }
-            else
-            {
-                GEN_SetMeasurementFreq(currF);
-            }
-        }
-        else
-        {
-            if(currF > GEN_BAND_FMIN)
-            {
-                if(currF > step && (currF - step) >= GEN_BAND_FMIN)
-                {
-                    GenFreq = currF - step;
-                    GEN_SetMeasurementFreq(GenFreq);
-                    BKUP_SaveFGen(GenFreq);
-                }
-                else
-                {
-                    GEN_SetMeasurementFreq(currF);
-                }
-            }
-            else
-            {
-                GEN_SetMeasurementFreq(currF);
-            }
-        }
-        ShowF();
-        Sleep(50);
-    }
-    return 0; //no request to change window
+    rqExit = 1;
 }
 
-
-void GENERATOR_Proc(void)
+static void FDecr(uint32_t step)
 {
-    //Load saved frequency value from BKUP registers 4, 5
-    //to GenFreq
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_GEN_F);
+    if(MeasurementFreq > step && MeasurementFreq % step != 0)
     {
-        uint32_t fbkup = BKUP_LoadFGen();
-        if (fbkup >= GEN_BAND_FMIN && fbkup <= GEN_BAND_FMAX && (fbkup % 5000) == 0)
+        MeasurementFreq -= (MeasurementFreq % step);
+        CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq < BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+        CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq > BAND_FMIN)
+    {
+        if(MeasurementFreq > step && (MeasurementFreq - step) >= BAND_FMIN)
         {
-            GenFreq = fbkup;
+            MeasurementFreq = MeasurementFreq - step;
+            CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
+            fChanged = 1;
         }
+    }
+}
+
+static void FIncr(uint32_t step)
+{
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_GEN_F);
+    if(MeasurementFreq > step && MeasurementFreq % step != 0)
+    {
+        MeasurementFreq -= (MeasurementFreq % step);
+        CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq < BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+        CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
+        fChanged = 1;
+    }
+    if(MeasurementFreq < BAND_FMAX)
+    {
+        if ((MeasurementFreq + step) > BAND_FMAX)
+            MeasurementFreq = BAND_FMAX;
         else
+            MeasurementFreq = MeasurementFreq + step;
+        CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
+        fChanged = 1;
+    }
+}
+
+static void GENERATOR_FDecr_500k(void)
+{
+    FDecr(500000);
+}
+static void GENERATOR_FDecr_100k(void)
+{
+    FDecr(100000);
+}
+static void GENERATOR_FDecr_5k(void)
+{
+    FDecr(5000);
+}
+static void GENERATOR_FIncr_5k(void)
+{
+    FIncr(5000);
+}
+static void GENERATOR_FIncr_100k(void)
+{
+    FIncr(100000);
+}
+static void GENERATOR_FIncr_500k(void)
+{
+    FIncr(500000);
+}
+
+static const struct HitRect hitArr[] =
+{
+    //        x0,  y0, width, height, callback
+    HITRECT(   0, 200,   100,     79, GENERATOR_SwitchWindow),
+    HITRECT(   0,   0,  80, 150, GENERATOR_FDecr_500k),
+    HITRECT(  80,   0,  80, 150, GENERATOR_FDecr_100k),
+    HITRECT( 160,   0,  70, 150, GENERATOR_FDecr_5k),
+    HITRECT( 250,   0,  70, 150, GENERATOR_FIncr_5k),
+    HITRECT( 320,   0,  80, 150, GENERATOR_FIncr_100k),
+    HITRECT( 400,   0,  80, 150, GENERATOR_FIncr_500k),
+    HITEND
+};
+
+
+void GENERATOR_Window_Proc(void)
+{
+    {
+        uint32_t fbkup = CFG_GetParam(CFG_PARAM_GEN_F);
+        if (!(fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 5000) == 0))
         {
-            GenFreq = 14000000ul;
-            BKUP_SaveFGen(GenFreq);
+            CFG_SetParam(CFG_PARAM_GEN_F, 14000000);
+            CFG_Flush();
         }
     }
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 70, 2, "Generator mode");
     Sleep(250);
+
     while(TOUCH_IsPressed());
 
     //Draw freq change areas bar
     uint16_t y;
     for (y = 0; y <2; y++)
     {
-        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(39,y), LCD_RGB(15,15,63));
-        LCD_Line(LCD_MakePoint(40,y), LCD_MakePoint(89,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(90,y), LCD_MakePoint(155,y),  LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(165,y), LCD_MakePoint(230,y), LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(231,y), LCD_MakePoint(280,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(281,y), LCD_MakePoint(319,y), LCD_RGB(15,15,63));
+        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
+        LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
+        LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
+        LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
+        LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
+        LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
     }
 
-    GEN_SetMeasurementFreq(GenFreq);
+    rqExit = 0;
+    fChanged = 0;
+
+    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
     ShowF();
     while(1)
     {
-        if(Touch())
+        LCDPoint pt;
+        while (TOUCH_Poll(&pt))
         {
-            GEN_SetMeasurementFreq(0);
-            return; //change window
+            HitTest(hitArr, pt.x, pt.y);
+            if (rqExit)
+            {
+                GEN_SetMeasurementFreq(0);
+                while(TOUCH_IsPressed());
+                return; //Change window
+            }
+            if (fChanged)
+                ShowF();
+            Sleep(50);
+        }
+        if (fChanged)
+        {
+            CFG_Flush();
+            fChanged = 0;
         }
 
         //Measure without changing current frequency and without any corrections
-        DSP_Measure(0, 0, 0, 7);
+        DSP_Measure(0, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 100);
         FONT_Printf(0, 100, "Raw Vi: %.1f mV, Vq: %.1f mV. Diff %.2f dB", DSP_MeasuredMagQmv(),
@@ -170,7 +201,6 @@ void GENERATOR_Proc(void)
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
-
         Sleep(100);
     }
-};
+}

@@ -14,85 +14,25 @@
 #include "font.h"
 #include "touch.h"
 #include "hit.h"
-//#include "dsp.h"
-//#include "gen.h"
+#include "dsp.h"
+#include "gen.h"
 #include "stm32f746xx.h"
 #include "oslfile.h"
 
-void Sleep(uint32_t ms);
+extern void Sleep(uint32_t ms);
 
 //==============================================================================
-//Temporary stubs
-
-typedef float complex DSP_RX;
-typedef float complex COMPLEX;
-
-static float DSP_CalcVSWR(DSP_RX Z)
-{
-    float X2 = powf(cimagf(Z), 2);
-    float R = crealf(Z);
-    float complex Z0 = (float)CFG_GetParam(CFG_PARAM_R0) + 0.0fi;
-    if(R < 0.0)
-    {
-        R = 0.0;
-    }
-    float ro = sqrtf((powf((R - Z0), 2) + X2) / (powf((R + Z0), 2) + X2));
-    if(ro > .999f)
-    {
-        ro = 0.999f;
-    }
-    X2 = (1.0 + ro) / (1.0 - ro);
-    return X2;
-}
-
-static uint32_t fff = 0;
-static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
-{
-    fff = freqHz;
-    Sleep(2);
-}
-
-static uint32_t lastfreq = 100000;
-static void GEN_SetMeasurementFreq(uint32_t f)
-{
-    lastfreq = f;
-}
-static uint32_t GEN_GetLastFreq(void)
-{
-    return lastfreq;
-}
-static DSP_RX DSP_MeasuredZ(void)
-{
-    return (((float)fff) / 100000.f) + 23.0fi;
-}
-
-static float DSP_MeasuredDiffdB(void)
-{
-    return 0.f;
-}
-
-static uint32_t DSP_MeasuredMagImv(void)
-{
-    return 700;
-}
-
-static uint32_t DSP_MeasuredMagQmv(void)
-{
-    return 700;
-}
-//==============================================================================
-
-static uint32_t MeasurementFreq = 14000000;
 static float vswr500[21];
 static uint32_t rqExit = 0;
 static uint32_t fChanged = 0;
+
 #define SCAN_ORIGIN_X 20
 #define SCAN_ORIGIN_Y 209
 
 static void ShowF()
 {
     char str[50];
-    sprintf(str, "F: %u kHz        ", (unsigned int)(MeasurementFreq / 1000));
+    sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
 }
 
@@ -114,12 +54,12 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex G)
 static int Scan500(void)
 {
     static int i = 0;
-    int fq = (int)MeasurementFreq + (i - 10) * 50000;
+    int fq = (int)CFG_GetParam(CFG_PARAM_MEAS_F) + (i - 10) * 50000;
     if (fq > 0)
     {
         GEN_SetMeasurementFreq(fq);
         Sleep(10);
-        DSP_Measure(fq, 1, 1, 5);
+        DSP_Measure(fq, 1, 5);
         vswr500[i] = DSP_CalcVSWR(DSP_MeasuredZ());
     }
     else
@@ -228,6 +168,7 @@ static void MEASUREMENT_SwitchWindowing(void)
 
 static void FDecr(uint32_t step)
 {
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
     if(MeasurementFreq > step && MeasurementFreq % step != 0)
     {
         MeasurementFreq -= (MeasurementFreq % step);
@@ -253,6 +194,7 @@ static void FDecr(uint32_t step)
 
 static void FIncr(uint32_t step)
 {
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
     if(MeasurementFreq > step && MeasurementFreq % step != 0)
     {
         MeasurementFreq -= (MeasurementFreq % step);
@@ -323,14 +265,9 @@ void MEASUREMENT_Proc(void)
     //Load saved middle frequency value from BKUP registers 2, 3
     //to MeasurementFreq
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
-    if (fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 10000) == 0)
+    if (!(fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 10000) == 0))
     {
-        MeasurementFreq = fbkup;
-    }
-    else
-    {
-        MeasurementFreq = 14000000ul;
-        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
         CFG_Flush();
     }
 
@@ -370,9 +307,9 @@ void MEASUREMENT_Proc(void)
     for(;;)
     {
         int scanres = Scan500();
-        GEN_SetMeasurementFreq(MeasurementFreq);
+        GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
         Sleep(10);
-        DSP_Measure(MeasurementFreq, 1, 1, 7);
+        DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
 
         rx = DSP_MeasuredZ();
         MeasurementModeDraw(rx);
@@ -408,4 +345,4 @@ void MEASUREMENT_Proc(void)
         }
         Sleep(50);
     }
-};
+}

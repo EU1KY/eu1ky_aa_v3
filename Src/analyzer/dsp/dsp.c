@@ -110,6 +110,7 @@ static float complex Goertzel(int channel)
 //Prepare ADC for sampling two channels
 void DSP_Init(void)
 {
+    //TODO
 }
 
 #define MAXNMEAS 50
@@ -225,11 +226,9 @@ void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
 REMEASURE:
     for (i = 0; i < NMEAS; i++)
     {
-        //ConfigDMA();
-        //ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-        //while(!DMA_GetFlagStatus(DMA1_FLAG_TC1)); //Blocks until measurement is finished
-        //DMA_ClearFlag(DMA1_FLAG_TC1);
-        //ADC_SoftwareStartConvCmd(ADC1, DISABLE);
+        //TODO: collect data
+
+        //TODO: replace Goertzel with FFT
 
         //Apply Goertzel agorithm to sampled data
         res_i = Goertzel(0);
@@ -245,13 +244,15 @@ REMEASURE:
             pdif += 2 * M_PI;
         else if (pdif > M_PI)
             pdif -= 2 * M_PI;
-#ifdef F_LO_DIVIDED_BY_TWO
-        //Correct quadrature phase shift
-        if (freqHz > BAND_FMAX) //Working on 3rd harmonic of LO
-            pdif -= M_PI_2;
-        else
-            pdif += M_PI_2;
-#endif
+
+        if (CFG_GetParam(CFG_PARAM_F_LO_DIV_BY_TWO))
+        {
+            //Correct quadrature phase shift
+            if (freqHz > (BAND_FMAX / 2)) //Working on 3rd harmonic of LO
+                pdif -= M_PI_2;
+            else
+                pdif += M_PI_2;
+        }
         phdif_buf[i] = pdif;
     }
 
@@ -340,7 +341,6 @@ static float DSP_CalcX(void)
 {
     return sinf(phdif) * Rtotal * magdif;
 }
-
 
 //Calculate VSWR from Z
 float DSP_CalcVSWR(DSP_RX Z)

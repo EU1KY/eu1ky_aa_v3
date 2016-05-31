@@ -7,6 +7,7 @@
 #include "touch.h"
 #include "panvswr2.h"
 #include "measurement.h"
+#include "generator.h"
 #include "fftwnd.h"
 #include "ff.h"
 #include "ff_gen_drv.h"
@@ -134,6 +135,7 @@ int main(void)
     {
         PANVSWR2_Proc();
         MEASUREMENT_Proc();
+        GENERATOR_Window_Proc();
         FFTWND_Proc();
     }
 
