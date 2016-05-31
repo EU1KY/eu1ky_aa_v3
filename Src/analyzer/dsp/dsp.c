@@ -223,6 +223,15 @@ void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
     }
     freqHz = GEN_GetLastFreq();
 
+    magmv_i = 700;
+    magmv_q = 701;
+
+    magdif = 1.22;
+    phdifdeg = 5.;
+    magdifdb = 1.5;
+    mZ = 55. + 3.5 * I;
+    return;
+
 REMEASURE:
     for (i = 0; i < NMEAS; i++)
     {
