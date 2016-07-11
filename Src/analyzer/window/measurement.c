@@ -38,11 +38,12 @@ static void ShowF()
 
 static void DrawSmallSmith(int X0, int Y0, int R, float complex G)
 {
+    LCDColor sc = LCD_RGB(96, 96, 96);
     LCD_FillCircle(LCD_MakePoint(X0, Y0), R, LCD_BLACK);
-    LCD_Circle(LCD_MakePoint(X0, Y0), R, LCD_RGB(64, 64, 64));
-    LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, LCD_RGB(64, 64, 64));
-    LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, LCD_RGB(64, 64, 64));
-    LCD_Line(LCD_MakePoint(X0 - R, Y0), LCD_MakePoint(X0 + R, Y0), LCD_RGB(64, 64, 64));
+    LCD_Circle(LCD_MakePoint(X0, Y0), R, sc);
+    LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, sc);
+    LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, sc);
+    LCD_Line(LCD_MakePoint(X0 - R, Y0), LCD_MakePoint(X0 + R, Y0), sc);
 
     int x = (int)(crealf(G) * R) + X0;
     int y = Y0 - (int)(cimagf(G) * R);

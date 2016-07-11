@@ -6,6 +6,8 @@
 #include "config.h"
 #include "font.h"
 #include "LCD.h"
+#include "gen.h"
+#include "dsp.h"
 
 #define MAX_OSLFILES 16
 #define OSL_BASE_R0 50.0f // Note: all OSL calibration coefficients are calculated using G based on 50 Ohms, not on OSL_BASE_R0 !!!
@@ -44,29 +46,6 @@ typedef enum
 #define OSL_SCAN_STEP 100000
 
 #define OSL_NUM_FILE_ENTRIES (((BAND_FMAX) - (BAND_FMIN)) / OSL_SCAN_STEP + 1)
-
-
-//==============================================================================
-//Temporary stubs
-
-static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
-{
-    Sleep(2);
-}
-
-static void GEN_SetMeasurementFreq(uint32_t f)
-{
-}
-
-static COMPLEX DSP_MeasuredZ(void)
-{
-    return 50.0 + 0.0fi;
-}
-
-//==============================================================================
-
-
-
 
 
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
@@ -142,28 +121,25 @@ int32_t OSL_IsSelectedValid(void)
 
 const char* OSL_GetSelectedName(void)
 {
-    static char* fn = " ";
+    static char fn[2];
     if (OSL_GetSelected() < 0 || OSL_GetSelected() >= MAX_OSLFILES)
         return "None";
-    fn[0] = (char)(OSL_GetSelected() + (int32_t)"A");
+    fn[0] = (char)(OSL_GetSelected() + (int32_t)'A');
     fn[1] = '\0';
     return fn;
 }
 
 void OSL_Select(int32_t index)
 {
-    if (index != OSL_GetSelected())
-    {
-        if (index >= 0 && index < MAX_OSLFILES)
-            CFG_SetParam(CFG_PARAM_OSL_SELECTED, index);
-        else
-            CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0);
-        CFG_Flush();
-        OSL_LoadFromFile();
-    }
+    if (index >= 0 && index < MAX_OSLFILES)
+        CFG_SetParam(CFG_PARAM_OSL_SELECTED, index);
+    else
+        CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0);
+    CFG_Flush();
+    OSL_LoadFromFile();
 }
 
-void OSL_ScanShort(void)
+void OSL_ScanShort(void(*progresscb)(uint32_t))
 {
     if (OSL_GetSelected() < 0)
     {
@@ -179,23 +155,22 @@ void OSL_ScanShort(void)
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
-        FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
-        FONT_Print(FONT_FRANBIG, LCD_PURPLE, LCD_BLACK, 0, 100, "%d kHz", oslCalFreqHz/1000);
-
-        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
         COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
 
         osl_data[i].gshort = gamma;
+        if (progresscb)
+            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     osl_file_status |= OSL_FILE_SCANNED_SHORT;
 }
 
-void OSL_ScanLoad(void)
+void OSL_ScanLoad(void(*progresscb)(uint32_t))
 {
     if (OSL_GetSelected() < 0)
     {
@@ -211,23 +186,22 @@ void OSL_ScanLoad(void)
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
-        FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
-        FONT_Print(FONT_FRANBIG, LCD_PURPLE, LCD_BLACK, 0, 100, "%d kHz", oslCalFreqHz / 1000);
-
-        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
         COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
 
         osl_data[i].gload = gamma;
+        if (progresscb)
+            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     osl_file_status |= OSL_FILE_SCANNED_LOAD;
 }
 
-void OSL_ScanOpen(void)
+void OSL_ScanOpen(void(*progresscb)(uint32_t))
 {
     if (OSL_GetSelected() < 0)
     {
@@ -243,17 +217,16 @@ void OSL_ScanOpen(void)
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
-        FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
-        FONT_Print(FONT_FRANBIG, LCD_PURPLE, LCD_BLACK, 0, 100, "%d kHz", oslCalFreqHz / 1000);
-
-        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
         COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
 
         osl_data[i].gopen = gamma;
+        if (progresscb)
+            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     osl_file_status |= OSL_FILE_SCANNED_OPEN;

@@ -37,7 +37,7 @@
 #define MAXNMEAS 20
 
 //Magnitude correction factor
-#define MCF 0.05f //TODO
+#define MCF 0.5f //TODO
 
 extern void Sleep(uint32_t);
 
@@ -104,6 +104,8 @@ void DSP_Init(void)
     uint8_t ret;
     int32_t i;
     int ns = NSAMPLES - 1;
+
+    OSL_Select(CFG_GetParam(CFG_PARAM_OSL_SELECTED));
 
     ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION), FSAMPLE);
     if (ret != AUDIO_OK)
@@ -259,6 +261,11 @@ REMEASURE:
     magmv_i = mag_i * MCF;
 
     magdif = mag_v / mag_i;
+
+    //HW correction
+    //magdif *= (360.3/346.5); //RAW I / RAW V
+    //phdif -= (-24.5 * M_PI / 180.);
+
     phdifdeg = (phdif * 180.) / M_PI;
     magdifdb = 20 * log10f(magdif);
     mZ = DSP_CalcR() + DSP_CalcX() * I;
@@ -320,8 +327,7 @@ float DSP_MeasuredMagImv(void)
 static float DSP_CalcR(void)
 {
     float RR = (cosf(phdif) * Rtotal * magdif) - (Rmeas + RmeasAdd);
-    if(RR < 0.0f) //Sometimes this happens due to measurement inaccuracy
-        RR = 0.0f;
+    //NB: It can be negative here! OSL calibration gets rid of the sign.
     return RR;
 }
 
@@ -330,7 +336,7 @@ static float DSP_CalcX(void)
     return sinf(phdif) * Rtotal * magdif;
 }
 
-//Calculate VSWR from Z
+//Calculate VSWR from Z, based on Z0 from configuration
 float DSP_CalcVSWR(DSP_RX Z)
 {
     float X2 = powf(cimagf(Z), 2);
@@ -339,7 +345,7 @@ float DSP_CalcVSWR(DSP_RX Z)
     {
         R = 0.0;
     }
-    float ro = sqrtf((powf((R - DSP_Z0), 2) + X2) / (powf((R + DSP_Z0), 2) + X2));
+    float ro = sqrtf((powf((R - CFG_GetParam(CFG_PARAM_R0)), 2) + X2) / (powf((R + CFG_GetParam(CFG_PARAM_R0)), 2) + X2));
     if(ro > .999)
     {
         ro = 0.999;

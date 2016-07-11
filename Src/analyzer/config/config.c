@@ -47,6 +47,7 @@ static uint32_t isSi5351(void)
 //Array of user changeable parameters descriptors
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 {
+    /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
@@ -56,6 +57,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used"
     },
+    */
     {
         .id = CFG_PARAM_SI5351_XTAL_FREQ,
         .idstring = "SI5351_XTAL_FREQ",
@@ -89,7 +91,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 2,
         .values = CFG_IARR(    0,     1),
         .strvalues = CFG_SARR("No", "Yes"),
-        .dstring = "Set to Yes if LO frequency is divided by 2 (e.g. quadrature mixer is used)",
+        .dstring = "Set to Yes if LO frequency is divided by 2 (quadrature mixer is used)",
     },
     {
         .id = CFG_PARAM_OSL_SELECTED,

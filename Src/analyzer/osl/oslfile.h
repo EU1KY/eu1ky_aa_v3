@@ -13,11 +13,9 @@ const char* OSL_GetSelectedName(void);
 void OSL_Select(int32_t index);
 int32_t OSL_IsSelectedValid(void);
 
-void OSL_ScanOpen(void);
-void OSL_ScanShort(void);
-void OSL_ScanLoad(void);
+void OSL_ScanOpen(void(*progresscb)(uint32_t));
+void OSL_ScanShort(void(*progresscb)(uint32_t));
+void OSL_ScanLoad(void(*progresscb)(uint32_t));
 void OSL_Calculate(void);
-void OSL_RecalcLoads(void);
-
 
 #endif //_OSLFILE_H_

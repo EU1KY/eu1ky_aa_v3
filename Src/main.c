@@ -17,6 +17,7 @@
 #include "gen.h"
 #include "dsp.h"
 #include "si5351.h"
+#include "oslcal.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -94,17 +95,21 @@ int main(void)
     LCD_Init();
     TOUCH_Init();
 
-    HAL_Delay(500);
+    HAL_Delay(300);
+
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
         CRASH("FATFS_LinkDriver failed");
     if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
         CRASH("f_mount failed");
     CFG_Init();
 
-    CFG_ParamWnd();
-
     si5351_init();
     DSP_Init();
+
+
+    OSL_CalWnd();
+
+    CFG_ParamWnd();
 
     #if 0
     int i = 0;
