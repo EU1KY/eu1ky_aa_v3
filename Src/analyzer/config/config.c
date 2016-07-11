@@ -186,11 +186,11 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_OSL_RLOAD, 50);
     CFG_SetParam(CFG_PARAM_OSL_RSHORT, 5);
     CFG_SetParam(CFG_PARAM_OSL_ROPEN, 500);
-    CFG_SetParam(CFG_PARAM_OSL_NSCANS, 5);
-    CFG_SetParam(CFG_PARAM_MEAS_NSCANS, 5);
-    CFG_SetParam(CFG_PARAM_PAN_NSCANS, 5);
-    CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 15);
-    CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 1);
+    CFG_SetParam(CFG_PARAM_OSL_NSCANS, 3);
+    CFG_SetParam(CFG_PARAM_MEAS_NSCANS, 1);
+    CFG_SetParam(CFG_PARAM_PAN_NSCANS, 1);
+    CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 0);
+    CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 0);
     CFG_SetParam(CFG_PARAM_GEN_F, 14000000ul);
 
     //Load parameters from file on SD card

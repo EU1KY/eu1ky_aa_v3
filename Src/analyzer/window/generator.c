@@ -184,8 +184,8 @@ void GENERATOR_Window_Proc(void)
         DSP_Measure(0, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 100);
-        FONT_Printf(0, 100, "Raw Vi: %.1f mV, Vq: %.1f mV. Diff %.2f dB", DSP_MeasuredMagQmv(),
-                     DSP_MeasuredMagImv(), DSP_MeasuredDiffdB());
+        FONT_Printf(0, 100, "Raw I: %.1f mV, V: %.1f mV. Diff %.2f dB", DSP_MeasuredMagImv(),
+                     DSP_MeasuredMagVmv(), DSP_MeasuredDiffdB());
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 120);
         FONT_Printf(0, 120, "Raw phase diff: %.1f deg", DSP_MeasuredPhaseDeg());
         static DSP_RX rx;
@@ -193,7 +193,7 @@ void GENERATOR_Window_Proc(void)
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 140);
         FONT_Printf(0, 140, "Raw R: %.1f X: %.1f", crealf(rx), cimagf(rx));
 
-        if (DSP_MeasuredMagImv() < 100. && DSP_MeasuredMagQmv() < 100.)
+        if (DSP_MeasuredMagVmv() < 20.)
         {
             FONT_Write(FONT_FRAN, LCD_BLACK, LCD_RED, 0, 160,   "No signal  ");
         }

@@ -29,10 +29,10 @@ float DSP_MeasuredDiff(void);
 float DSP_MeasuredDiffdB(void);
 float DSP_MeasuredPhaseDeg(void);
 float DSP_MeasuredPhase(void);
+float DSP_MeasuredMagVmv(void);
 float DSP_MeasuredMagImv(void);
-float DSP_MeasuredMagQmv(void);
+float complex DSP_MeasuredMagPhaseV(void);
 float complex DSP_MeasuredMagPhaseI(void);
-float complex DSP_MeasuredMagPhaseQ(void);
 
 float DSP_CalcVSWR(DSP_RX Z);
 uint32_t DSP_GetIF(void);

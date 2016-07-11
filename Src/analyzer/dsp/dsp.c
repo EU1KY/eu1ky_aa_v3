@@ -21,7 +21,7 @@
 #include "crash.h"
 
 //Measuring bridge parameters
-#define Rmeas 10.0f
+#define Rmeas 5.1f
 #define RmeasAdd 33.0f
 #define Rload 51.0f
 #define Rtotal (RmeasAdd + Rmeas + Rload)
@@ -31,29 +31,30 @@
 #define NSAMPLES 512
 #define NDUMMY 32
 #define FSAMPLE I2S_AUDIOFREQ_48K
-#define BIN 113 //for 10031 Hz center frequency
+#define BIN 107 //for 10031 Hz center frequency
 
 //Maximum number of measurements to average
 #define MAXNMEAS 20
 
 //Magnitude correction factor
-#define MCF 1.f/300.f
+#define MCF 0.05f //TODO
 
 extern void Sleep(uint32_t);
 
+static float mag_v_buf[MAXNMEAS];
 static float mag_i_buf[MAXNMEAS];
-static float mag_q_buf[MAXNMEAS];
 static float phdif_buf[MAXNMEAS];
 static float windowfunc[NSAMPLES];
 static float rfft_input[NSAMPLES];
 static float rfft_output[NSAMPLES];
+static const float complex *prfft   = (float complex*)rfft_output;
 static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
 
 //Measurement results
+static float complex magphase_v = 0.1f+0.fi; //Measured magnitude and phase for V channel
 static float complex magphase_i = 0.1f+0.fi; //Measured magnitude and phase for I channel
-static float complex magphase_q = 0.1f+0.fi; //Measured magnitude and phase for Q channel
+static float magmv_v = 1.;                   //Measured magnitude in millivolts for V channel
 static float magmv_i = 1.;                   //Measured magnitude in millivolts for I channel
-static float magmv_q = 1.;                   //Measured magnitude in millivolts for I channel
 static float magdif = 1.f;                   //Measured magnitude ratio
 static float magdifdb = 0.f;                 //Measured magnitude ratio in dB
 static float phdif = 0.f;                    //Measured phase difference in radians
@@ -72,9 +73,8 @@ static float complex DSP_FFT(int channel)
     int16_t* pBuf = &audioBuf[NDUMMY + (channel != 0)];
     for(i = 0; i < NSAMPLES; i++)
     {
-        rfft_input[i] = (float)*pBuf;
+        rfft_input[i] = (float)*pBuf * windowfunc[i];
         pBuf += 2;
-        rfft_input[i] *= windowfunc[i];
     }
 
     arm_rfft_fast_init_f32(&S, NSAMPLES);
@@ -84,14 +84,15 @@ static float complex DSP_FFT(int channel)
     float power = 0.f;
     for (i = BIN - 2; i <= BIN + 2; i++)
     {
-        float bin_magnitude = cabsf(rfft_output[i]) / (NSAMPLES/2);
+        float complex binf = prfft[i];
+        float bin_magnitude = cabsf(binf) / (NSAMPLES/2);
         power += powf(bin_magnitude, 2);
     }
     magnitude = sqrtf(power);
 
     //Calculate results
-    float re = crealf(rfft_output[i]);
-    float im = cimagf(rfft_output[i]);
+    float re = crealf(prfft[BIN]);
+    float im = cimagf(prfft[BIN]);
     phase = atan2f(im, re);
     return magnitude + phase * I;
 }
@@ -191,11 +192,10 @@ static float DSP_FilterArray(float* arr, int nm, int doRetries)
 //if requested. Note that clock source remains turned on after the measurement!
 void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
 {
-    #define NMEAS nMeasurements
+    float mag_v = 0.0f;
     float mag_i = 0.0f;
-    float mag_q = 0.0f;
     float pdif = 0.0f;
-    float complex res_i, res_q;
+    float complex res_v, res_i;
     int i;
     int retries = 3;
 
@@ -210,7 +210,7 @@ void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
     freqHz = GEN_GetLastFreq();
 
 REMEASURE:
-    for (i = 0; i < NMEAS; i++)
+    for (i = 0; i < nMeasurements; i++)
     {
         extern SAI_HandleTypeDef haudio_in_sai;
         HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
@@ -220,11 +220,11 @@ REMEASURE:
         }
 
         res_i = DSP_FFT(0);
-        res_q = DSP_FFT(1);
+        res_v = DSP_FFT(1);
 
+        mag_v_buf[i] = crealf(res_v);
         mag_i_buf[i] = crealf(res_i);
-        mag_q_buf[i] = crealf(res_q);
-        pdif = cimagf(res_i) - cimagf(res_q);
+        pdif = cimagf(res_i) - cimagf(res_v);
         //Correct phase difference quadrant
         pdif = fmodf(pdif + M_PI, 2 * M_PI) - M_PI;
 
@@ -245,20 +245,20 @@ REMEASURE:
     }
 
     //Now perform filtering to remove outliers with sigma > 1.0
-    mag_i = DSP_FilterArray(mag_i_buf, NMEAS, retries);
-    mag_q = DSP_FilterArray(mag_q_buf, NMEAS, retries);
-    phdif = DSP_FilterArray(phdif_buf, NMEAS, retries);
-    if (mag_i == 0.0f || mag_q == 0.0f || phdif == 0.0f)
+    mag_v = DSP_FilterArray(mag_v_buf, nMeasurements, retries);
+    mag_i = DSP_FilterArray(mag_i_buf, nMeasurements, retries);
+    phdif = DSP_FilterArray(phdif_buf, nMeasurements, retries);
+    if (mag_v == 0.0f || mag_i == 0.0f || phdif == 0.0f)
     {//need to measure again : too much noise detected
         retries--;
         goto REMEASURE;
     }
 
     //Calculate derived results
+    magmv_v = mag_v * MCF;
     magmv_i = mag_i * MCF;
-    magmv_q = mag_q * MCF;
 
-    magdif = mag_q / mag_i;
+    magdif = mag_v / mag_i;
     phdifdeg = (phdif * 180.) / M_PI;
     magdifdb = 20 * log10f(magdif);
     mZ = DSP_CalcR() + DSP_CalcX() * I;
@@ -297,24 +297,24 @@ float DSP_MeasuredDiff(void)
     return magdif;
 }
 
+float complex DSP_MeasuredMagPhaseV(void)
+{
+    return magphase_v;
+}
+
 float complex DSP_MeasuredMagPhaseI(void)
 {
     return magphase_i;
 }
 
-float complex DSP_MeasuredMagPhaseQ(void)
+float DSP_MeasuredMagVmv(void)
 {
-    return magphase_q;
+    return magmv_v;
 }
 
 float DSP_MeasuredMagImv(void)
 {
     return magmv_i;
-}
-
-float DSP_MeasuredMagQmv(void)
-{
-    return magmv_q;
 }
 
 static float DSP_CalcR(void)

@@ -15,6 +15,7 @@
 #include "config.h"
 #include "crash.h"
 #include "gen.h"
+#include "dsp.h"
 #include "si5351.h"
 
 static void SystemClock_Config(void);

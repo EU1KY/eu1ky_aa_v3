@@ -110,9 +110,8 @@ static void do_fft_audiobuf(int ch)
     int16_t* pBuf = &audioBuf[NDUMMY + (ch != 0)];
     for(i = 0; i < NSAMPLES; i++)
     {
-        rfft_input[i] = (float)*pBuf;
+        rfft_input[i] = (float)*pBuf * wnd[i];
         pBuf += 2;
-        rfft_input[i] *= wnd[i];
     }
 
     arm_rfft_fast_init_f32(&S, NSAMPLES);

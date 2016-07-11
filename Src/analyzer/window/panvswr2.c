@@ -20,7 +20,7 @@
 #include "config.h"
 #include "ff.h"
 #include "crash.h"
-//#include "dsp.h"
+#include "dsp.h"
 #include "gen.h"
 #include "oslfile.h"
 
@@ -49,41 +49,6 @@
 #define SM_INTENSITY 32
 
 void Sleep(uint32_t nms);
-
-//-----------------------------------------
-//STUBS (temporary)
-typedef float complex DSP_RX;
-typedef float complex COMPLEX;
-
-static float DSP_CalcVSWR(DSP_RX Z)
-{
-    float X2 = powf(cimagf(Z), 2);
-    float R = crealf(Z);
-    float complex Z0 = (float)CFG_GetParam(CFG_PARAM_R0) + 0.0fi;
-    if(R < 0.0)
-    {
-        R = 0.0;
-    }
-    float ro = sqrtf((powf((R - Z0), 2) + X2) / (powf((R + Z0), 2) + X2));
-    if(ro > .999f)
-    {
-        ro = 0.999f;
-    }
-    X2 = (1.0 + ro) / (1.0 - ro);
-    return X2;
-}
-
-static void DSP_Measure(uint32_t freqHz, int applyErrCorrection, int applyOSL, int nMeasurements)
-{
-    GEN_SetMeasurementFreq(freqHz);
-    Sleep(10);
-}
-
-static DSP_RX DSP_MeasuredZ(void)
-{
-    return (((float)GEN_GetLastFreq()) / 100000.f) + 23.0fi;
-}
-//-------------------------------------------
 
 typedef enum
 {
@@ -129,7 +94,7 @@ static uint32_t f1 = 14000;
 static BANDSPAN span = BS800;
 static char buf[64];
 static LCDPoint pt;
-static DSP_RX values[WWIDTH];
+static float complex values[WWIDTH];
 static int isMeasured = 0;
 static uint32_t cursorPos = WWIDTH / 2;
 static GRAPHTYPE grType = GRAPH_VSWR;
@@ -138,7 +103,7 @@ static uint32_t cursorChangeCount = 0;
 
 static void DrawRX();
 static void DrawSmith();
-static DSP_RX SmoothRX(int idx, int useHighSmooth);
+static float complex SmoothRX(int idx, int useHighSmooth);
 
 static int swroffset(float swr)
 {
@@ -170,7 +135,7 @@ static void DrawCursor()
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 465, 110, ">");
     if (grType == GRAPH_SMITH)
     {
-        DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+        float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
         float complex g = OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0));
         uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
         uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
@@ -200,7 +165,7 @@ static void DrawCursor()
 
 static void DrawCursorText()
 {
-    DSP_RX rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
     float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
 
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
@@ -473,21 +438,8 @@ static void ScanRX()
     for(i = 0; i < WWIDTH; i++)
     {
         uint32_t freq = (f1 + (i * BSVALUES[span]) / WWIDTH) * 1000;
-        if (i == 0)
-            DSP_Measure(freq, 1, 1, 10); //to stabilize filter
-        if (freq > BAND_FMAX)
-#ifdef FAVOR_PRECISION
-            DSP_Measure(freq, 1, 1, 13); //3rd harmonic, magnitude is -10 dB, scan more times to decrease noise
-#else
-            DSP_Measure(freq, 1, 1, 7); //3rd harmonic, magnitude is -10 dB, scan more times to decrease noise
-#endif
-        else
-#ifdef FAVOR_PRECISION
-            DSP_Measure(freq, 1, 1, 10);
-#else
-            DSP_Measure(freq, 1, 1, 5);
-#endif
-        DSP_RX rx = DSP_MeasuredZ();
+        DSP_Measure(freq, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
+        float complex rx = DSP_MeasuredZ();
         if (isnan(crealf(rx)) || isinf(crealf(rx)))
             rx = 0.0f + cimagf(rx) * I;
         if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
@@ -501,9 +453,6 @@ static void ScanRX()
         values[i] = rx;
         LCD_SetPixel(LCD_MakePoint(X0 + i, 135), LCD_BLUE);
         LCD_SetPixel(LCD_MakePoint(X0 + i, 136), LCD_BLUE);
-        //Fill test data instead of real measurements
-        //values1[i] = sinf(i / 20.) * 70. + 70;
-        //values2[i] = cosf(i / 14.) * 220.;
     }
     GEN_SetMeasurementFreq(0);
     isMeasured = 1;
@@ -512,10 +461,10 @@ static void ScanRX()
 //Calculates average R and X of SMOOTHWINDOW measurements around frequency
 //In the beginning and the end of measurement data missing measurements are replaced
 //with first and last measurement respectively.
-static DSP_RX SmoothRX(int idx, int useHighSmooth)
+static float complex SmoothRX(int idx, int useHighSmooth)
 {
     int i;
-    DSP_RX sample;
+    float complex sample;
     float resr = 0.0f;
     float resx = 0.0f;
     int smoothofs;

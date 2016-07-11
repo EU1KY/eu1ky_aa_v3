@@ -46,8 +46,8 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex G)
 
     int x = (int)(crealf(G) * R) + X0;
     int y = Y0 - (int)(cimagf(G) * R);
-    LCD_Line(LCD_MakePoint(x - 3, y), LCD_MakePoint(x + 3, y), LCD_GREEN);
-    LCD_Line(LCD_MakePoint(x, y - 3), LCD_MakePoint(x, y + 3), LCD_GREEN);
+    LCD_Line(LCD_MakePoint(x - 1, y), LCD_MakePoint(x + 1, y), LCD_GREEN);
+    LCD_Line(LCD_MakePoint(x, y - 1), LCD_MakePoint(x, y + 1), LCD_GREEN);
 }
 
 //Scan VSWR in +/- 500 kHz range around measurement frequency with 100 kHz step, to draw a small graph below the measurement
@@ -316,7 +316,7 @@ void MEASUREMENT_Proc(void)
         if (scanres)
             MeasurementModeGraph(rx);
 
-        if (DSP_MeasuredMagImv() < 100. && DSP_MeasuredMagQmv() < 100.)
+        if (DSP_MeasuredMagVmv() < 20.)
         {
             FONT_Write(FONT_FRAN, LCD_BLACK, LCD_RED, 380, 2, "No signal  ");
         }
