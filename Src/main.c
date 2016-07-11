@@ -107,13 +107,8 @@ int main(void)
     CFG_ParamWnd();
 
     si5351_init();
+    DSP_Init();
 
-    uint8_t ret;
-    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION), FSAMPLE);
-    if (ret != AUDIO_OK)
-    {
-        CRASH("BSP_AUDIO_IN_Init failed");
-    }
 
     #if 0
     int i = 0;

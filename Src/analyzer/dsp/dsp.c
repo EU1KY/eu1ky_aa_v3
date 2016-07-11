@@ -11,49 +11,43 @@
 #include <complex.h>
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
+#include "stm32746g_discovery_audio.h"
+#include "arm_math.h"
 
 #include "dsp.h"
 #include "gen.h"
 #include "oslfile.h"
 #include "config.h"
+#include "crash.h"
 
+//Measuring bridge parameters
 #define Rmeas 10.0f
 #define RmeasAdd 33.0f
 #define Rload 51.0f
 #define Rtotal (RmeasAdd + Rmeas + Rload)
 #define DSP_Z0 50.0f
 
+//DSP sampling parameters
 #define NSAMPLES 512
+#define NDUMMY 32
+#define FSAMPLE I2S_AUDIOFREQ_48K
+#define BIN 113 //for 10031 Hz center frequency
 
-#define DBGPRINT(...)
+//Maximum number of measurements to average
+#define MAXNMEAS 20
 
-#define DSP_SAMPLECYCLES ADC_SampleTime_1Cycles5
+//Magnitude correction factor
+#define MCF 1.f/300.f
 
 extern void Sleep(uint32_t);
 
-int g_favor_precision = 0; //Nonzero value increases number of retries in case of noise detection during calibration
-
-//Considering ADC clock 9 MHz, 1.5 ADC clocks for sampling, and 12.5 clocks for
-//conversion, we obtain sampling frequency for our DSP algorithms:
-static const float fSample = (9000.f / 14.f) * 1000.f;
-static const float targetFreq = 10031.f; //Falls exactly in the middle of bin
-
-//Goertzel algorithm constants
-#define BIN 8 //(int)roundf(((0.5f + NSAMPLES) * targetFreq) / fSample);
-#define GOERTZEL_W ((2. * M_PI / NSAMPLES) * BIN)
-static float cosine = 0.;
-static float sine = 0.;
-static float coeff = 0.;
-
-//Magnitude conversion coefficient (to millivolts):
-//2.34 is amplitude loss because of the Blackman window
-//3.3 is power supply voltage (==Aref)
-//4096 is ADC resolution (12 bits)
-static const float MCF = (2.34 * 3.3 * 2.0 * 1000.) / (NSAMPLES * 4096);
-
-//Sample buffer (filled with DMA)
-static volatile uint32_t adcBuf[NSAMPLES];
+static float mag_i_buf[MAXNMEAS];
+static float mag_q_buf[MAXNMEAS];
+static float phdif_buf[MAXNMEAS];
 static float windowfunc[NSAMPLES];
+static float rfft_input[NSAMPLES];
+static float rfft_output[NSAMPLES];
+static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
 
 //Measurement results
 static float complex magphase_i = 0.1f+0.fi; //Measured magnitude and phase for I channel
@@ -69,39 +63,35 @@ static DSP_RX mZ = DSP_Z0 + 0.0fi;
 static float DSP_CalcR(void);
 static float DSP_CalcX(void);
 
-static float complex Goertzel(int channel)
+static float complex DSP_FFT(int channel)
 {
-    int i;
-    float q0, q1, q2;
-    float re, im, magnitude, phase;
+    float magnitude, phase;
+    uint32_t i;
+    arm_rfft_fast_instance_f32 S;
 
-    //initials
-    q0 = 0.0;
-    q1 = 0.0;
-    q2 = 0.0;
-    for (i = 0; i < NSAMPLES; i++)
+    int16_t* pBuf = &audioBuf[NDUMMY + (channel != 0)];
+    for(i = 0; i < NSAMPLES; i++)
     {
-        float sample = (channel ? (float)(adcBuf[i] >> 16) : (float)(adcBuf[i] & 0xFFFF));
-        //Remove DC component as much as possible
-        sample -= 2048.0;
-        //Apply windowing to reduce reaction of this bin on OOB frequencies
-        sample *= windowfunc[i];
-
-        q0 = coeff * q1 - q2 + sample;
-        q2 = q1;
-        q1 = q0;
+        rfft_input[i] = (float)*pBuf;
+        pBuf += 2;
+        rfft_input[i] *= windowfunc[i];
     }
 
-    //Run one extra step with sample = 0 to obtain exactly the same result as in DFT
-    //for particular bin (see here: http://en.wikipedia.org/wiki/Goertzel_algorithm)
-    q0 = coeff * q1 - q2; //considering sample is 0
-    q2 = q1;
-    q1 = q0;
+    arm_rfft_fast_init_f32(&S, NSAMPLES);
+    arm_rfft_fast_f32(&S, rfft_input, rfft_output, 0);
+
+    //Calculate magnitude value considering +/-2 bins from maximum
+    float power = 0.f;
+    for (i = BIN - 2; i <= BIN + 2; i++)
+    {
+        float bin_magnitude = cabsf(rfft_output[i]) / (NSAMPLES/2);
+        power += powf(bin_magnitude, 2);
+    }
+    magnitude = sqrtf(power);
 
     //Calculate results
-    re = q1 - q2 * cosine;
-    im = q2 * sine;
-    magnitude = sqrtf(powf(re, 2) + powf(im, 2));
+    float re = crealf(rfft_output[i]);
+    float im = cimagf(rfft_output[i]);
     phase = atan2f(im, re);
     return magnitude + phase * I;
 }
@@ -110,13 +100,22 @@ static float complex Goertzel(int channel)
 //Prepare ADC for sampling two channels
 void DSP_Init(void)
 {
-    //TODO
-}
+    uint8_t ret;
+    int32_t i;
+    int ns = NSAMPLES - 1;
 
-#define MAXNMEAS 50
-static float mag_i_buf[MAXNMEAS];
-static float mag_q_buf[MAXNMEAS];
-static float phdif_buf[MAXNMEAS];
+    ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION), FSAMPLE);
+    if (ret != AUDIO_OK)
+    {
+        CRASH("BSP_AUDIO_IN_Init failed");
+    }
+
+    //Prepare Blackman window, >66 dB OOB rejection
+    for(i = 0; i < NSAMPLES; i++)
+    {
+        windowfunc[i] = 0.426591f - .496561f * cosf( (2 * M_PI * i) / ns) + .076848f * cosf((4 * M_PI * i) / ns);
+    }
+}
 
 //Filter array of floats with nm entries to remove outliers, and return mean
 //of the remaining entries that fall into 1 sigma interval.
@@ -162,18 +161,9 @@ static float DSP_FilterArray(float* arr, int nm, int doRetries)
     deviation = sqrtf(deviation / nm);
 
     //Calculate mean of entries within part of standard deviation range
-#ifdef FAVOR_PRECISION
-    if (g_favor_precision)
-    {
-        low = mean - deviation * 0.6;
-        high = mean + deviation * 0.6;
-    }
-    else
-#endif
-    {
-        low = mean - deviation * 0.75;
-        high = mean + deviation * 0.75;
-    }
+    low = mean - deviation * 0.75;
+    high = mean + deviation * 0.75;
+
     counter = 0;
     result = 0.0f;
     for (i = 0; i < nm; i++)
@@ -207,11 +197,7 @@ void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
     float pdif = 0.0f;
     float complex res_i, res_q;
     int i;
-    #ifdef FAVOR_PRECISION
-    int retries = g_favor_precision ? 150 : 10;
-    #else
     int retries = 3;
-    #endif
 
     assert_param(nMeasurements > 0);
     if (nMeasurements > MAXNMEAS)
@@ -223,25 +209,18 @@ void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
     }
     freqHz = GEN_GetLastFreq();
 
-    magmv_i = 700;
-    magmv_q = 701;
-
-    magdif = 1.22;
-    phdifdeg = 5.;
-    magdifdb = 1.5;
-    mZ = 55. + 3.5 * I;
-    return;
-
 REMEASURE:
     for (i = 0; i < NMEAS; i++)
     {
-        //TODO: collect data
+        extern SAI_HandleTypeDef haudio_in_sai;
+        HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
+        if (HAL_OK != res)
+        {
+            CRASHF("HAL_SAI_Receive failed, err %d", res);
+        }
 
-        //TODO: replace Goertzel with FFT
-
-        //Apply Goertzel agorithm to sampled data
-        res_i = Goertzel(0);
-        res_q = Goertzel(1);
+        res_i = DSP_FFT(0);
+        res_q = DSP_FFT(1);
 
         mag_i_buf[i] = crealf(res_i);
         mag_q_buf[i] = crealf(res_q);
@@ -366,11 +345,10 @@ float DSP_CalcVSWR(DSP_RX Z)
         ro = 0.999;
     }
     X2 = (1.0 + ro) / (1.0 - ro);
-    DBGPRINT("VSWR %.2f\n", X2);
     return X2;
 }
 
 uint32_t DSP_GetIF(void)
 {
-    return (uint32_t)targetFreq;
+    return (uint32_t)10031; //TODO: Calculate from BIN number and sampling frequency
 }

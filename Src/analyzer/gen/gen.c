@@ -29,7 +29,10 @@ void GEN_SetMeasurementFreq(uint32_t fhz)
         {
             si5351_set_freq(fhz, SI5351_CLK0);
             si5351_set_freq(((fhz + IF) * 2) / 3, SI5351_CLK1);
-            BSP_AUDIO_IN_SetVolume(109 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION)); //Add +10 dB gain against normal
+            if (CFG_GetParam(CFG_PARAM_LIN_ATTENUATION) > 9)
+            {
+                BSP_AUDIO_IN_SetVolume(109 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION)); //Add +10 dB gain against normal
+            }
         }
         else
         {
