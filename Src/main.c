@@ -25,10 +25,6 @@ void Sleep(uint32_t nms)
     HAL_Delay(nms);
 }
 
-#define NSAMPLES 512
-#define NDUMMY 32
-#define FSAMPLE I2S_AUDIOFREQ_48K
-
 static int step = 1;
 static UART_HandleTypeDef UartHandle = {0};
 
@@ -108,7 +104,6 @@ int main(void)
 
     si5351_init();
     DSP_Init();
-
 
     #if 0
     int i = 0;

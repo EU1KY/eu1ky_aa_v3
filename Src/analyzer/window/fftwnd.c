@@ -15,9 +15,10 @@
 #include "touch.h"
 #include "hit.h"
 #include "crash.h"
+#include "gen.h"
 
 #define NSAMPLES 512
-#define NDUMMY 32
+#define NDUMMY 64
 #define FSAMPLE I2S_AUDIOFREQ_48K
 #define step 1
 
@@ -147,6 +148,7 @@ void FFTWND_Proc(void)
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 32);
     FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
 
+    GEN_SetMeasurementFreq(3500000);
     while (1)
     {
         (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);
