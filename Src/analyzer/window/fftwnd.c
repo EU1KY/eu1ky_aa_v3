@@ -148,6 +148,7 @@ void FFTWND_Proc(void)
     FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
 
     GEN_SetMeasurementFreq(3500000);
+
     while (1)
     {
         (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);

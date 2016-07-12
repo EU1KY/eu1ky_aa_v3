@@ -18,10 +18,10 @@
 //#define SI5351_BUS_BASE_ADDR 0xCE
 
 //Frequency range of the analyzer
-#define BAND_FMIN 100000ul   //BAND_FMIN must be 100000
+#define BAND_FMIN 500000ul    //BAND_FMIN must be multiple 100000
 #define BAND_FMAX 150000000ul //BAND_FMAX must be multiple of 100000
 
-#if (BAND_FMAX % 100000) != 0 || BAND_FMAX < BAND_FMIN || BAND_FMIN != 100000
+#if (BAND_FMAX % 100000) != 0 || BAND_FMAX < BAND_FMIN || (BAND_FMIN % 100000) != 0
     #error "Incorrect band limit settings"
 #endif
 

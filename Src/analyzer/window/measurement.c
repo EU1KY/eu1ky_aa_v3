@@ -60,7 +60,7 @@ static int Scan500(void)
     {
         GEN_SetMeasurementFreq(fq);
         Sleep(10);
-        DSP_Measure(fq, 1, 5);
+        DSP_Measure(fq, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         vswr500[i] = DSP_CalcVSWR(DSP_MeasuredZ());
     }
     else
@@ -328,7 +328,7 @@ void MEASUREMENT_Proc(void)
         int scanres = Scan500();
         GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
         Sleep(10);
-        DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+        DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
 
         rx = DSP_MeasuredZ();
         MeasurementModeDraw(rx);

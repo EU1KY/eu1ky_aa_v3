@@ -21,7 +21,7 @@ extern int g_favor_precision;
 
 void DSP_Init(void);
 
-void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements);
+void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasurements);
 
 DSP_RX DSP_MeasuredZ(void);
 float DSP_MeasuredPhase(void);

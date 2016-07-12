@@ -33,6 +33,13 @@ typedef union
     };
 } S_OSLDATA;
 
+//Hardware error correction sctucture
+typedef struct
+{
+    float mag0;    //Magnitude ratio correction coefficient
+    float phase0;  //Phase correction value
+} OSL_ERRCORR;
+
 typedef enum
 {
     OSL_FILE_EMPTY =  0x00,
@@ -49,14 +56,104 @@ typedef enum
 
 
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
-static S_OSLDATA osl_data[OSL_NUM_FILE_ENTRIES]; //36 kilobytes
+static S_OSLDATA osl_data[OSL_NUM_FILE_ENTRIES];
+static OSL_ERRCORR osl_errCorr[OSL_NUM_FILE_ENTRIES];
+static int32_t osl_file_loaded = -1;
+static int32_t osl_err_loaded = 0;
 
 static const COMPLEX cmplus1 = 1.0f + 0.0fi;
 static const COMPLEX cmminus1 = -1.0f + 0.0fi;
 
-static int32_t osl_file_loaded = -1;
-
 static int32_t OSL_LoadFromFile(void);
+
+static uint32_t OSL_GetCalFreqByIdx(int32_t idx)
+{
+    if (idx < 0 || idx >= OSL_NUM_FILE_ENTRIES)
+        return 0;
+    return BAND_FMIN + idx * OSL_SCAN_STEP;
+}
+
+static int GetIndexForFreq(uint32_t fhz)
+{
+    int idx = -1;
+    if (fhz < BAND_FMIN)
+        return idx;
+    if (fhz <= BAND_FMAX)
+    {
+        idx = (int)roundf((float)fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
+        return idx;
+    }
+    return idx;
+}
+
+int32_t OSL_IsErrCorrLoaded(void)
+{
+    return osl_err_loaded;
+}
+
+void OSL_LoadErrCorr(void)
+{
+    FRESULT res;
+    FIL fp;
+    TCHAR path[64];
+
+    osl_err_loaded = 0;
+
+    sprintf(path, "%s/errcorr.osl", g_cfg_osldir);
+    res = f_open(&fp, path, FA_READ | FA_OPEN_EXISTING);
+    if (FR_OK != res)
+        return;
+    UINT br =  0;
+    res = f_read(&fp, osl_errCorr, sizeof(osl_errCorr), &br);
+    f_close(&fp);
+    if (FR_OK != res || sizeof(osl_errCorr) != br)
+        return;
+    osl_err_loaded = 1;
+}
+
+void OSL_ScanErrCorr(void)
+{
+    uint32_t i;
+    for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
+    {
+        uint32_t freq = OSL_GetCalFreqByIdx(i);
+        GEN_SetMeasurementFreq(freq);
+        DSP_Measure(freq, 0, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        if (DSP_MeasuredMagImv() < 100. || DSP_MeasuredMagVmv() < 100.)
+        {
+            CRASH("No signal");
+        }
+        osl_errCorr[i].mag0 = 1.0f / DSP_MeasuredDiff();
+        osl_errCorr[i].phase0 = DSP_MeasuredPhase();
+    }
+    GEN_SetMeasurementFreq(0);
+    //Store to file
+    FRESULT res;
+    FIL fp;
+    TCHAR path[64];
+    sprintf(path, "%s/errcorr.osl", g_cfg_osldir);
+    f_mkdir(g_cfg_osldir);
+    res = f_open(&fp, path, FA_WRITE | FA_CREATE_ALWAYS);
+    if (FR_OK != res)
+        CRASHF("Failed to open file %s for write: error %d", path, res);
+    UINT bw;
+    res = f_write(&fp, osl_errCorr, sizeof(osl_errCorr), &bw);
+    if (FR_OK != res || bw != sizeof(osl_errCorr))
+        CRASHF("Failed to write file %s: error %d", path, res);
+    f_close(&fp);
+    osl_err_loaded = 1;
+}
+
+void OSL_CorrectErr(uint32_t fhz, float *magdif, float *phdif)
+{
+    if (!osl_err_loaded)
+        return;
+    int idx = GetIndexForFreq(fhz);
+    if (-1 == idx)
+        return;
+    *magdif *= osl_errCorr[idx].mag0;
+    *phdif -= osl_errCorr[idx].phase0;
+}
 
 // Function to calculate determinant of 3x3 matrix
 // Input: 3x3 matrix [[a, b, c],
@@ -99,13 +196,6 @@ static COMPLEX ParabolicInterpolation(COMPLEX y1, COMPLEX y2, COMPLEX y3, //valu
     COMPLEX b = ((y3-y2)/(x3-x2)*(x2-x1)+(y2-y1)/(x2-x1)*(x3-x2))/(x3-x1);
     COMPLEX res = a * powf(x - x2, 2.) + b * (x - x2) + y2;
     return res;
-}
-
-static uint32_t GetCalFreqByIdx(int32_t idx)
-{
-    if (idx < 0 || idx >= OSL_NUM_FILE_ENTRIES)
-        return 0;
-    return BAND_FMIN + idx * OSL_SCAN_STEP;
 }
 
 int32_t OSL_GetSelected(void)
@@ -152,13 +242,13 @@ void OSL_ScanShort(void(*progresscb)(uint32_t))
     int i;
     for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
     {
-        uint32_t oslCalFreqHz = GetCalFreqByIdx(i);
+        uint32_t oslCalFreqHz = OSL_GetCalFreqByIdx(i);
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
-        DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
         COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
@@ -183,13 +273,13 @@ void OSL_ScanLoad(void(*progresscb)(uint32_t))
     int i;
     for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
     {
-        uint32_t oslCalFreqHz = GetCalFreqByIdx(i);
+        uint32_t oslCalFreqHz = OSL_GetCalFreqByIdx(i);
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
-        DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
         COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);
@@ -214,13 +304,13 @@ void OSL_ScanOpen(void(*progresscb)(uint32_t))
     int i;
     for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
     {
-        uint32_t oslCalFreqHz = GetCalFreqByIdx(i);
+        uint32_t oslCalFreqHz = OSL_GetCalFreqByIdx(i);
         if (oslCalFreqHz == 0)
             break;
         if (i == 0)
-            DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
+            DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS)); //First run is fake to let the filter stabilize
 
-        DSP_Measure(oslCalFreqHz, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
+        DSP_Measure(oslCalFreqHz, 1, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
 
         COMPLEX rx = DSP_MeasuredZ();
         COMPLEX gamma = OSL_GFromZ(rx, OSL_BASE_R0);

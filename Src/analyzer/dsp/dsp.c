@@ -106,6 +106,7 @@ void DSP_Init(void)
     int ns = NSAMPLES - 1;
 
     OSL_Select(CFG_GetParam(CFG_PARAM_OSL_SELECTED));
+    OSL_LoadErrCorr();
 
     ret = BSP_AUDIO_IN_Init(INPUT_DEVICE_INPUT_LINE_1, 100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION), FSAMPLE);
     if (ret != AUDIO_OK)
@@ -192,7 +193,7 @@ static float DSP_FilterArray(float* arr, int nm, int doRetries)
 //Set frequency, run measurement sampling and calculate phase, magnitude ratio
 //and Z from sampled data, applying hardware error correction and OSL correction
 //if requested. Note that clock source remains turned on after the measurement!
-void DSP_Measure(uint32_t freqHz, int applyOSL, int nMeasurements)
+void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasurements)
 {
     float mag_v = 0.0f;
     float mag_i = 0.0f;
@@ -256,15 +257,13 @@ REMEASURE:
         goto REMEASURE;
     }
 
+    magdif = mag_v / mag_i;
+    if (applyErrCorr)
+        OSL_CorrectErr(freqHz, &magdif, &phdif);
+
     //Calculate derived results
     magmv_v = mag_v * MCF;
     magmv_i = mag_i * MCF;
-
-    magdif = mag_v / mag_i;
-
-    //HW correction
-    //magdif *= (360.3/346.5); //RAW I / RAW V
-    //phdif -= (-24.5 * M_PI / 180.);
 
     phdifdeg = (phdif * 180.) / M_PI;
     magdifdb = 20 * log10f(magdif);

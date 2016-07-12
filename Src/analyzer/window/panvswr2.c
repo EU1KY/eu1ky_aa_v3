@@ -438,7 +438,7 @@ static void ScanRX()
     for(i = 0; i < WWIDTH; i++)
     {
         uint32_t freq = (f1 + (i * BSVALUES[span]) / WWIDTH) * 1000;
-        DSP_Measure(freq, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
+        DSP_Measure(freq, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
         float complex rx = DSP_MeasuredZ();
         if (isnan(crealf(rx)) || isinf(crealf(rx)))
             rx = 0.0f + cimagf(rx) * I;

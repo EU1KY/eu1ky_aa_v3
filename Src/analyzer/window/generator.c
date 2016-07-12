@@ -177,11 +177,12 @@ void GENERATOR_Window_Proc(void)
         if (fChanged)
         {
             CFG_Flush();
+            GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
             fChanged = 0;
         }
 
         //Measure without changing current frequency and without any corrections
-        DSP_Measure(0, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+        DSP_Measure(0, 0, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 100);
         FONT_Printf(0, 100, "Raw I: %.1f mV, V: %.1f mV. Diff %.2f dB", DSP_MeasuredMagImv(),

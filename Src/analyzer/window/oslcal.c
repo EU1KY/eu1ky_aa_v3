@@ -108,6 +108,8 @@ static void _hit_save(void)
 
 void OSL_CalWnd(void)
 {
+    //if (!OSL_IsErrCorrLoaded())
+    //    OSL_ScanErrCorr();
     if (-1 == OSL_GetSelected())
         return;
 
