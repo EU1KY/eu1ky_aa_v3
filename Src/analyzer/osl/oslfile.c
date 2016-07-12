@@ -54,6 +54,7 @@ static S_OSLDATA osl_data[OSL_NUM_FILE_ENTRIES]; //36 kilobytes
 static const COMPLEX cmplus1 = 1.0f + 0.0fi;
 static const COMPLEX cmminus1 = -1.0f + 0.0fi;
 
+static int32_t osl_file_loaded = -1;
 
 static int32_t OSL_LoadFromFile(void);
 
@@ -260,8 +261,12 @@ static int32_t OSL_LoadFromFile(void)
     if (-1 == OSL_GetSelected())
     {
         osl_file_status = OSL_FILE_EMPTY;
+        osl_file_loaded = -1;
         return -1;
     }
+
+    osl_file_loaded = OSL_GetSelected(); //It's OK here, at least we tried to load it
+
     sprintf(path, "%s/%s.osl", g_cfg_osldir, OSL_GetSelectedName());
     res = f_open(&fp, path, FA_READ | FA_OPEN_EXISTING);
     if (FR_OK != res)
@@ -324,6 +329,7 @@ void OSL_Calculate(void)
 
     //Now store calculated data to file
     osl_file_status = OSL_FILE_VALID;
+    osl_file_loaded = OSL_GetSelected();
     OSL_StoreFile();
 }
 
@@ -357,6 +363,10 @@ static float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
     {
         return gMeasured;
     }
+
+    if (OSL_GetSelected() >= 0 && osl_file_loaded != OSL_GetSelected()) //Reload OSL file if needed
+        OSL_LoadFromFile();
+
     if (OSL_GetSelected() < 0 || !OSL_IsSelectedValid())
     {
         return gMeasured;
