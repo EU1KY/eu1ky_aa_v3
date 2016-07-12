@@ -305,6 +305,24 @@ void MEASUREMENT_Proc(void)
     FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "  Next window  ");
     ShowF();
     DSP_RX rx;
+
+    if (-1 == OSL_GetSelected())
+    {
+        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 18, "No OSL");
+    }
+    else
+    {
+        OSL_CorrectZ(BAND_FMIN, 0+0*I); //To force lazy loading OSL file if it has not been loaded yet
+        if (OSL_IsSelectedValid())
+        {
+            FONT_Print(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 18, "OSL: %s, OK", OSL_GetSelectedName());
+        }
+        else
+        {
+            FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 380, 18, "OSL: %s, BAD", OSL_GetSelectedName());
+        }
+    }
+
     for(;;)
     {
         int scanres = Scan500();
