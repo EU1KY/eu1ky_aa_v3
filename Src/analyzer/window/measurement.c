@@ -84,8 +84,7 @@ static void MeasurementModeDraw(DSP_RX rx)
     while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
 
     char str[50] = "";
-    FONT_ClearLine(FONT_FRAN, LCD_BLACK, 36);
-    sprintf(str, "Magnitude diff %.2f dB", DSP_MeasuredDiffdB());
+    sprintf(str, "Magnitude diff %.2f dB     ", DSP_MeasuredDiffdB());
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, 38, str);
 
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 62);
@@ -302,7 +301,7 @@ void MEASUREMENT_Proc(void)
         LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
     }
 
-    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "  Next window  ");
+    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
     ShowF();
     DSP_RX rx;
 
@@ -321,6 +320,15 @@ void MEASUREMENT_Proc(void)
         {
             FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 380, 18, "OSL: %s, BAD", OSL_GetSelectedName());
         }
+    }
+
+    if (OSL_IsErrCorrLoaded())
+    {
+        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 36, "HW cal: OK");
+    }
+    else
+    {
+        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 36, "HW cal: NO");
     }
 
     for(;;)

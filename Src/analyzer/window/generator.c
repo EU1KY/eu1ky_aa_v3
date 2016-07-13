@@ -182,10 +182,10 @@ void GENERATOR_Window_Proc(void)
         }
 
         //Measure without changing current frequency and without any corrections
-        DSP_Measure(0, 0, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+        DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 100);
-        FONT_Printf(0, 100, "Raw I: %.1f mV, V: %.1f mV. Diff %.2f dB", DSP_MeasuredMagImv(),
+        FONT_Printf(0, 100, "Raw I: %.1f, V: %.1f. Diff %.2f dB", DSP_MeasuredMagImv(),
                      DSP_MeasuredMagVmv(), DSP_MeasuredDiffdB());
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 120);
         FONT_Printf(0, 120, "Raw phase diff: %.1f deg", DSP_MeasuredPhaseDeg());

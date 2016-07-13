@@ -54,12 +54,12 @@ void MainWnd(void)
     TEXTBOX_Append(&main_ctx, &hbHwCal);
 
     //OSL calibration menu
-    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =  " OSL Calibration ", .font = FONT_FRANBIG,
+    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " OSL Calibration ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd };
     TEXTBOX_Append(&main_ctx, &hbOslCal);
 
     //Device configuration menu
-    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 100, .text = " Configuration  ", .font = FONT_FRANBIG,
+    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 120, .text = " Configuration  ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
     TEXTBOX_Append(&main_ctx, &hbConfig);
 
@@ -69,17 +69,17 @@ void MainWnd(void)
     TEXTBOX_Append(&main_ctx, &hbPan);
 
     //Measurement window
-    hbMeas = (TEXTBOX_t){.x0 = COL2, .y0 =  50, .text =   " Measurement    ", .font = FONT_FRANBIG,
+    hbMeas = (TEXTBOX_t){.x0 = COL2, .y0 =  60, .text =   " Measurement    ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Proc };
     TEXTBOX_Append(&main_ctx, &hbMeas);
 
     //Generator window
-    hbGen  = (TEXTBOX_t){.x0 = COL2, .y0 = 100, .text =   " Generator      ", .font = FONT_FRANBIG,
+    hbGen  = (TEXTBOX_t){.x0 = COL2, .y0 = 120, .text =   " Generator      ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc };
     TEXTBOX_Append(&main_ctx, &hbGen);
 
     //DSP window
-    hbDsp  = (TEXTBOX_t){.x0 = COL2, .y0 = 150, .text =   " DSP            ", .font = FONT_FRANBIG,
+    hbDsp  = (TEXTBOX_t){.x0 = COL2, .y0 = 180, .text =   " DSP            ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc };
     TEXTBOX_Append(&main_ctx, &hbDsp);
 

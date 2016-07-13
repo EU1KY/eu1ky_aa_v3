@@ -47,17 +47,23 @@ static uint32_t isSi5351(void)
 //Array of user changeable parameters descriptors
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 {
-    /*
     {
-        .id = CFG_PARAM_SYNTH_TYPE,
-        .idstring = "SYNTH_TYPE",
-        .nvalues = 1,
-        .values = CFG_IARR(   0),
-        .strvalues = CFG_SARR("Si5351A"),
-        .type = CFG_PARAM_T_U32,
-        .dstring = "Frequency synthesizer type used"
+        .id = CFG_PARAM_OSL_SELECTED,
+        .idstring = "OSL_SELECTED",
+        .nvalues = 17,
+        .values = CFG_IARR(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1),
+        .strvalues = CFG_SARR("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","None"),
+        .type = CFG_PARAM_T_S32,
+        .dstring = "Selected OSL file"
     },
-    */
+    {
+        .id = CFG_PARAM_R0,
+        .idstring = "Z0",
+        .nvalues = 6,
+        .values = CFG_IARR(28, 50, 75, 100, 150, 300),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Selected base impedance (Z0) for Smith Chart and VSWR"
+    },
     {
         .id = CFG_PARAM_SI5351_XTAL_FREQ,
         .idstring = "SI5351_XTAL_FREQ",
@@ -92,23 +98,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(    0,     1),
         .strvalues = CFG_SARR("No", "Yes"),
         .dstring = "Set to Yes if LO frequency is divided by 2 (quadrature mixer is used)",
-    },
-    {
-        .id = CFG_PARAM_OSL_SELECTED,
-        .idstring = "OSL_SELECTED",
-        .nvalues = 17,
-        .values = CFG_IARR(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1),
-        .strvalues = CFG_SARR("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","None"),
-        .type = CFG_PARAM_T_S32,
-        .dstring = "Selected OSL file"
-    },
-    {
-        .id = CFG_PARAM_R0,
-        .idstring = "Z0",
-        .nvalues = 6,
-        .values = CFG_IARR(28, 50, 75, 100, 150, 300),
-        .type = CFG_PARAM_T_U32,
-        .dstring = "Selected base impedance (Z0) for Smith Chart and VSWR"
     },
     {
         .id = CFG_PARAM_OSL_RLOAD,
@@ -165,8 +154,19 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 11,
         .values = CFG_IARR(0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30),
         .type = CFG_PARAM_T_U8,
-        .dstring = "Linar audio inputs attenuation, dB."
+        .dstring = "Linear audio inputs attenuation, dB."
     },
+    /*
+    {
+        .id = CFG_PARAM_SYNTH_TYPE,
+        .idstring = "SYNTH_TYPE",
+        .nvalues = 1,
+        .values = CFG_IARR(   0),
+        .strvalues = CFG_SARR("Si5351A"),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Frequency synthesizer type used"
+    },
+    */
 };
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
@@ -188,10 +188,10 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_OSL_RLOAD, 50);
     CFG_SetParam(CFG_PARAM_OSL_RSHORT, 5);
     CFG_SetParam(CFG_PARAM_OSL_ROPEN, 500);
-    CFG_SetParam(CFG_PARAM_OSL_NSCANS, 3);
+    CFG_SetParam(CFG_PARAM_OSL_NSCANS, 1);
     CFG_SetParam(CFG_PARAM_MEAS_NSCANS, 1);
     CFG_SetParam(CFG_PARAM_PAN_NSCANS, 1);
-    CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 0);
+    CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 6);
     CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 0);
     CFG_SetParam(CFG_PARAM_GEN_F, 14000000ul);
 

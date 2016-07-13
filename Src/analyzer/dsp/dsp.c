@@ -22,7 +22,7 @@
 
 //Measuring bridge parameters
 #define Rmeas 5.1f
-#define RmeasAdd 33.0f
+#define RmeasAdd 200.0f
 #define Rload 51.0f
 #define Rtotal (RmeasAdd + Rmeas + Rload)
 #define DSP_Z0 50.0f
@@ -37,7 +37,7 @@
 #define MAXNMEAS 20
 
 //Magnitude correction factor
-#define MCF 0.5f //TODO
+#define MCF 1.0f //TODO
 
 extern void Sleep(uint32_t);
 
@@ -260,6 +260,13 @@ REMEASURE:
     magdif = mag_v / mag_i;
     if (applyErrCorr)
         OSL_CorrectErr(freqHz, &magdif, &phdif);
+
+/*
+    if (phdif < -M_PI_2)
+        phdif = -M_PI_2;
+    else if (phdif > M_PI_2)
+        phdif = M_PI_2;
+*/
 
     //Calculate derived results
     magmv_v = mag_v * MCF;

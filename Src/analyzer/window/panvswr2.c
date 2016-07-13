@@ -554,7 +554,7 @@ static void LoadBkups()
 static void DrawHelp()
 {
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 15, "(Tap here to set F and Span)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 10, 190, "(Tap for next window)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 10, 190, "(Tap to exit to main window)");
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to change graph)");
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 360, 190, "(Tap to run scan)");
 }
