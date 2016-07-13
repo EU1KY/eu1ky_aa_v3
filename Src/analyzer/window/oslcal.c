@@ -175,6 +175,22 @@ void OSL_CalWnd(void)
     }
 }
 
+static void _hit_err_scan(void)
+{
+    progressval = 100;
+    progress_cb(0);
+
+    hbScanShort.bgcolor = LCD_RGB(128, 128, 0);
+    TEXTBOX_DrawContext(&osl_ctx);
+
+    OSL_ScanErrCorr(progress_cb);
+
+    hbScanShort.bgcolor = LCD_RGB(0, 128, 0);
+
+    progresstxt[0] = '\0';
+    TEXTBOX_SetText(&osl_ctx, hbScanProgressId, progresstxt);
+    TEXTBOX_DrawContext(&osl_ctx);
+}
 
 //Hardware error calibration window
 void OSL_CalErrCorr(void)
@@ -183,15 +199,28 @@ void OSL_CalErrCorr(void)
     shortScanned = 0; //To prevent OSL file reloading at exit
     openScanned = 0;  //To prevent OSL file reloading at exit
     loadScanned = 0;  //To prevent OSL file reloading at exit
+    progresstxt[0] = '\0';
 
     LCD_FillAll(LCD_BLACK);
     while (TOUCH_IsPressed());
 
-    TEXTBOX_InitContext(&osl_ctx);
-    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 80, 0, "HW Error Correction Calibration");
+    FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, 50, "Set jumper to HW calibration position and hit Start button");
 
+    TEXTBOX_InitContext(&osl_ctx);
+
+    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
     TEXTBOX_Append(&osl_ctx, &hbEx);
+
+    //Reusing hbScanShort
+    hbScanShort = (TEXTBOX_t){.x0 = 100, .y0 = 120, .text = " Start HW calibration ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_RED, .bgcolor = LCD_RGB(64, 64, 64), .cb = _hit_err_scan };
+    TEXTBOX_Append(&osl_ctx, &hbScanShort);
+
+    hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1,
+                                 .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+    hbScanProgressId = TEXTBOX_Append(&osl_ctx, &hbScanProgress);
 
     TEXTBOX_DrawContext(&osl_ctx);
 
@@ -200,10 +229,7 @@ void OSL_CalErrCorr(void)
         if (TEXTBOX_HitTest(&osl_ctx))
         {
             if (rqExit)
-            {
-                CFG_Init();
                 return;
-            }
             Sleep(50);
         }
     }

@@ -18,7 +18,7 @@ void OSL_ScanShort(void(*progresscb)(uint32_t));
 void OSL_ScanLoad(void(*progresscb)(uint32_t));
 void OSL_Calculate(void);
 void OSL_LoadErrCorr(void);
-void OSL_ScanErrCorr(void);
+void OSL_ScanErrCorr(void(*progresscb)(uint32_t));
 void OSL_CorrectErr(uint32_t fhz, float *magdif, float *phdif);
 int32_t OSL_IsErrCorrLoaded(void);
 

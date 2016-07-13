@@ -111,7 +111,7 @@ void OSL_LoadErrCorr(void)
     osl_err_loaded = 1;
 }
 
-void OSL_ScanErrCorr(void)
+void OSL_ScanErrCorr(void(*progresscb)(uint32_t))
 {
     uint32_t i;
     for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
@@ -125,6 +125,8 @@ void OSL_ScanErrCorr(void)
         }
         osl_errCorr[i].mag0 = 1.0f / DSP_MeasuredDiff();
         osl_errCorr[i].phase0 = DSP_MeasuredPhase();
+        if (progresscb)
+            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     //Store to file
