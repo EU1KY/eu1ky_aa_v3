@@ -21,9 +21,10 @@
 #include "crash.h"
 
 //Measuring bridge parameters
-#define Rmeas 5.1f
-#define RmeasAdd 200.0f
-#define Rload 51.0f
+//#define Rmeas 5.1f : moved to configuration variable
+//#define RmeasAdd 200.0f : moved to configuration variable
+//#define Rload 51.0f : moved to configuration variable
+
 #define Rtotal (RmeasAdd + Rmeas + Rload)
 #define DSP_Z0 50.0f
 
@@ -40,6 +41,10 @@
 #define MCF 1.0f //TODO
 
 extern void Sleep(uint32_t);
+
+static float Rmeas = 5.1f;
+static float RmeasAdd = 200.0f;
+static float Rload = 51.0f;
 
 static float mag_v_buf[MAXNMEAS];
 static float mag_i_buf[MAXNMEAS];
@@ -104,6 +109,14 @@ void DSP_Init(void)
     uint8_t ret;
     int32_t i;
     int ns = NSAMPLES - 1;
+    uint32_t tmp;
+
+    tmp = CFG_GetParam(CFG_PARAM_BRIDGE_RM);
+    Rmeas = *(float*)&tmp;
+    tmp = CFG_GetParam(CFG_PARAM_BRIDGE_RADD);
+    RmeasAdd = *(float*)&tmp;
+    tmp = CFG_GetParam(CFG_PARAM_BRIDGE_RLOAD);
+    Rload = *(float*)&tmp;
 
     OSL_Select(CFG_GetParam(CFG_PARAM_OSL_SELECTED));
     OSL_LoadErrCorr();

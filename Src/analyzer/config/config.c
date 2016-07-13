@@ -2,6 +2,7 @@
 #include "ff.h"
 #include "crash.h"
 #include <string.h>
+#include <stdint.h>
 
 static uint32_t g_cfg_array[CFG_NUM_PARAMS] = { 0 };
 const char *g_aa_dir = "/aa";
@@ -37,6 +38,8 @@ typedef struct
 #define CFG_IARR(...) (const int32_t[]){__VA_ARGS__}
 //Character array macro
 #define CFG_SARR(...) (const char*[]){__VA_ARGS__}
+//Float array macro
+#define CFG_FARR(...) (const float[]){__VA_ARGS__}
 
 //Callback that returns nonzero if Si5351 frequency synthesizer is selected
 static uint32_t isSi5351(void)
@@ -157,6 +160,22 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Linear audio inputs attenuation, dB."
     },
     {
+        .id = CFG_PARAM_BRIDGE_RM,
+        .idstring = "BRIDGE_RM",
+        .nvalues = 3,
+        .values = (int32_t*)CFG_FARR(1.f, 5.1f, 10.f),
+        .type = CFG_PARAM_T_F32,
+        .dstring = "Bridge Rm value, Ohm"
+    },
+    {
+        .id = CFG_PARAM_BRIDGE_RADD,
+        .idstring = "BRIDGE_RADD",
+        .nvalues = 7,
+        .values = (int32_t*)CFG_FARR(33.f, 51.f, 75.f, 100.f, 120.f, 150.f, 200.f),
+        .type = CFG_PARAM_T_F32,
+        .dstring = "Bridge Radd value, Ohm"
+    },
+    {
         .id = CFG_PARAM_PAN_CENTER_F,
         .idstring = "PAN_CENTER_F",
         .nvalues = 2,
@@ -204,6 +223,12 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 0);
     CFG_SetParam(CFG_PARAM_GEN_F, 14000000ul);
     CFG_SetParam(CFG_PARAM_PAN_CENTER_F, 0);
+    float tmp = 5.1f;
+    CFG_SetParam(CFG_PARAM_BRIDGE_RM, *((uint32_t*)&tmp));
+    tmp = 200.f;
+    CFG_SetParam(CFG_PARAM_BRIDGE_RADD, *((uint32_t*)&tmp));
+    tmp = 51.f;
+    CFG_SetParam(CFG_PARAM_BRIDGE_RLOAD, *((uint32_t*)&tmp));
 
     //Load parameters from file on SD card
     FRESULT res;
