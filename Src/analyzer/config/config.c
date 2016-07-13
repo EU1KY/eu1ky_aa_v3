@@ -156,6 +156,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U8,
         .dstring = "Linear audio inputs attenuation, dB."
     },
+    {
+        .id = CFG_PARAM_PAN_CENTER_F,
+        .idstring = "PAN_CENTER_F",
+        .nvalues = 2,
+        .values = CFG_IARR(0, 1),
+        .strvalues = CFG_SARR("Start F", "Center F"),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Select setting start or center F in panoramic window."
+    },
     /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
@@ -194,6 +203,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_LIN_ATTENUATION, 6);
     CFG_SetParam(CFG_PARAM_F_LO_DIV_BY_TWO, 0);
     CFG_SetParam(CFG_PARAM_GEN_F, 14000000ul);
+    CFG_SetParam(CFG_PARAM_PAN_CENTER_F, 0);
 
     //Load parameters from file on SD card
     FRESULT res;

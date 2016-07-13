@@ -206,11 +206,23 @@ void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasureme
     if (nMeasurements > MAXNMEAS)
         nMeasurements = MAXNMEAS;
 
-    if (freqHz != 0)
+    if (freqHz == 0)
     {
+        freqHz = GEN_GetLastFreq();
+    }
+    else
+    {
+        if (freqHz < BAND_FMIN || freqHz > BAND_FMAX)
+        { // Set defaults for out of band measurements
+            magmv_v = 500.f;
+            magmv_i = 500.f;
+            phdifdeg = 0.f;
+            magdifdb = 0.f;
+            mZ = 50.0f + 0.0fi;
+            return;
+        }
         GEN_SetMeasurementFreq(freqHz);
     }
-    freqHz = GEN_GetLastFreq();
 
 REMEASURE:
     for (i = 0; i < nMeasurements; i++)

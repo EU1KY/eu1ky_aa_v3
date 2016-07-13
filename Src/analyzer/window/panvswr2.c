@@ -89,6 +89,8 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 static uint32_t modstrw = 0;
 
 static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
+static const char* BSSTR_HALF[] = {"200 kHz", "400 kHz", "800 kHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
+
 static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 20000, 40000};
 static uint32_t f1 = 14000;
 static BANDSPAN span = BS800;
@@ -168,8 +170,17 @@ static void DrawCursorText()
     float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
     float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
 
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - BSVALUES[span] / 2;
+
+    float fcur = ((float)(fstart + cursorPos * BSVALUES[span] / WWIDTH))/1000.;
+    if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
+        fcur = 0.f;
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
-        ((float)(f1 + cursorPos * BSVALUES[span] / WWIDTH))/1000.,
+        fcur,
         crealf(rx),
         cimagf(rx),
         DSP_CalcVSWR(rx),
@@ -236,16 +247,30 @@ static void DrawGrid(int drawSwr)
 
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
 
-    if (drawSwr)
-        sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+    uint32_t fstart;
+    if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+    {
+        fstart = f1;
+        if (drawSwr)
+            sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+        else
+            sprintf(buf, "R/X graph: %d kHz + %s", (int)fstart, BSSTR[span]);
+    }
     else
-        sprintf(buf, "R/X graph: %d kHz + %s", (int)f1, BSSTR[span]);
+    {
+        fstart = f1 - BSVALUES[span] / 2;
+        if (drawSwr)
+            sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %d)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
+        else
+            sprintf(buf, "R/X graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
+    }
+
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, modstrw + 10, 0, buf);
 
     //Mark ham bands with colored background
     for (i = 0; i < WWIDTH; i++)
     {
-        uint32_t f = f1 + (i * BSVALUES[span]) / WWIDTH;
+        uint32_t f = fstart + (i * BSVALUES[span]) / WWIDTH;
         if (IsFinHamBands(f))
         {
             LCD_Line(LCD_MakePoint(X0 + i, Y0), LCD_MakePoint(X0 + i, Y0 + WHEIGHT), LCD_RGB(0, 0, 64));
@@ -261,7 +286,10 @@ static void DrawGrid(int drawSwr)
         if ((i % lmod) == 0 || i == WWIDTH/linediv)
         {
             char f[10];
-            sprintf(f, "%.2f", ((float)(f1 + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.);
+            float flabel = ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f;
+            if (flabel * 1000000.f > (float)(BAND_FMAX+1))
+                continue;
+            sprintf(f, "%.2f", ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
             FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, x - w / 2, Y0 + WHEIGHT + 5, f);
             LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLORBR);
@@ -306,7 +334,7 @@ static void print_span(BANDSPAN sp)
 
 static void print_f1(uint32_t f)
 {
-    sprintf(buf, "<<  <  F1: %d kHz  >  >>", (int)f);
+    sprintf(buf, "<<  <  %s: %d kHz  >  >>", CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "Fc" : "F0", (int)f);
     FONT_ClearLine(FONT_CONSBIG, LCD_BLACK, 100);
     FONT_Write(FONT_CONSBIG, LCD_BLUE, LCD_BLACK, 0, 100, buf);
 }
@@ -347,7 +375,7 @@ static void SELFREQ_Proc(void)
 
     LCD_FillAll(LCD_BLACK);
     while(TOUCH_IsPressed());
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 30, 5, "Select F1 and bandspan");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 30, 5, "Select Freq and Bandspan");
 
     print_span(span);
     print_f1(f1);
@@ -435,9 +463,20 @@ static void SELFREQ_Proc(void)
 static void ScanRX()
 {
     int i;
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - BSVALUES[span] / 2;
+
+    DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
+
     for(i = 0; i < WWIDTH; i++)
     {
-        uint32_t freq = (f1 + (i * BSVALUES[span]) / WWIDTH) * 1000;
+        uint32_t freq;
+        freq = (fstart + (i * BSVALUES[span]) / WWIDTH) * 1000;
+        if (freq == 0) //To overcome special case in DSP_Measure, where 0 is valid value
+            freq = 1;
         DSP_Measure(freq, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
         float complex rx = DSP_MeasuredZ();
         if (isnan(crealf(rx)) || isinf(crealf(rx)))
@@ -697,7 +736,10 @@ static void DrawSmith()
     int i;
 
     LCD_FillAll(LCD_BLACK);
-    sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+    if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+        sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+    else
+        sprintf(buf, "Smith chart: %d kHz +/- %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
     LCD_FillCircle(LCD_MakePoint(cx0, cy0), 100, SMITH_CIRCLE_BG); //Chart circle
     LCD_Circle(LCD_MakePoint(cx0, cy0), 33, WGRIDCOLOR); //VSWR 2.0 circle
@@ -943,10 +985,17 @@ static void save_snapshot(void)
                   "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
     fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
     if (FR_OK != fr) goto CRASH_WR;
+
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - BSVALUES[span] / 2;
+
     for (i = 0; i < WWIDTH; i++)
     {
         float complex g = OSL_GFromZ(values[i], 50.f);
-        float fmhz = (float)(f1 + i * BSVALUES[span] / WWIDTH) / 1000.0f;
+        float fmhz = (float)(fstart + i * BSVALUES[span] / WWIDTH) / 1000.0f;
         sprintf(wbuf, "%.3f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
         fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
         if (FR_OK != fr) goto CRASH_WR;

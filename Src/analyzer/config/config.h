@@ -46,6 +46,7 @@ typedef enum
     CFG_PARAM_LIN_ATTENUATION,       //Linear audio input attenuation, dB
     CFG_PARAM_F_LO_DIV_BY_TWO,       //LO frequency is divided by two in quadrature mixer
     CFG_PARAM_GEN_F,                 //Frequency for generator window, Hz
+    CFG_PARAM_PAN_CENTER_F,          //Way of setting panoramic window. 0: F0+bandspan, 1: Fcenter +- Bandspan/2
 
     //---------------------
     CFG_NUM_PARAMS
