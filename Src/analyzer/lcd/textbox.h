@@ -26,6 +26,7 @@ typedef struct
     uint16_t height;   //Filled automatically for TEXTBOX_TYPE_TEXT type
     void *next;        //Filled automatically in TEXTBOX_Append
 } TEXTBOX_t;
+#pragma pack(pop)
 
 typedef struct
 {
