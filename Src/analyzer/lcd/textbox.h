@@ -6,8 +6,8 @@
 
 typedef enum
 {
-    TEXTBOX_TYPE_TEXT = 0,
-    TEXTBOX_TYPE_HITRECT, //Invisible hit rectangle
+    TEXTBOX_TYPE_TEXT = 0, //Visible item with text
+    TEXTBOX_TYPE_HITRECT,  //Invisible hit rectangle
 } TEXTBOX_TYPE_t;
 
 #pragma pack(push,1)
@@ -17,13 +17,13 @@ typedef struct
     uint8_t nowait;    //Set to 1 to bypass waiting for touch release and to return 0 from hit test func
     uint16_t x0;       //Origin x
     uint16_t y0;       //Origin y
-    const char* text;  //Text of the box for TEXTBOX_TYPE_TEXT
-    FONTS font;        //Font of the box for TEXTBOX_TYPE_TEXT
-    uint32_t fgcolor;  //Foreground color for TEXTBOX_TYPE_TEXT
-    uint32_t bgcolor;  //Background color for TEXTBOX_TYPE_TEXT
-    void (*cb)(void);  //Callback function to be called
-    uint16_t width;    //Filled automatically for TEXTBOX_TYPE_TEXT
-    uint16_t height;   //Filled automatically for TEXTBOX_TYPE_TEXT
+    const char* text;  //Text of the box for TEXTBOX_TYPE_TEXT type
+    FONTS font;        //Font of the box for TEXTBOX_TYPE_TEXT type
+    uint32_t fgcolor;  //Foreground color for TEXTBOX_TYPE_TEXT type
+    uint32_t bgcolor;  //Background color for TEXTBOX_TYPE_TEXT type
+    void (*cb)(void);  //Callback function to be called when textbox is tapped
+    uint16_t width;    //Filled automatically for TEXTBOX_TYPE_TEXT type
+    uint16_t height;   //Filled automatically for TEXTBOX_TYPE_TEXT type
     void *next;        //Filled automatically in TEXTBOX_Append
 } TEXTBOX_t;
 

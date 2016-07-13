@@ -1,4 +1,9 @@
-//OSL calibration window
+/*
+ *   (c) Yury Kuchura
+ *   kuchura@gmail.com
+ *
+ *   This code can be used on terms of WTFPL Version 2 (http://www.wtfpl.net/).
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -18,6 +23,7 @@ static uint32_t loadScanned = 0;
 static uint32_t openScanned = 0;
 static char progresstxt[16];
 static int progressval;
+static TEXTBOX_t hbEx;
 static TEXTBOX_t hbScanShort;
 static TEXTBOX_t hbScanOpen;
 static TEXTBOX_t hbScanLoad;
@@ -106,10 +112,9 @@ static void _hit_save(void)
     rqExit = 1;
 }
 
+//OSL calibration window
 void OSL_CalWnd(void)
 {
-    //if (!OSL_IsErrCorrLoaded())
-    //    OSL_ScanErrCorr();
     if (-1 == OSL_GetSelected())
         return;
 
@@ -125,8 +130,6 @@ void OSL_CalWnd(void)
     FONT_Print(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 110, 0, "OSL Calibration, file %s", OSL_GetSelectedName());
 
     TEXTBOX_InitContext(&osl_ctx);
-    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
 
     static char shortvalue[50];
     sprintf(shortvalue, " Scan short: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_RSHORT));
@@ -138,6 +141,8 @@ void OSL_CalWnd(void)
     else
         strcpy(openvalue, " Scan open: infinite ");
 
+    hbEx = (TEXTBOX_t){.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
     hbScanShort = (TEXTBOX_t){.x0 = 10, .y0 = 50, .text = shortvalue, .font = FONT_FRANBIG,
                             .fgcolor = LCD_BLUE, .bgcolor = LCD_RGB(64,64,64), .cb = _hb_scan_short };
     hbScanLoad = (TEXTBOX_t){.x0 = 10, .y0 = 100, .text = loadvalue, .font = FONT_FRANBIG,
@@ -154,6 +159,40 @@ void OSL_CalWnd(void)
     TEXTBOX_Append(&osl_ctx, &hbScanOpen);
     TEXTBOX_Append(&osl_ctx, &hbSave);
     hbScanProgressId = TEXTBOX_Append(&osl_ctx, &hbScanProgress);
+    TEXTBOX_DrawContext(&osl_ctx);
+
+    for(;;)
+    {
+        if (TEXTBOX_HitTest(&osl_ctx))
+        {
+            if (rqExit)
+            {
+                CFG_Init();
+                return;
+            }
+            Sleep(50);
+        }
+    }
+}
+
+
+//Hardware error calibration window
+void OSL_CalErrCorr(void)
+{
+    rqExit = 0;
+    shortScanned = 0; //To prevent OSL file reloading at exit
+    openScanned = 0;  //To prevent OSL file reloading at exit
+    loadScanned = 0;  //To prevent OSL file reloading at exit
+
+    LCD_FillAll(LCD_BLACK);
+    while (TOUCH_IsPressed());
+
+    TEXTBOX_InitContext(&osl_ctx);
+    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
+
+    TEXTBOX_Append(&osl_ctx, &hbEx);
+
     TEXTBOX_DrawContext(&osl_ctx);
 
     for(;;)

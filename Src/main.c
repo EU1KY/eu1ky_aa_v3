@@ -5,19 +5,14 @@
 #include "lcd.h"
 #include "font.h"
 #include "touch.h"
-#include "panvswr2.h"
-#include "measurement.h"
-#include "generator.h"
-#include "fftwnd.h"
 #include "ff.h"
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
 #include "config.h"
 #include "crash.h"
-#include "gen.h"
-#include "dsp.h"
 #include "si5351.h"
-#include "oslcal.h"
+#include "dsp.h"
+#include "mainwnd.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -42,38 +37,6 @@ void uart_init(void)
     BSP_COM_Init(COM1, &UartHandle);
 }
 
-void flash_example()
-{
-    BSP_QSPI_Init();
-
-    QSPI_Info inf;
-    BSP_QSPI_GetInfo(&inf);
-    FONT_SetAttributes(FONT_FRAN, LCD_YELLOW, LCD_BLACK);
-    FONT_Printf(0, 0, "FlashSize: %d", inf.FlashSize);
-    FONT_Printf(0, 20, "EraseSectorSize: %d", inf.EraseSectorSize);
-    FONT_Printf(0, 40, "EraseSectorsNumber: %d", inf.EraseSectorsNumber);
-    FONT_Printf(0, 60, "ProgPageSize: %d", inf.ProgPageSize);
-    FONT_Printf(0, 80, "ProgPagesNumber: %d", inf.ProgPagesNumber);
-
-    uint8_t rdbuf[256] = {0};
-    //BSP_QSPI_Erase_Chip();
-    //BSP_QSPI_Erase_Block(0);
-
-    //rdbuf[0] = 0xFF;
-    //BSP_QSPI_Write(rdbuf, 100000, 1);
-
-    BSP_QSPI_Read(rdbuf, 0, 256);
-    FONT_SetAttributes(FONT_FRAN, LCD_YELLOW, LCD_BLACK);
-    uint8_t* p = rdbuf;
-    for (uint32_t i=0; i < 10; i++)
-    {
-        FONT_Printf(0, 100 + i * 14, "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-                    p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
-                    p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
-        p += 16;
-    }
-}
-
 _ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
 {
     HAL_UART_Transmit(&UartHandle, (uint8_t*)ptr, len, 0xFFFFFFFF);
@@ -86,7 +49,6 @@ static char SDPath[4];        // SD card logical drive path
 
 int main(void)
 {
-    uint32_t oscilloscope = 1;
     CPU_CACHE_Enable();
     HAL_Init();
     SystemClock_Config();
@@ -97,19 +59,17 @@ int main(void)
 
     HAL_Delay(300);
 
+    //Mount SD card
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
         CRASH("FATFS_LinkDriver failed");
     if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
         CRASH("f_mount failed");
-    CFG_Init();
 
-    si5351_init();
-    DSP_Init();
+    CFG_Init(); //Load configuration
 
+    si5351_init(); //Initialize frequency synthesizer
 
-    OSL_CalWnd();
-
-    CFG_ParamWnd();
+    DSP_Init(); //Initialize DSP module. Also loads calibration files inside.
 
     #if 0
     int i = 0;
@@ -127,13 +87,8 @@ int main(void)
     }
     #endif
 
-    for(;;)
-    {
-        PANVSWR2_Proc();
-        MEASUREMENT_Proc();
-        GENERATOR_Window_Proc();
-        FFTWND_Proc();
-    }
+    //Run main window function
+    MainWnd(); //Never returns
 
     return 0;
 }
