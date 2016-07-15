@@ -52,7 +52,7 @@ void Sleep(uint32_t nms);
 
 typedef enum
 {
-    BS400, BS800, BS1600, BS4M, BS8M, BS16M, BS20M, BS40M
+    BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M
 } BANDSPAN;
 
 typedef enum
@@ -88,10 +88,10 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
 
-static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
-static const char* BSSTR_HALF[] = {"200 kHz", "400 kHz", "800 kHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
+static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
+static const char* BSSTR_HALF[] = {"200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
 
-static const uint32_t BSVALUES[] = {400, 800, 1600, 4000, 8000, 16000, 20000, 40000};
+static const uint32_t BSVALUES[] = {400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
 static uint32_t f1 = 14000;
 static BANDSPAN span = BS800;
 static char buf[64];
