@@ -10,7 +10,7 @@
 #include "dsp.h"
 
 #define MAX_OSLFILES 16
-#define OSL_BASE_R0 50.0f // Note: all OSL calibration coefficients are calculated using G based on 50 Ohms, not on OSL_BASE_R0 !!!
+#define OSL_BASE_R0 50.0f // Note: all OSL calibration coefficients are calculated using G based on 50 Ohms, not on CFG_PARAM_R0 !!!
 
 extern void Sleep(uint32_t);
 
