@@ -2,14 +2,14 @@
   ******************************************************************************
   * @file    stm32746g_discovery_qspi.h
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file contains the common defines and functions prototypes for
   *          the stm32746g_discovery_qspi.c driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -105,6 +105,8 @@
 #define QSPI_FLASH_SIZE            23     /* Address bus width to access whole memory space */
 #define QSPI_PAGE_SIZE             256
 
+/* This alias is added as the name of Memory mapped fucntion changed */   
+#define BSP_QSPI_MemoryMappedMode  BSP_QSPI_EnableMemoryMappedMode   
 /**
   * @}
   */
@@ -139,7 +141,7 @@ uint8_t BSP_QSPI_Erase_Block(uint32_t BlockAddress);
 uint8_t BSP_QSPI_Erase_Chip (void);
 uint8_t BSP_QSPI_GetStatus  (void);
 uint8_t BSP_QSPI_GetInfo    (QSPI_Info* pInfo);
-uint8_t BSP_QSPI_MemoryMappedMode(void);
+uint8_t BSP_QSPI_EnableMemoryMappedMode(void);
 
 /* These functions can be modified in case the current settings
    need to be changed for specific application needs */

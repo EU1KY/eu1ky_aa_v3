@@ -2,10 +2,10 @@
   ******************************************************************************
   * @file    exc7200.c
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    28-April-2015
+  * @version V1.0.1
+  * @date    21-September-2015
   * @brief   This file provides a set of functions needed to manage the EXC7200
-  *          IO Expander devices.
+  *          Touch-screen controller.
   ******************************************************************************
   * @attention
   *
@@ -158,18 +158,16 @@ void exc7200_TS_Start(uint16_t DeviceAddr)
   */
 uint8_t exc7200_TS_DetectTouch(uint16_t DeviceAddr)
 {
-  /* Read TS data from LCD */
-  IOE_ReadMultiple(DeviceAddr, EXC7200_READ_CMD, aBufferTS, 10);  
+  /* Read TS data : Send I2C Slave address + 1 Bit0=1 for:read */
+  IOE_ReadMultiple(DeviceAddr | 1, EXC7200_READ_CMD, aBufferTS, 10);  
 
   /* check for first byte */
-  if( (aBufferTS[1]!=0x83) | (aBufferTS[1]==0x82))
+  if (aBufferTS[1]==0x83)
   {	
-    return 0;
-  }
-  else
-  {
     return 1;
   }
+  
+  return 0;
 }
 
 /**
@@ -182,11 +180,11 @@ uint8_t exc7200_TS_DetectTouch(uint16_t DeviceAddr)
 void exc7200_TS_GetXY(uint16_t DeviceAddr, uint16_t *X, uint16_t *Y)
 {
   /* Calculate positions */
-  *X = (((aBufferTS[3]&0x00ff) << 4) | ((aBufferTS[2]&0x00f0) >> 4));
-  *Y = (((aBufferTS[5]&0x00ff) << 4) | ((aBufferTS[4]&0x00f0) >> 4));
+  *X = (((aBufferTS[3]&0x00ff) << 4) | ((aBufferTS[2]&0x00f0) >> 4)) << 1;
+  *Y = (((aBufferTS[5]&0x00ff) << 4) | ((aBufferTS[4]&0x00f0) >> 4)) << 1;
   
-  *X = (*X * 640) / 2048;
-  *Y = (*Y * 480) / 2048;
+  /* Dummy Read to deactivate read mode */
+  IOE_ReadMultiple(DeviceAddr, EXC7200_READ_CMD, aBufferTS, 10);    
 }
 
 /**

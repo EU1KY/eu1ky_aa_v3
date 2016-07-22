@@ -2,14 +2,14 @@
   ******************************************************************************
   * @file    stm32746g_discovery_sdram.h
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file contains the common defines and functions prototypes for
   *          the stm32746g_discovery_sdram.c driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -91,7 +91,7 @@
 #define SDRAM_DMAx_CHANNEL                DMA_CHANNEL_0
 #define SDRAM_DMAx_STREAM                 DMA2_Stream0  
 #define SDRAM_DMAx_IRQn                   DMA2_Stream0_IRQn
-#define SDRAM_DMAx_IRQHandler             DMA2_Stream0_IRQHandler  
+#define BSP_SDRAM_DMA_IRQHandler          DMA2_Stream0_IRQHandler  
 /**
   * @}
   */ 
@@ -132,7 +132,6 @@ uint8_t BSP_SDRAM_ReadData_DMA(uint32_t uwStartAddress, uint32_t *pData, uint32_
 uint8_t BSP_SDRAM_WriteData(uint32_t uwStartAddress, uint32_t *pData, uint32_t uwDataSize);
 uint8_t BSP_SDRAM_WriteData_DMA(uint32_t uwStartAddress, uint32_t *pData, uint32_t uwDataSize);
 uint8_t BSP_SDRAM_Sendcmd(FMC_SDRAM_CommandTypeDef *SdramCmd);
-void    BSP_SDRAM_DMA_IRQHandler(void);  
    
 /* These functions can be modified in case the current settings (e.g. DMA stream)
    need to be changed for specific application needs */

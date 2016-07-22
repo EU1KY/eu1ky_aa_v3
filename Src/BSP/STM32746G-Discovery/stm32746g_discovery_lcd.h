@@ -2,14 +2,14 @@
   ******************************************************************************
   * @file    stm32746g_discovery_lcd.h
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file contains the common defines and functions prototypes for
   *          the stm32746g_discovery_lcd.c driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -34,7 +34,7 @@
   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-  */
+  */  
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __STM32746G_DISCOVERY_LCD_H
@@ -42,7 +42,7 @@
 
 #ifdef __cplusplus
  extern "C" {
-#endif
+#endif 
 
 /* Includes ------------------------------------------------------------------*/
 /* Include LCD component Driver */
@@ -51,10 +51,10 @@
 
 /* Include SDRAM Driver */
 #include "stm32746g_discovery_sdram.h"
-
+ 
 #include "stm32746g_discovery.h"
-#include "../Utilities/Fonts/fonts.h" /* Fixed: Cube folder structure points 3 level up from "Debug", changed to 1 level. */
-
+#include "../Utilities/Fonts/fonts.h"
+  
 /** @addtogroup BSP
   * @{
   */
@@ -62,30 +62,30 @@
 /** @addtogroup STM32746G_DISCOVERY
   * @{
   */
-
+    
 /** @addtogroup STM32746G_DISCOVERY_LCD
   * @{
-  */
+  */ 
 
 /** @defgroup STM32746G_DISCOVERY_LCD_Exported_Types STM32746G_DISCOVERY_LCD Exported Types
   * @{
-  */
-typedef struct
-{
-  uint32_t TextColor;
-  uint32_t BackColor;
+  */  
+typedef struct 
+{ 
+  uint32_t TextColor; 
+  uint32_t BackColor;  
   sFONT    *pFont;
-}LCD_DrawPropTypeDef;
-
-typedef struct
+}LCD_DrawPropTypeDef;   
+   
+typedef struct 
 {
   int16_t X;
   int16_t Y;
-}Point, * pPoint;
-
-/**
-  * @brief  Line mode structures definition
-  */
+}Point, * pPoint; 
+   
+/** 
+  * @brief  Line mode structures definition  
+  */ 
 typedef enum
 {
   CENTER_MODE             = 0x01,    /* Center mode */
@@ -95,31 +95,31 @@ typedef enum
 
 /**
   * @}
-  */
+  */ 
 
 /** @defgroup STM32746G_DISCOVERY_LCD_Exported_Constants STM32746G_DISCOVERY_LCD Exported Constants
   * @{
-  */
+  */ 
 #define MAX_LAYER_NUMBER       ((uint32_t)2)
 
 #define LCD_LayerCfgTypeDef    LTDC_LayerCfgTypeDef
 
 #define LTDC_ACTIVE_LAYER	     ((uint32_t)1) /* Layer 1 */
-/**
-  * @brief  LCD status structure definition
-  */
+/** 
+  * @brief  LCD status structure definition  
+  */     
 #define LCD_OK                 ((uint8_t)0x00)
 #define LCD_ERROR              ((uint8_t)0x01)
 #define LCD_TIMEOUT            ((uint8_t)0x02)
 
-/**
-  * @brief  LCD FB_StartAddress
+/** 
+  * @brief  LCD FB_StartAddress  
   */
 #define LCD_FB_START_ADDRESS       ((uint32_t)0xC0000000)
 
-/**
-  * @brief  LCD color
-  */
+/** 
+  * @brief  LCD color  
+  */ 
 #define LCD_COLOR_BLUE          ((uint32_t)0xFF0000FF)
 #define LCD_COLOR_GREEN         ((uint32_t)0xFF00FF00)
 #define LCD_COLOR_RED           ((uint32_t)0xFFFF0000)
@@ -147,10 +147,17 @@ typedef enum
 #define LCD_COLOR_ORANGE        ((uint32_t)0xFFFFA500)
 #define LCD_COLOR_TRANSPARENT   ((uint32_t)0xFF000000)
 
-/**
-  * @brief LCD default font
+/** 
+  * @brief LCD default font 
+  */ 
+//#define LCD_DEFAULT_FONT        Font24     
+
+/** 
+  * @brief  LCD Reload Types  
   */
-//#define LCD_DEFAULT_FONT        Font24
+#define LCD_RELOAD_IMMEDIATE               ((uint32_t)LTDC_SRCR_IMR)
+#define LCD_RELOAD_VERTICAL_BLANKING       ((uint32_t)LTDC_SRCR_VBR) 
+
 
 /**
   * @brief LCD special pins
@@ -169,7 +176,7 @@ typedef enum
 
 /**
   * @}
-  */
+  */ 
 
 /** @addtogroup STM32746G_DISCOVERY_LCD_Exported_Functions
   * @{
@@ -185,13 +192,19 @@ void     BSP_LCD_SetYSize(uint32_t imageHeightPixels);
 void     BSP_LCD_LayerDefaultInit(uint16_t LayerIndex, uint32_t FrameBuffer);
 void     BSP_LCD_LayerRgb565Init(uint16_t LayerIndex, uint32_t FB_Address);
 void     BSP_LCD_SetTransparency(uint32_t LayerIndex, uint8_t Transparency);
+void     BSP_LCD_SetTransparency_NoReload(uint32_t LayerIndex, uint8_t Transparency);
 void     BSP_LCD_SetLayerAddress(uint32_t LayerIndex, uint32_t Address);
+void     BSP_LCD_SetLayerAddress_NoReload(uint32_t LayerIndex, uint32_t Address);
 void     BSP_LCD_SetColorKeying(uint32_t LayerIndex, uint32_t RGBValue);
+void     BSP_LCD_SetColorKeying_NoReload(uint32_t LayerIndex, uint32_t RGBValue);
 void     BSP_LCD_ResetColorKeying(uint32_t LayerIndex);
+void     BSP_LCD_ResetColorKeying_NoReload(uint32_t LayerIndex);
 void     BSP_LCD_SetLayerWindow(uint16_t LayerIndex, uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height);
-
+void     BSP_LCD_SetLayerWindow_NoReload(uint16_t LayerIndex, uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height);
 void     BSP_LCD_SelectLayer(uint32_t LayerIndex);
 void     BSP_LCD_SetLayerVisible(uint32_t LayerIndex, FunctionalState State);
+void     BSP_LCD_SetLayerVisible_NoReload(uint32_t LayerIndex, FunctionalState State);
+void     BSP_LCD_Reload(uint32_t ReloadType);
 
 void     BSP_LCD_SetTextColor(uint32_t Color);
 uint32_t BSP_LCD_GetTextColor(void);
@@ -233,19 +246,19 @@ void     BSP_LCD_ClockConfig(LTDC_HandleTypeDef *hltdc, void *Params);
 
 /**
   * @}
-  */
+  */ 
 
 /**
   * @}
-  */
-
+  */ 
+  
 /**
   * @}
   */
-
+ 
 /**
   * @}
-  */
+  */ 
 
 #ifdef __cplusplus
 }

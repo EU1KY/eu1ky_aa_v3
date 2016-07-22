@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    audio.h
   * @author  MCD Application Team
-  * @version V4.0.0
-  * @date    22-June-2015
+  * @version V4.0.1
+  * @date    21-July-2015
   * @brief   This header file contains the common defines and functions prototypes
   *          for the Audio driver.  
   ******************************************************************************

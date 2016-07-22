@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    io.h
   * @author  MCD Application Team
-  * @version V4.0.0
-  * @date    22-June-2015
+  * @version V4.0.1
+  * @date    21-July-2015
   * @brief   This file contains all the functions prototypes for the IO driver.
   ******************************************************************************
   * @attention

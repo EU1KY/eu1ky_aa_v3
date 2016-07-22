@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32746g_discovery_qspi.c
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file includes a standard driver for the N25Q128A QSPI
   *          memory mounted on STM32746G-Discovery board.
   @verbatim
@@ -37,7 +37,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -456,7 +456,7 @@ uint8_t BSP_QSPI_GetInfo(QSPI_Info* pInfo)
   * @brief  Configure the QSPI in memory-mapped mode
   * @retval QSPI memory status
   */
-uint8_t BSP_QSPI_MemoryMappedMode(void)
+uint8_t BSP_QSPI_EnableMemoryMappedMode(void)
 {
   QSPI_CommandTypeDef      s_command;
   QSPI_MemoryMappedTypeDef s_mem_mapped_cfg;
@@ -474,8 +474,8 @@ uint8_t BSP_QSPI_MemoryMappedMode(void)
   s_command.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
   
   /* Configure the memory mapped mode */
-  s_mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_ENABLE;
-  s_mem_mapped_cfg.TimeOutPeriod     = 1;
+  s_mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
+  s_mem_mapped_cfg.TimeOutPeriod     = 0;
   
   if (HAL_QSPI_MemoryMapped(&QSPIHandle, &s_command, &s_mem_mapped_cfg) != HAL_OK)
   {

@@ -2,14 +2,14 @@
   ******************************************************************************
   * @file    wm8994.h
   * @author  MCD Application Team
-  * @version V2.0.0
-  * @date    24-June-2015
+  * @version V2.1.0
+  * @date    22-February-2016
   * @brief   This file contains all the functions prototypes for the 
   *          wm8994.c driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -79,6 +79,7 @@
 #define INPUT_DEVICE_DIGITAL_MICROPHONE_2     ((uint16_t)0x0200)
 #define INPUT_DEVICE_INPUT_LINE_1             ((uint16_t)0x0300)
 #define INPUT_DEVICE_INPUT_LINE_2             ((uint16_t)0x0400)
+#define INPUT_DEVICE_DIGITAL_MIC1_MIC2        ((uint16_t)0x0800)
 
 /* Volume Levels values */
 #define DEFAULT_VOLMIN                0x00

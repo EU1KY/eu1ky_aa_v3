@@ -2,14 +2,14 @@
   ******************************************************************************
   * @file    stm32746g_discovery_audio.h
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file contains the common defines and functions prototypes for
   *          the stm32746g_discovery_audio.c driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -119,7 +119,7 @@
 #define AUDIO_OUT_SAIx_DMAx_IRQHandler           DMA2_Stream4_IRQHandler
 
 /* Select the interrupt preemption priority for the DMA interrupt */
-#define AUDIO_OUT_IRQ_PREPRIO                    ((uint32_t)5)   /* Select the preemption priority level(0 is the highest) */
+#define AUDIO_OUT_IRQ_PREPRIO                    ((uint32_t)0x0E)   /* Select the preemption priority level(0 is the highest) */
 
 /*------------------------------------------------------------------------------
                         AUDIO IN CONFIGURATION
@@ -151,7 +151,7 @@
 #define AUDIO_IN_INT_IRQHandler                  EXTI15_10_IRQHandler
 
 /* Select the interrupt preemption priority and subpriority for the IT/DMA interrupt */
-#define AUDIO_IN_IRQ_PREPRIO                     ((uint32_t)6)   /* Select the preemption priority level(0 is the highest) */
+#define AUDIO_IN_IRQ_PREPRIO                     ((uint32_t)0x0F)   /* Select the preemption priority level(0 is the highest) */
 
 /*------------------------------------------------------------------------------
              CONFIGURATION: Audio Driver Configuration parameters

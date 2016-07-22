@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32746g_discovery_audio.c
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file provides the Audio driver for the STM32746G-Discovery board.
   @verbatim
     How To use this driver:
@@ -65,7 +65,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -485,14 +485,12 @@ void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai)
   audio_in_state = HAL_SAI_GetState(&haudio_in_sai);
 
   /* Determines if it is an audio out or audio in error */
-  if ((audio_out_state == HAL_SAI_STATE_BUSY) || (audio_out_state == HAL_SAI_STATE_BUSY_TX)
-   || (audio_out_state == HAL_SAI_STATE_TIMEOUT) || (audio_out_state == HAL_SAI_STATE_ERROR))
+  if ((audio_out_state == HAL_SAI_STATE_BUSY) || (audio_out_state == HAL_SAI_STATE_BUSY_TX))
   {
     BSP_AUDIO_OUT_Error_CallBack();
   }
 
-  if ((audio_in_state == HAL_SAI_STATE_BUSY) || (audio_in_state == HAL_SAI_STATE_BUSY_RX)
-   || (audio_in_state == HAL_SAI_STATE_TIMEOUT) || (audio_in_state == HAL_SAI_STATE_ERROR))
+  if ((audio_in_state == HAL_SAI_STATE_BUSY) || (audio_in_state == HAL_SAI_STATE_BUSY_RX))
   {
     BSP_AUDIO_IN_Error_CallBack();
   }

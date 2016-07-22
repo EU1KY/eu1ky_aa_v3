@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32746g_discovery_sd.c
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file includes the uSD card driver mounted on STM32746G-Discovery
   *          board.
   @verbatim
@@ -47,7 +47,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -114,7 +114,7 @@
 /** @defgroup STM32746G_DISCOVERY_SD_Private_Variables STM32746G_DISCOVERY_SD Private Variables
   * @{
   */
-static SD_HandleTypeDef uSdHandle;
+SD_HandleTypeDef uSdHandle;
 static SD_CardInfo      uSdCardInfo;
 
 /**
@@ -524,33 +524,6 @@ __weak void BSP_SD_MspDeInit(SD_HandleTypeDef *hsd, void *Params)
 
   /* GPIO pins clock and DMA clocks can be shut down in the application
      by surcharging this __weak function */
-}
-
-/**
-  * @brief  Handles SD card interrupt request.
-  * @retval None
-  */
-void BSP_SD_IRQHandler(void)
-{
-  HAL_SD_IRQHandler(&uSdHandle);
-}
-
-/**
-  * @brief  Handles SD DMA Tx transfer interrupt request.
-  * @retval None
-  */
-void BSP_SD_DMA_Tx_IRQHandler(void)
-{
-  HAL_DMA_IRQHandler(uSdHandle.hdmatx); 
-}
-
-/**
-  * @brief  Handles SD DMA Rx transfer interrupt request.
-  * @retval None
-  */
-void BSP_SD_DMA_Rx_IRQHandler(void)
-{
-  HAL_DMA_IRQHandler(uSdHandle.hdmarx);
 }
 
 /**

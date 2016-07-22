@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32746g_discovery_sdram.c
   * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    25-June-2015
+  * @version V1.1.0
+  * @date    22-April-2016
   * @brief   This file includes the SDRAM driver for the MT48LC4M32B2B5-7 memory 
   *          device mounted on STM32746G-Discovery board.
   @verbatim
@@ -48,7 +48,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -114,7 +114,7 @@
 /** @defgroup STM32746G_DISCOVERY_SDRAM_Private_Variables STM32746G_DISCOVERY_SDRAM Private Variables
   * @{
   */       
-static SDRAM_HandleTypeDef sdramHandle;
+SDRAM_HandleTypeDef sdramHandle;
 static FMC_SDRAM_TimingTypeDef Timing;
 static FMC_SDRAM_CommandTypeDef Command;
 /**
@@ -360,15 +360,6 @@ uint8_t BSP_SDRAM_Sendcmd(FMC_SDRAM_CommandTypeDef *SdramCmd)
 }
 
 /**
-  * @brief  Handles SDRAM DMA transfer interrupt request.
-  * @retval None
-  */
-void BSP_SDRAM_DMA_IRQHandler(void)
-{
-  HAL_DMA_IRQHandler(sdramHandle.hdma); 
-}
-
-/**
   * @brief  Initializes SDRAM MSP.
   * @param  hsdram: SDRAM handle
   * @param  Params
@@ -404,7 +395,7 @@ __weak void BSP_SDRAM_MspInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
   HAL_GPIO_Init(GPIOC, &gpio_init_structure);
 
   /* GPIOD configuration */
-  gpio_init_structure.Pin   = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_3 | GPIO_PIN_8 | GPIO_PIN_9 |
+  gpio_init_structure.Pin   = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_8 | GPIO_PIN_9 |
                               GPIO_PIN_10 | GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init(GPIOD, &gpio_init_structure);
 
@@ -455,7 +446,7 @@ __weak void BSP_SDRAM_MspInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
   HAL_DMA_Init(&dma_handle); 
   
   /* NVIC configuration for DMA transfer complete interrupt */
-  HAL_NVIC_SetPriority(SDRAM_DMAx_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(SDRAM_DMAx_IRQn, 0x0F, 0);
   HAL_NVIC_EnableIRQ(SDRAM_DMAx_IRQn);
 }
 
