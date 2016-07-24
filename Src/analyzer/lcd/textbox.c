@@ -7,7 +7,7 @@ void TEXTBOX_InitContext(TEXTBOX_CTX_t* ctx)
     ctx->start = 0;
 }
 
-static TEXTBOX_t* TEXTBOX_Find(TEXTBOX_CTX_t *ctx, uint32_t idx)
+TEXTBOX_t* TEXTBOX_Find(TEXTBOX_CTX_t *ctx, uint32_t idx)
 {
     if (0 == ctx)
         return 0;
@@ -116,7 +116,10 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                 if (pbox->cb)
                     pbox->cb();
                 if (pbox->nowait)
+                {
+                    Sleep(pbox->nowait);
                     return 0;
+                }
                 if (TEXTBOX_TYPE_TEXT == pbox->type)
                     FONT_Write(pbox->font, pbox->bgcolor, pbox->fgcolor, pbox->x0, pbox->y0, pbox->text);
                 while (TOUCH_IsPressed());

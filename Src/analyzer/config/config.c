@@ -31,6 +31,7 @@ typedef struct
     const char **strvalues;            //Array of alternative string representations for values that can be selected for parameter. Length of the array must be in .values
     CFG_PARAM_TYPE_t type;             //Parameter value type, see CFG_PARAM_TYPE_t
     const char *dstring;               //Detailed description of the parameter
+    uint32_t repeatdelay;              //Nonzero if continuous tap of value should be detected. Number of ms to sleep between callbacks
     uint32_t (*isvalid)(void);         //Optional callback that can be defined. This function should return zero if parameter should not be displayed.
 } CFG_CHANGEABLE_PARAM_DESCR_t;
 
@@ -92,6 +93,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_S16,
         .dstring = "Si5351 XTAL frequency correction, Hz",
         .isvalid = isSi5351,
+        .repeatdelay = 20,
     },
     {
         .id = CFG_PARAM_F_LO_DIV_BY_TWO,
@@ -449,6 +451,8 @@ static TEXTBOX_CTX_t *pctx = 0;
 static uint32_t hbNameIdx = 0;
 static uint32_t hbDescrIdx = 0;
 static uint32_t hbValIdx = 0;
+static uint32_t hbPrevValueIdx = 0;
+static uint32_t hbNextValueIdx = 0;
 
 static void _hit_prev(void)
 {
@@ -468,6 +472,8 @@ static void _hit_prev(void)
     TEXTBOX_SetText(pctx, hbNameIdx, CFG_GetStringName(selected_param));
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
     TEXTBOX_SetText(pctx, hbDescrIdx, CFG_GetStringDescr(selected_param));
+    TEXTBOX_Find(pctx, hbPrevValueIdx)->nowait = cfg_ch_descr_table[selected_param].repeatdelay;
+    TEXTBOX_Find(pctx, hbNextValueIdx)->nowait = cfg_ch_descr_table[selected_param].repeatdelay;
 }
 
 static void _hit_next(void)
@@ -489,6 +495,8 @@ static void _hit_next(void)
     TEXTBOX_SetText(pctx, hbNameIdx, CFG_GetStringName(selected_param));
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
     TEXTBOX_SetText(pctx, hbDescrIdx, CFG_GetStringDescr(selected_param));
+    TEXTBOX_Find(pctx, hbPrevValueIdx)->nowait = cfg_ch_descr_table[selected_param].repeatdelay;
+    TEXTBOX_Find(pctx, hbNextValueIdx)->nowait = cfg_ch_descr_table[selected_param].repeatdelay;
 }
 
 static void _hit_save(void)
@@ -557,8 +565,8 @@ void CFG_ParamWnd(void)
     TEXTBOX_Append(pctx, &hbNextParam);
     TEXTBOX_Append(pctx, &hbEx);
     TEXTBOX_Append(pctx, &hbSave);
-    TEXTBOX_Append(pctx, &hbPrevValue);
-    TEXTBOX_Append(pctx, &hbNextValue);
+    hbPrevValueIdx = TEXTBOX_Append(pctx, &hbPrevValue);
+    hbNextValueIdx = TEXTBOX_Append(pctx, &hbNextValue);
     hbNameIdx = TEXTBOX_Append(pctx, &hbParamName);
     hbDescrIdx = TEXTBOX_Append(pctx, &hbParamDescr);
     hbValIdx = TEXTBOX_Append(pctx, &hbValue);

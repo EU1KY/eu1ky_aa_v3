@@ -358,6 +358,7 @@ void MEASUREMENT_Proc(void)
             HitTest(hitArr, pt.x, pt.y);
             if (rqExit)
             {
+                GEN_SetMeasurementFreq(0);
                 while(TOUCH_IsPressed());
                 return;
             }

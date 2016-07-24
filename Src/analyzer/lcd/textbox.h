@@ -39,5 +39,6 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx);
 void TEXTBOX_Clear(TEXTBOX_CTX_t *ctx, uint32_t idx);
 void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char *txt);
 uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx);
+TEXTBOX_t* TEXTBOX_Find(TEXTBOX_CTX_t *ctx, uint32_t idx);
 
 #endif //_TEXTBOX_H_
