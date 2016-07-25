@@ -352,7 +352,7 @@ void MEASUREMENT_Proc(void)
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK");
         }
 
-        SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+        //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
 
         LCDPoint pt;
         while (TOUCH_Poll(&pt))
@@ -367,7 +367,7 @@ void MEASUREMENT_Proc(void)
             if (fChanged)
             {
                 ShowF();
-                SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+                //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
             }
             Sleep(50);
         }

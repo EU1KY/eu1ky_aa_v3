@@ -174,7 +174,7 @@ void GENERATOR_Window_Proc(void)
             if (fChanged)
             {
                 ShowF();
-                SCB_CleanDCache();
+                //SCB_CleanDCache();
             }
             Sleep(50);
         }
@@ -206,7 +206,7 @@ void GENERATOR_Window_Proc(void)
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
-        SCB_CleanDCache();
+        //SCB_CleanDCache();
         Sleep(100);
     }
 }

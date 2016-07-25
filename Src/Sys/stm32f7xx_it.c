@@ -174,8 +174,6 @@ void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
   HAL_DMA_IRQHandler(haudio_in_sai.hdmarx);
 }
 
-
-
 /**
   * @}
   */

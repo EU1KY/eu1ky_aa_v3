@@ -43,8 +43,8 @@ _ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
     return len;
 }
 
-
-static FATFS SDFatFs;  // File system object for SD card logical drive
+//SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
+static  __attribute__((aligned(32))) FATFS SDFatFs;  // File system object for SD card logical drive
 static char SDPath[4];        // SD card logical drive path
 
 int main(void)

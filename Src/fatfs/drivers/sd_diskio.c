@@ -112,7 +112,7 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
     DRESULT res = RES_OK;
 
-    if(BSP_SD_ReadBlocks((uint32_t*)buff,
+    if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff,
                        (uint64_t) (sector * BLOCK_SIZE),
                        BLOCK_SIZE,
                        count) != MSD_OK)
@@ -125,7 +125,7 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
     //  (Its implementation is actually blocking in the CubeF7 BSP).
     //  Anyway, to provide cache coherence, a call SCB_InvalidateDCache() should be added
     //  after the DMA read operation! Uncomment it below. (EU1KY)
-    //SCB_InvalidateDCache();
+    SCB_InvalidateDCache_by_Addr((uint32_t*)buff, (int32_t)(count * BLOCK_SIZE));
     return res;
 }
 
@@ -147,9 +147,9 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
     //  (this function is actually blocking in CubeF7 BSP implementation),
     //  the D-cache must be flushed before the DMA write operation start.
     //  Uncomment the line below in this case! (EU1KY)
-    //SCB_CleanDCache();
+    SCB_CleanDCache_by_Addr((uint32_t*)buff, (int32_t)(count * BLOCK_SIZE));
 
-    if(BSP_SD_WriteBlocks((uint32_t*)buff,
+    if(BSP_SD_WriteBlocks_DMA((uint32_t*)buff,
                         (uint64_t)(sector * BLOCK_SIZE),
                         BLOCK_SIZE, count) != MSD_OK)
     {

@@ -136,7 +136,7 @@ static void DrawCursor()
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 2, 110, "<");
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 465, 110, ">");
 
-    SCB_InvalidateDCache();
+    //SCB_InvalidateDCache();
     if (grType == GRAPH_SMITH)
     {
         float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
@@ -165,7 +165,7 @@ static void DrawCursor()
             p.y++;
         }
     }
-    SCB_CleanDCache();
+    //SCB_CleanDCache();
 }
 
 static void DrawCursorText()
@@ -225,7 +225,7 @@ static void DecrCursor()
     cursorPos--;
     DrawCursor();
     DrawCursorText();
-    SCB_CleanDCache();
+    //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
@@ -240,7 +240,7 @@ static void AdvCursor()
     cursorPos++;
     DrawCursor();
     DrawCursorText();
-    SCB_CleanDCache();
+    //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
@@ -889,7 +889,7 @@ static void RedrawWindow()
         DrawCursorText();
         DrawSaveText();
     }
-    SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+    //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
 }
 
 static const uint8_t bmp_hdr[] =
@@ -923,8 +923,7 @@ static void save_snapshot(void)
 
     DrawSavingText();
 
-    SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
-    SCB_InvalidateDCache(); //Invalidate D-Cache contents before reading from RAM to avoid cache coherency
+    //SCB_CleanInvalidateDCache(); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
 
     f_mkdir(sndir);
 
@@ -1060,7 +1059,7 @@ void PANVSWR2_Proc(void)
     {
         DrawGrid(1);
         DrawHelp();
-        SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+        //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
     }
     else
         RedrawWindow();
