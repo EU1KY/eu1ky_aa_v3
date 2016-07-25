@@ -23,6 +23,7 @@
 #include "dsp.h"
 #include "gen.h"
 #include "oslfile.h"
+#include "stm32746g_discovery_lcd.h"
 
 #define X0 40
 #define Y0 20
@@ -205,6 +206,7 @@ static void DrawSavingText(void)
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLUE, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
                Y0 + WHEIGHT + 16 + 16, txt);
+    Sleep(20);
 }
 
 static void DrawSavedText(void)
@@ -923,7 +925,7 @@ static void save_snapshot(void)
 
     DrawSavingText();
 
-    //SCB_CleanInvalidateDCache(); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
+    SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
 
     f_mkdir(sndir);
 

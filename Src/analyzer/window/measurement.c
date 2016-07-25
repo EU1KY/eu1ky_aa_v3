@@ -18,6 +18,7 @@
 #include "gen.h"
 #include "stm32f746xx.h"
 #include "oslfile.h"
+#include "stm32746g_discovery_lcd.h"
 
 extern void Sleep(uint32_t ms);
 
@@ -352,7 +353,8 @@ void MEASUREMENT_Proc(void)
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK");
         }
 
-        //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+        Sleep(5);
+        SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
 
         LCDPoint pt;
         while (TOUCH_Poll(&pt))
@@ -367,7 +369,6 @@ void MEASUREMENT_Proc(void)
             if (fChanged)
             {
                 ShowF();
-                //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
             }
             Sleep(50);
         }
