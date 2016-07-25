@@ -2,6 +2,8 @@
 #include "LCD.h"
 #include "touch.h"
 
+extern void Sleep(uint32_t);
+
 void TEXTBOX_InitContext(TEXTBOX_CTX_t* ctx)
 {
     ctx->start = 0;

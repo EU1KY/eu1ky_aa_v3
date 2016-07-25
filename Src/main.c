@@ -170,9 +170,11 @@ void SystemClock_Config(void)
 static void CPU_CACHE_Enable(void)
 {
     /* Enable I-Cache */
+    SCB_InvalidateICache();
     SCB_EnableICache();
 
     /* Enable D-Cache */
+    SCB_InvalidateDCache();
     SCB_EnableDCache();
 }
 

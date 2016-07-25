@@ -132,6 +132,10 @@ static void measure(void)
     {
         CRASHF("HAL_SAI_Receive failed, err %d", res);
     }
+    //NB:
+    //  If DMA is in use, HAL_SAI_Receive_DMA is to be called instead of HAL_SAI_Receive.
+    //  In this case, to provide cache coherence, a call SCB_InvalidateDCache() should be added
+    //  to the custom HAL_SAI_RxCpltCallback() implementation !!! (EU1KY)
 }
 
 void FFTWND_Proc(void)

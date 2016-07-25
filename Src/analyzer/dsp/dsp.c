@@ -247,6 +247,11 @@ REMEASURE:
             CRASHF("HAL_SAI_Receive failed, err %d", res);
         }
 
+        //NB:
+        //  If DMA is in use, HAL_SAI_Receive_DMA is to be called instead of HAL_SAI_Receive.
+        //  In this case, to provide cache coherence, a call SCB_InvalidateDCache() should be added
+        //  to the custom HAL_SAI_RxCpltCallback() implementation !!! (EU1KY)
+
         res_i = DSP_FFT(0);
         res_v = DSP_FFT(1);
 

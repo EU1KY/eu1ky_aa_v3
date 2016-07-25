@@ -14,6 +14,7 @@
 #include "gen.h"
 #include "config.h"
 #include "hit.h"
+#include "main.h"
 
 static uint32_t fChanged = 0;
 static uint32_t rqExit = 0;
@@ -171,7 +172,10 @@ void GENERATOR_Window_Proc(void)
                 return; //Change window
             }
             if (fChanged)
+            {
                 ShowF();
+                SCB_CleanDCache();
+            }
             Sleep(50);
         }
         if (fChanged)
@@ -202,6 +206,7 @@ void GENERATOR_Window_Proc(void)
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
+        SCB_CleanDCache();
         Sleep(100);
     }
 }

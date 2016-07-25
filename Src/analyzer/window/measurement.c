@@ -39,7 +39,7 @@ static void ShowF()
 static void DrawSmallSmith(int X0, int Y0, int R, float complex G)
 {
     LCDColor sc = LCD_RGB(96, 96, 96);
-    LCD_FillCircle(LCD_MakePoint(X0, Y0), R, LCD_BLACK);
+    LCD_FillCircle(LCD_MakePoint(X0, Y0), R + 2, LCD_BLACK);
     LCD_Circle(LCD_MakePoint(X0, Y0), R, sc);
     LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, sc);
     LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, sc);
@@ -352,6 +352,8 @@ void MEASUREMENT_Proc(void)
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK");
         }
 
+        SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+
         LCDPoint pt;
         while (TOUCH_Poll(&pt))
         {
@@ -363,7 +365,10 @@ void MEASUREMENT_Proc(void)
                 return;
             }
             if (fChanged)
+            {
                 ShowF();
+                SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+            }
             Sleep(50);
         }
         if (fChanged)
