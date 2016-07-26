@@ -153,6 +153,7 @@ void SysTick_Handler(void)
 /******************************************************************************/
 extern SAI_HandleTypeDef             haudio_out_sai;
 extern SAI_HandleTypeDef             haudio_in_sai;
+extern PCD_HandleTypeDef             hpcd;
 
 /**
   * @brief This function handles DMA2 Stream 4 interrupt request.
@@ -173,6 +174,17 @@ void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
 {
   HAL_DMA_IRQHandler(haudio_in_sai.hdmarx);
 }
+
+/**
+  * @brief  This function handles USB-On-The-Go FS/HS global interrupt request.
+  * @param  None
+  * @retval None
+*/
+void OTG_HS_IRQHandler(void)
+{
+    HAL_PCD_IRQHandler(&hpcd);
+}
+
 
 /**
   * @}

@@ -12,4 +12,5 @@ Thumbs.db
 *.elay
 *_build_log.html
 *.cscope_file_list
+*.ebTemp
 cscope.out

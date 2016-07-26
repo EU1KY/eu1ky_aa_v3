@@ -46,6 +46,10 @@
 #include "stm32746g_discovery_ts.h"
 #include "stm32746g_discovery_audio.h"
 #include "stm32746g_discovery_qspi.h"
+#include "usbd_core.h"
+#include "usbd_desc.h"
+#include "usbd_msc.h"
+
 
 /* Definition for USARTx clock resources */
 #define USARTx                           USART1

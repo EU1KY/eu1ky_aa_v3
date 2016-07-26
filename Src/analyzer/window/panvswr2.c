@@ -926,7 +926,7 @@ static void save_snapshot(void)
     DrawSavingText();
 
     SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
-
+    Sleep(10);
     f_mkdir(sndir);
 
     //Scan dir for snapshot files

@@ -44,8 +44,8 @@ _ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
 }
 
 //SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
-static  __attribute__((aligned(32))) FATFS SDFatFs;  // File system object for SD card logical drive
-static char SDPath[4];        // SD card logical drive path
+__attribute__((aligned(32))) FATFS SDFatFs;  // File system object for SD card logical drive
+char SDPath[4];        // SD card logical drive path
 
 int main(void)
 {
@@ -91,6 +91,26 @@ int main(void)
     MainWnd(); //Never returns
 
     return 0;
+}
+
+/**
+  * @brief This function provides accurate delay (in milliseconds) based
+  *        on SysTick counter flag.
+  * @note This function is declared as __weak to be overwritten in case of other
+  *       implementations in user file.
+  * @param Delay: specifies the delay time length, in milliseconds.
+  * @retval None
+  */
+
+void HAL_Delay(__IO uint32_t Delay)
+{
+  while(Delay)
+  {
+    if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+    {
+      Delay--;
+    }
+  }
 }
 
 /**

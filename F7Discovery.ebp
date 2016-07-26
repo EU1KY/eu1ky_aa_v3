@@ -40,6 +40,7 @@
 					<Add symbol="USE_HAL_DRIVER" />
 					<Add symbol="ARM_MATH_CM7" />
 					<Add symbol="__FPU_PRESENT" />
+					<Add symbol="USE_USB_HS" />
 					<Add directory="Src\BSP\Components\ampire480272" />
 					<Add directory="Src\BSP\Components\ampire640480" />
 					<Add directory="Src\BSP\Components\Common" />
@@ -69,6 +70,7 @@
 					<Add directory="Src\config" />
 					<Add directory="Src\gen" />
 					<Add directory="Src\dsp" />
+					<Add directory="Src\USBD" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--keep-locals" />
@@ -127,6 +129,7 @@
 					<Add symbol="USE_HAL_DRIVER" />
 					<Add symbol="ARM_MATH_CM7" />
 					<Add symbol="__FPU_PRESENT" />
+					<Add symbol="USE_USB_HS" />
 					<Add directory="Src\BSP\Components\ampire480272" />
 					<Add directory="Src\BSP\Components\ampire640480" />
 					<Add directory="Src\BSP\Components\Common" />
@@ -153,6 +156,7 @@
 					<Add directory="Src\config" />
 					<Add directory="Src\gen" />
 					<Add directory="Src\dsp" />
+					<Add directory="Src\USBD" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--gdwarf-2" />
@@ -660,6 +664,47 @@
 		<Unit filename="Src\Sys\system_stm32f7xx.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Src\USBD\usbd_conf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_conf.h" />
+		<Unit filename="Src\USBD\usbd_core.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_core.h" />
+		<Unit filename="Src\USBD\usbd_ctlreq.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_ctlreq.h" />
+		<Unit filename="Src\USBD\usbd_def.h" />
+		<Unit filename="Src\USBD\usbd_desc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_desc.h" />
+		<Unit filename="Src\USBD\usbd_ioreq.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_ioreq.h" />
+		<Unit filename="Src\USBD\usbd_msc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_msc.h" />
+		<Unit filename="Src\USBD\usbd_msc_bot.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_msc_bot.h" />
+		<Unit filename="Src\USBD\usbd_msc_data.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_msc_data.h" />
+		<Unit filename="Src\USBD\usbd_msc_scsi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_msc_scsi.h" />
+		<Unit filename="Src\USBD\usbd_storage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\USBD\usbd_storage.h" />
 		<Extensions>
 			<projectwizard TargetDevice="STM32F437ZG" />
 			<code_completion />

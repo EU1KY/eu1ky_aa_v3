@@ -139,6 +139,10 @@ static SD_CardInfo      uSdCardInfo;
 uint8_t BSP_SD_Init(void)
 {
   uint8_t sd_state = MSD_OK;
+  //static uint32_t isInitialized = 0;
+
+  //if (isInitialized)
+  //    return MSD_OK;
 
   /* uSD device interface configuration */
   uSdHandle.Instance = SDMMC1;
@@ -177,6 +181,7 @@ uint8_t BSP_SD_Init(void)
     else
     {
       sd_state = MSD_OK;
+      //isInitialized = 1;
     }
   }
 
