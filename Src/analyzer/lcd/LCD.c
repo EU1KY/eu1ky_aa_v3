@@ -56,8 +56,8 @@ void LCD_Init(void)
     /* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
     PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-    PeriphClkInitStruct.PLLSAI.PLLSAIR = 5;
-    PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
+    PeriphClkInitStruct.PLLSAI.PLLSAIR = 5; // Must be 2..7.
+    PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8; // RCC_PLLSAIDIVR_4; <-- Setting to 4.8 MHz to minimize chances of LTDC FIFO underrun
     HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 
     // Configure LCD : Only one layer is used
