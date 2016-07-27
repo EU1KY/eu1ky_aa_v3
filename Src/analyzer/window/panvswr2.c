@@ -1023,10 +1023,11 @@ static void save_snapshot(void)
     int y = 0;
     for (y = 271; y >= 0; y--)
     {
+        uint32_t line[480];
+        BSP_LCD_ReadLine(y, line);
         for (x = 0; x < 480; x++)
         {
-            uint32_t color = LCD_ReadPixel(LCD_MakePoint(x, y));
-            fr = f_write(&fo, &color, 3, &bw);
+            fr = f_write(&fo, &line[x], 3, &bw);
             if (FR_OK != fr) goto CRASH_WR;
         }
     }
