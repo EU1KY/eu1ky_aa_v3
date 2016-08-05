@@ -160,6 +160,7 @@
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--gdwarf-2" />
+					<Add option="-mthumb" />
 				</Assembler>
 				<Linker>
 					<Add option="-u _printf_float" />
@@ -168,6 +169,10 @@
 					<Add option="-Wl,--gc-sections" />
 					<Add option="-flto" />
 					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
+					<Add option="-mcpu=cortex-m7" />
+					<Add option="-mthumb" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-mfpu=fpv5-sp-d16" />
 					<Add library="m" />
 				</Linker>
 				<ExtraCommands>
@@ -709,7 +714,7 @@
 			<projectwizard TargetDevice="STM32F437ZG" />
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Debug" active_interface="J-link">
+				<target_debugging_settings target="Debug" active_interface="ST-link">
 					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="200" options="2" reg_filter="0" active_family="STMicroelectronics">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_DEVICE" opt_value="STM32F746NG" />
@@ -732,13 +737,13 @@
 							<option opt_id="ID_THUMB_SWI" opt_value="" />
 						</family_options>
 					</debug_interface>
-					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="200" options="10" reg_filter="0" active_family="STMicroelectronics">
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="500" options="2" reg_filter="0" active_family="STMicroelectronics">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
 							<option opt_id="ID_RESET_TYPE" opt_value="System" />
 							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
-							<option opt_id="ID_SEMIHOST_CHECK" opt_value="0" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
 							<option opt_id="ID_RAM_EXEC" opt_value="0" />
 							<option opt_id="ID_VEC_TABLE" opt_value="0" />
 							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
@@ -748,7 +753,7 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="Release" active_interface="J-link">
+				<target_debugging_settings target="Release" active_interface="ST-link">
 					<debug_interface interface_id="Generic" ip_address="" ip_port="" path="" executable="" description="Src\CMSIS\SVD\STM32F7x.svd" dont_start_server="false" backoff_time="" options="10" reg_filter="0" active_family="All">
 						<family_options family_id="All" />
 					</debug_interface>
@@ -774,13 +779,13 @@
 							<option opt_id="ID_THUMB_SWI" opt_value="" />
 						</family_options>
 					</debug_interface>
-					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="" dont_start_server="false" backoff_time="200" options="0" reg_filter="0" active_family="STMicroelectronics">
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="st-util.exe" description="" dont_start_server="false" backoff_time="200" options="2" reg_filter="0" active_family="STMicroelectronics">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
 							<option opt_id="ID_RESET_TYPE" opt_value="System" />
 							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
-							<option opt_id="ID_SEMIHOST_CHECK" opt_value="0" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="1" />
 							<option opt_id="ID_RAM_EXEC" opt_value="0" />
 							<option opt_id="ID_VEC_TABLE" opt_value="0" />
 							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />

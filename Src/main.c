@@ -84,7 +84,8 @@ int main(void)
         }
         else
         {
-            printf("%f\r\n", ((float)i++)/ 100.f);
+            //printf("%f\r\n", ((float)i++)/ 100.f);
+            Sleep(10);
         }
     }
     #endif
