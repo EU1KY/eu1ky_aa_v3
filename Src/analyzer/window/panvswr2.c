@@ -954,15 +954,15 @@ static void save_snapshot(void)
             if (0 != strcasecmp(&fno.fname[8], ".s1p"))
                 continue; //Bypass files that are not s1p
             for (i = 0; i < 8; i++)
-                if (!isxdigit(fno.fname[i]))
+                if (!isdigit(fno.fname[i]))
                     break;
             if (i != 8)
                 continue; //Bypass file names that are not 8-digit hex numbers
             numfiles++;
-            //Now convert file name to hex number
+            //Now convert file name to number
             uint32_t hexn = 0;
             char* endptr;
-            hexn = strtoul(fno.fname, &endptr, 16);
+            hexn = strtoul(fno.fname, &endptr, 10);
             if (hexn < fmin)
                 fmin = hexn;
             if (hexn > fmax)
@@ -977,14 +977,14 @@ static void save_snapshot(void)
     //Erase one oldest file if needed
     if (numfiles >= 100)
     {
-        sprintf(path, "%s/%08X.s1p", sndir, fmin);
+        sprintf(path, "%s/%08d.s1p", sndir, fmin);
         f_unlink(path);
-        sprintf(path, "%s/%08X.bmp", sndir, fmin);
+        sprintf(path, "%s/%08d.bmp", sndir, fmin);
         f_unlink(path);
     }
 
     //Now write measured data to file fmax+1 in s1p format
-    sprintf(path, "%s/%08X.s1p", sndir, fmax+1);
+    sprintf(path, "%s/%08d.s1p", sndir, fmax+1);
     FIL fo = { 0 };
     UINT bw;
     fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
@@ -1013,7 +1013,7 @@ static void save_snapshot(void)
     f_close(&fo);
 
     //Now write screenshot as bitmap
-    sprintf(path, "%s/%08X.bmp", sndir, fmax+1);
+    sprintf(path, "%s/%08d.bmp", sndir, fmax+1);
     fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
     if (FR_OK != fr)
         CRASHF("Failed to open file %s", path);
