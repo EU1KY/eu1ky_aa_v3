@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 void GEN_SetMeasurementFreq(uint32_t fhz);
-uint32_t GEN_GetLastFreq();
+uint32_t GEN_GetLastFreq(void);
 
 #ifdef __cplusplus
 }

@@ -71,6 +71,7 @@
 					<Add directory="Src\gen" />
 					<Add directory="Src\dsp" />
 					<Add directory="Src\USBD" />
+					<Add directory="Src\uartcomm" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--keep-locals" />
@@ -157,6 +158,7 @@
 					<Add directory="Src\gen" />
 					<Add directory="Src\dsp" />
 					<Add directory="Src\USBD" />
+					<Add directory="Src\uartcomm" />
 				</Compiler>
 				<Assembler>
 					<Add option="-Wa,--gdwarf-2" />
@@ -250,6 +252,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\osl\oslfile.h" />
+		<Unit filename="Src\analyzer\uartcomm\aauart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\uartcomm\aauart.h" />
+		<Unit filename="Src\analyzer\uartcomm\fifo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\uartcomm\fifo.h" />
 		<Unit filename="Src\analyzer\window\fftwnd.c">
 			<Option compilerVar="CC" />
 		</Unit>

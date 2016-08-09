@@ -40,6 +40,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_it.h"
+#include "aauart.h"
 
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
@@ -185,6 +186,17 @@ void OTG_HS_IRQHandler(void)
     HAL_PCD_IRQHandler(&hpcd);
 }
 
+/**
+  * @brief  This function handles UART interrupt request.
+  * @param  None
+  * @retval None
+  * @Note   This function is redefined in "main.h" and related to DMA
+  *         used for USART data transmission
+  */
+void USART1_IRQHandler(void)
+{
+    AAUART_IRQHandler();
+}
 
 /**
   * @}

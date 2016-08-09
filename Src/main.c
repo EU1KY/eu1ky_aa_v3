@@ -1,5 +1,4 @@
 #include "main.h"
-#include "stm32f7xx_hal_uart.h"
 #include <stdio.h>
 #include <string.h>
 #include "lcd.h"
@@ -13,6 +12,7 @@
 #include "si5351.h"
 #include "dsp.h"
 #include "mainwnd.h"
+#include "aauart.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -21,27 +21,6 @@ static void MPU_Config(void);
 void Sleep(uint32_t nms)
 {
     HAL_Delay(nms);
-}
-
-static int step = 1;
-static UART_HandleTypeDef UartHandle = {0};
-
-void uart_init(void)
-{
-    UartHandle.Init.BaudRate = 921600;
-    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-    UartHandle.Init.StopBits = UART_STOPBITS_1;
-    UartHandle.Init.Parity = UART_PARITY_NONE;
-    UartHandle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    UartHandle.Init.Mode = UART_MODE_TX_RX;
-
-    BSP_COM_Init(COM1, &UartHandle);
-}
-
-_ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
-{
-    HAL_UART_Transmit(&UartHandle, (uint8_t*)ptr, len, 0xFFFFFFFF);
-    return len;
 }
 
 //SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
@@ -54,7 +33,6 @@ int main(void)
     CPU_CACHE_Enable();
     HAL_Init();
     SystemClock_Config();
-    uart_init();
     BSP_LED_Init(LED1);
     LCD_Init();
     TOUCH_Init();
@@ -73,22 +51,7 @@ int main(void)
 
     DSP_Init(); //Initialize DSP module. Also loads calibration files inside.
 
-    #if 0
-    int i = 0;
-    for(;;)
-    {
-        uint8_t rxb[4];
-        if (HAL_OK == HAL_UART_Receive(&UartHandle, rxb, 1, 100))
-        {
-            printf("%02X\r\n", rxb[0]);
-        }
-        else
-        {
-            //printf("%f\r\n", ((float)i++)/ 100.f);
-            Sleep(10);
-        }
-    }
-    #endif
+    AAUART_Init(); //Initialize remote control protocol handler
 
     //Run main window function
     MainWnd(); //Never returns
@@ -107,13 +70,13 @@ int main(void)
 
 void HAL_Delay(__IO uint32_t Delay)
 {
-  while(Delay)
-  {
-    if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+    while(Delay)
     {
-      Delay--;
+        if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+        {
+            Delay--;
+        }
     }
-  }
 }
 
 /**
@@ -197,43 +160,43 @@ void SystemClock_Config(void)
   */
 static void MPU_Config(void)
 {
-  MPU_Region_InitTypeDef MPU_InitStruct;
+    MPU_Region_InitTypeDef MPU_InitStruct;
 
-  /* Disable the MPU */
-  HAL_MPU_Disable();
+    /* Disable the MPU */
+    HAL_MPU_Disable();
 
-  /* Configure the MPU attributes as WT for SRAM */
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.BaseAddress = 0x20010000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_256KB;
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-  MPU_InitStruct.SubRegionDisable = 0x00;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+    /* Configure the MPU attributes as WT for SRAM */
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.BaseAddress = 0x20010000;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_256KB;
+    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+    MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+    MPU_InitStruct.SubRegionDisable = 0x00;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
 
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-  /* Configure the MPU attributes for SDRAM */
-  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-  MPU_InitStruct.BaseAddress = SDRAM_DEVICE_ADDR;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_8MB;
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
-  MPU_InitStruct.SubRegionDisable = 0x00;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+    /* Configure the MPU attributes for SDRAM */
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.BaseAddress = SDRAM_DEVICE_ADDR;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_8MB;
+    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+    MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+    MPU_InitStruct.SubRegionDisable = 0x00;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
 
-  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-  /* Enable the MPU */
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+    /* Enable the MPU */
+    HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
 
 
