@@ -248,6 +248,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\lcd\touch.h" />
+		<Unit filename="Src\analyzer\osl\match.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\osl\match.h" />
 		<Unit filename="Src\analyzer\osl\oslfile.c">
 			<Option compilerVar="CC" />
 		</Unit>

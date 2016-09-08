@@ -45,9 +45,9 @@
 // results, you see them both.
 #define SMOOTHWINDOW 3 //Must be odd!
 #define SMOOTHOFS (SMOOTHWINDOW/2)
-#define SMOOTHWINDOW_HI 15 //Must be odd!
+#define SMOOTHWINDOW_HI 7 //Must be odd!
 #define SMOOTHOFS_HI (SMOOTHWINDOW_HI/2)
-#define SM_INTENSITY 32
+#define SM_INTENSITY 64
 
 void Sleep(uint32_t nms);
 
@@ -137,7 +137,6 @@ static void DrawCursor()
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 2, 110, "<");
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 465, 110, ">");
 
-    //SCB_InvalidateDCache();
     if (grType == GRAPH_SMITH)
     {
         float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
@@ -166,7 +165,6 @@ static void DrawCursor()
             p.y++;
         }
     }
-    //SCB_CleanDCache();
 }
 
 static void DrawCursorText()
@@ -490,12 +488,14 @@ static void ScanRX()
             rx = 0.0f + cimagf(rx) * I;
         if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
             rx = crealf(rx) + 0.0fi;
+        /*
         if (crealf(rx) > 1999.)
             rx = 1999.f + cimagf(rx) * I;
         if (cimagf(rx) > 1999.)
             rx = crealf(rx) + 1999.fi;
         else if (cimagf(rx) < -1999.)
             rx = crealf(rx) - 1999.fi;
+        */
         values[i] = rx;
         LCD_SetPixel(LCD_MakePoint(X0 + i, 135), LCD_BLUE);
         LCD_SetPixel(LCD_MakePoint(X0 + i, 136), LCD_BLUE);
@@ -665,6 +665,11 @@ static void DrawRX()
             maxRX = cimagf(values[i]);
     }
 
+    if (minRX < -1999.f)
+        minRX = -1999.f;
+    if (maxRX > 1999.f)
+        maxRX = 1999.f;
+
     int nticks = 8; //Max number of intermediate ticks of labels
     float range = nicenum(maxRX - minRX, 0);
     float d = nicenum(range / (nticks - 1), 1);
@@ -698,8 +703,18 @@ static void DrawRX()
     int lastoffset_sm = 0;
     for(i = 0; i < WWIDTH; i++)
     {
-        yofs = RXOFFS(crealf(values[i]));
-        yofs_sm = RXOFFS(crealf(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0)));
+        float r = crealf(values[i]);
+        if (r < -1999.f)
+            r = -1999.f;
+        else if (r > 1999.f)
+            r = 1999.f;
+        yofs = RXOFFS(r);
+        r = crealf(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0));
+        if (r < -1999.f)
+            r = -1999.f;
+        else if (r > 1999.f)
+            r = 1999.f;
+        yofs_sm = RXOFFS(r);
         int x = X0 + i;
         if(i == 0)
         {
@@ -720,8 +735,18 @@ static void DrawRX()
     lastoffset_sm = 0;
     for(i = 0; i < WWIDTH; i++)
     {
-        yofs = RXOFFS(cimagf(values[i]));
-        yofs_sm = RXOFFS(cimagf(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0)));
+        float ix = cimagf(values[i]);
+        if (ix < -1999.f)
+            ix = -1999.f;
+        else if (ix > 1999.f)
+            ix = 1999.f;
+        yofs = RXOFFS(ix);
+        ix = cimagf(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0));
+        if (ix < -1999.f)
+            ix = -1999.f;
+        else if (ix > 1999.f)
+            ix = 1999.f;
+        yofs_sm = RXOFFS(ix);
         int x = X0 + i;
         if(i == 0)
         {
