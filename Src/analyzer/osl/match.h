@@ -27,5 +27,12 @@ typedef struct
 */
 uint32_t MATCH_Calc(float complex ZL, MATCH_S *pResult);
 
+/**
+    @brief   Convert X to capacitor (in pF) or inductance (in uH) string value
+    @param   FHz Frequency in Hz
+    @param   X impedance to convert to capacitor or inductor value at frequency FHz
+    @param   str pointer to string buffer
+*/
+void MATCH_XtoStr(uint32_t FHz, float X, char* str);
 
 #endif // _MATCH_H_
