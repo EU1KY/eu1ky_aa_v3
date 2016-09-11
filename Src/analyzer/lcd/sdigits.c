@@ -175,6 +175,14 @@ TCDATA sdigits_UF[6]={3,
     b2b(0,0,0,0,0,1,0,0),
     b2b(0,0,0,0,0,1,0,0)};
 
+/**  0x48 - 72  - 'H'  **/
+TCDATA sdigits_UH[6]={3,
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,1,1),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,0,1)};
+
 /*  'L'  */
 TCDATA sdigits_UL[6]={3,
     b2b(0,0,0,0,0,1,0,0),
@@ -190,6 +198,30 @@ TCDATA sdigits_UZ[6]={3,
     b2b(0,0,0,0,0,0,1,0),
     b2b(0,0,0,0,0,1,0,0),
     b2b(0,0,0,0,0,1,1,1)};
+
+/**  0x6E - 110 - 'n'  **/
+TCDATA sdigits_ln[6]={3,
+    b2b(0,0,0,0,0,0,0,0),
+    b2b(0,0,0,0,0,1,1,0),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,0,1)};
+
+/**  0x70 - 112 - 'p'  **/
+TCDATA sdigits_lp[6]={3,
+    b2b(0,0,0,0,0,0,0,0),
+    b2b(0,0,0,0,0,1,1,0),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,1,0),
+    b2b(0,0,0,0,0,1,0,0)};
+
+/**  0x75 - 117 - 'u'  **/
+TCDATA sdigits_lu[6]={3,
+    b2b(0,0,0,0,0,0,0,0),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,0,1),
+    b2b(0,0,0,0,0,1,1,1),
+    b2b(0,0,0,0,0,1,0,0)};
 
 /**  0x100 - 256  **/
 TCDATA sdigits_blank[6]={3,
@@ -277,7 +309,7 @@ const uint8_t* const sdigits[256] =
          sdigits_UE,
          sdigits_UF,
          sdigits_blank, //sdigits_UG,
-         sdigits_blank, //sdigits_UH,
+         sdigits_UH,    //sdigits_UH,
          sdigits_blank, //sdigits_UI,
          sdigits_blank, //sdigits_UJ,
          sdigits_blank, //sdigits_UK,
@@ -315,14 +347,14 @@ const uint8_t* const sdigits[256] =
          sdigits_blank, //sdigits_lk,
          sdigits_blank, //sdigits_ll,
          sdigits_blank, //sdigits_lm,
-         sdigits_blank, //sdigits_ln,
+         sdigits_ln,    //sdigits_ln,
          sdigits_blank, //sdigits_lo,
-         sdigits_blank, //sdigits_lp,
+         sdigits_lp,    //sdigits_lp,
          sdigits_blank, //sdigits_lq,
          sdigits_blank, //sdigits_lr,
          sdigits_blank, //sdigits_ls,
          sdigits_blank, //sdigits_lt,
-         sdigits_blank, //sdigits_lu,
+         sdigits_lu,    //sdigits_lu,
          sdigits_blank, //sdigits_lv,
          sdigits_blank, //sdigits_lw,
          sdigits_blank, //sdigits_lx,

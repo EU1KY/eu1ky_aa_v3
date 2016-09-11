@@ -7,6 +7,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include "match.h"
 #include "dsp.h"
 #include "config.h"
@@ -114,6 +115,16 @@ uint32_t MATCH_Calc(float complex ZL, MATCH_S *pResult)
 
 void MATCH_XtoStr(uint32_t FHz, float X, char* str)
 {
+    if (isnanf(X))
+    {
+        strcpy(str, " --- ");
+        return;
+    }
+    if (0.f == X || -0.f == X)
+    {
+        strcpy(str, "0");
+        return;
+    }
     if (X < 0.f)
     {
         float CpF = -1e12f / (2.f * M_PI * FHz * X);

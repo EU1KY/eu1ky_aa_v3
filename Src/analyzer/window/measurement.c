@@ -19,6 +19,7 @@
 #include "stm32f746xx.h"
 #include "oslfile.h"
 #include "stm32746g_discovery_lcd.h"
+#include "match.h"
 
 extern void Sleep(uint32_t ms);
 
@@ -26,6 +27,7 @@ extern void Sleep(uint32_t ms);
 static float vswr500[21];
 static uint32_t rqExit = 0;
 static uint32_t fChanged = 0;
+static uint32_t isMatch = 0;
 
 #define SCAN_ORIGIN_X 20
 #define SCAN_ORIGIN_Y 209
@@ -37,10 +39,44 @@ static void ShowF()
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
 }
 
-static void DrawSmallSmith(int X0, int Y0, int R, float complex G)
+static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
 {
+    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 2), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), LCD_BLACK);
+    if (isMatch)
+    { //Draw LC match
+        X0 = X0 - R - 20;
+        Y0 -= R;
+        MATCH_S matches[4];
+        uint32_t nMatches = MATCH_Calc(rx, matches);
+        if (0 == nMatches)
+        {
+            FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, X0, Y0, "No LC match for this load");
+        }
+        else
+        {
+            uint32_t i;
+            uint32_t fHz = CFG_GetParam(CFG_PARAM_MEAS_F);
+            FONT_Print(FONT_FRAN, LCD_PURPLE, LCD_BLACK, X0, Y0, "LC match for SRC Z0 = %d", CFG_GetParam(CFG_PARAM_R0));
+            Y0 += FONT_GetHeight(FONT_FRAN) + 4;
+            FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, X0, Y0, "SRCpar   Ser   LoadPar");
+            Y0 += FONT_GetHeight(FONT_FRAN) + 4;
+            for (i = 0; i < nMatches; i++)
+            {
+                char strxpl[32];
+                char strxps[32];
+                char strxs[32];
+                MATCH_XtoStr(fHz, matches[i].XPL, strxpl);
+                MATCH_XtoStr(fHz, matches[i].XPS, strxps);
+                MATCH_XtoStr(fHz, matches[i].XS, strxs);
+                FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, X0, Y0, "%s, %s, %s", strxps, strxs, strxpl);
+                Y0 += FONT_GetHeight(FONT_FRAN) + 4;
+            }
+        }
+        return;
+    }
+    float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     LCDColor sc = LCD_RGB(96, 96, 96);
-    LCD_FillCircle(LCD_MakePoint(X0, Y0), R + 2, LCD_BLACK);
+    //LCD_FillCircle(LCD_MakePoint(X0, Y0), R + 2, LCD_BLACK);
     LCD_Circle(LCD_MakePoint(X0, Y0), R, sc);
     LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, sc);
     LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, sc);
@@ -128,7 +164,7 @@ static void MeasurementModeDraw(DSP_RX rx)
         FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 158, str);
     }
 
-    DrawSmallSmith(380, 180, 80, OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0)));
+    DrawSmallSmith(380, 180, 80, rx);
 }
 
 //Draw a small (100x20 pixels) VSWR graph for data collected by Scan500()
@@ -243,17 +279,24 @@ static void MEASUREMENT_FIncr_500k(void)
 {
     FIncr(500000);
 }
+static void MEASUREMENT_SmithMatch(void)
+{
+    isMatch = !isMatch;
+    while(TOUCH_IsPressed());
+    Sleep(50);
+}
 
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
     HITRECT(   0, 200,   100,     79, MEASUREMENT_SwitchWindowing),
-    HITRECT(   0,   0,  80, 150, MEASUREMENT_FDecr_500k),
-    HITRECT(  80,   0,  80, 150, MEASUREMENT_FDecr_100k),
-    HITRECT( 160,   0,  70, 150, MEASUREMENT_FDecr_10k),
-    HITRECT( 250,   0,  70, 150, MEASUREMENT_FIncr_10k),
-    HITRECT( 320,   0,  80, 150, MEASUREMENT_FIncr_100k),
-    HITRECT( 400,   0,  80, 150, MEASUREMENT_FIncr_500k),
+    HITRECT(   0,   0,  80, 100, MEASUREMENT_FDecr_500k),
+    HITRECT(  80,   0,  80, 100, MEASUREMENT_FDecr_100k),
+    HITRECT( 160,   0,  70, 100, MEASUREMENT_FDecr_10k),
+    HITRECT( 250,   0,  70, 100, MEASUREMENT_FIncr_10k),
+    HITRECT( 320,   0,  80, 100, MEASUREMENT_FIncr_100k),
+    HITRECT( 400,   0,  80, 100, MEASUREMENT_FIncr_500k),
+    HITRECT( 300,   110,  180, 110, MEASUREMENT_SmithMatch),
     HITEND
 };
 
@@ -274,6 +317,7 @@ void MEASUREMENT_Proc(void)
 
     rqExit = 0;
     fChanged = 0;
+    isMatch = 0;
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 60, "Measurement mode");
