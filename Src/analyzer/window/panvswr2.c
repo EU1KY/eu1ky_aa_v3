@@ -684,20 +684,21 @@ static void DrawRX()
     //Draw horizontal lines and labels
     int yofs = 0;
     int yofs_sm = 0;
-    int ystep = roundf((WHEIGHT * d) / grange);
     float labelValue;
+
+    #define RXOFFS(rx) ((int)roundf(((rx - graphmin) * WHEIGHT) / grange) + 1)
+
     for (labelValue = graphmin; labelValue < graphmax + (.5 * d); labelValue += d)
     {
         sprintf(buf, str, labelValue); //Get label string in buf
+        yofs = RXOFFS(labelValue);
         FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 25, WY(yofs) - 2, buf);
         if (roundf(labelValue) == 0)
-            LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLORBR);
+            LCD_Line(LCD_MakePoint(X0, WY(RXOFFS(0.f))), LCD_MakePoint(X0 + WWIDTH, WY(RXOFFS(0.f))), WGRIDCOLORBR);
         else
             LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
-        yofs += ystep;
     }
 
-    #define RXOFFS(rx) ((int)roundf(((rx - graphmin) * WHEIGHT) / grange) + 1)
     //Now draw R graph
     int lastoffset = 0;
     int lastoffset_sm = 0;
