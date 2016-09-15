@@ -69,7 +69,11 @@ static void USBD_Proc()
     USBD_MSC_RegisterStorage(&USBD_Device, &USBD_DISK_fops);
     USBD_Start(&USBD_Device);
 
+    //USBD works in interrupts only, no need to leave CPU running in main.
+    HAL_PWR_EnableSleepOnExit();
+    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
     for(;;);
+    /*
     LCDPoint coord;
     while (!TOUCH_Poll(&coord))
     {
@@ -91,6 +95,7 @@ static void USBD_Proc()
             return;
         }
     }
+    */
 }
 
 //==========================================================================================
