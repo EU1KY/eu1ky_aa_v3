@@ -143,7 +143,15 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
+    extern volatile uint32_t main_sleep_timer;
+    HAL_IncTick();
+    if (0 != main_sleep_timer)
+    {
+        if (--main_sleep_timer == 0)
+        {
+            HAL_PWR_DisableSleepOnExit(); //Leave the CPU running after exit from interrupt
+        }
+    }
 }
 
 /******************************************************************************/

@@ -18,9 +18,16 @@ static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 static void MPU_Config(void);
 
+volatile uint32_t main_sleep_timer = 0;
 void Sleep(uint32_t nms)
 {
-    HAL_Delay(nms);
+    // Enter sleep mode. The device will wake up on interrupts, and go sleep again
+    // after interrupt routine exit. The SysTick_Handler interrupt routine will
+    // leave device running when the main_sleep_timer downcount reaches zero,
+    // until then the device remains in Sleep state with only interrupts running.
+    main_sleep_timer = nms;
+    HAL_PWR_EnableSleepOnExit();
+    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 }
 
 //SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
@@ -37,7 +44,7 @@ int main(void)
     LCD_Init();
     TOUCH_Init();
 
-    HAL_Delay(300);
+    Sleep(300);
 
     //Mount SD card
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)

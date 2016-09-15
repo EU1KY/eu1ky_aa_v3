@@ -22,6 +22,8 @@
 #define FSAMPLE I2S_AUDIOFREQ_48K
 #define step 1
 
+extern void Sleep(uint32_t nms);
+
 static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2] = {0};
 static float rfft_input[NSAMPLES];
 static float rfft_output[NSAMPLES];
@@ -160,7 +162,7 @@ void FFTWND_Proc(void)
         if (TOUCH_Poll(&pt))
         {
             HitTest(hitArr, pt.x, pt.y);
-            HAL_Delay(50);
+            Sleep(50);
             while(TOUCH_IsPressed());
             if (rqExit)
                 return;
@@ -303,6 +305,6 @@ void FFTWND_Proc(void)
                 }
             }
         }
-        HAL_Delay(100);
+        Sleep(100);
     }
 }

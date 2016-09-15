@@ -76,8 +76,6 @@ void AAUART_IRQHandler(void)
 }
 
 //======================================================
-extern void Sleep(uint32_t nms);
-
 int AAUART_Putchar (int ch)
 {
     FIFO_STATUS res;
