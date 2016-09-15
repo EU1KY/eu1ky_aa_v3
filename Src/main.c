@@ -21,6 +21,15 @@ static void MPU_Config(void);
 volatile uint32_t main_sleep_timer = 0;
 void Sleep(uint32_t nms)
 {
+    if (nms == 0)
+        return;
+
+    if (nms == 1)
+    {
+        HAL_Delay(1);
+        return;
+    }
+
     // Enter sleep mode. The device will wake up on interrupts, and go sleep again
     // after interrupt routine exit. The SysTick_Handler interrupt routine will
     // leave device running when the main_sleep_timer downcount reaches zero,
