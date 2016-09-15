@@ -159,7 +159,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 11,
         .values = CFG_IARR(0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30),
         .type = CFG_PARAM_T_U8,
-        .dstring = "Linear audio inputs attenuation, dB."
+        .dstring = "Linear audio inputs attenuation, dB. Requires reset."
     },
     {
         .id = CFG_PARAM_BRIDGE_RM,
@@ -185,6 +185,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .strvalues = CFG_SARR("Start F", "Center F"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Select setting start or center F in panoramic window."
+    },
+    {
+        .id = CFG_PARAM_COM_PORT,
+        .idstring = "COM_PORT",
+        .nvalues = 2,
+        .values = CFG_IARR(COM1, COM2),
+        .strvalues = CFG_SARR("COM1 (ST-Link)", "COM2 (on the shield)"),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Select serial port to be used for remote control. Requires reset."
     },
     /*
     {
@@ -231,6 +240,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_BRIDGE_RADD, *((uint32_t*)&tmp));
     tmp = 51.f;
     CFG_SetParam(CFG_PARAM_BRIDGE_RLOAD, *((uint32_t*)&tmp));
+    CFG_SetParam(CFG_PARAM_COM_PORT, COM1);
 
     //Load parameters from file on SD card
     FRESULT res;

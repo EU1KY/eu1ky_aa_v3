@@ -195,13 +195,21 @@ void OTG_HS_IRQHandler(void)
 }
 
 /**
-  * @brief  This function handles UART interrupt request.
+  * @brief  This function handles USART1 interrupt request.
   * @param  None
   * @retval None
-  * @Note   This function is redefined in "main.h" and related to DMA
-  *         used for USART data transmission
   */
 void USART1_IRQHandler(void)
+{
+    AAUART_IRQHandler();
+}
+
+/**
+  * @brief  This function handles USART6 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void USART6_IRQHandler(void)
 {
     AAUART_IRQHandler();
 }

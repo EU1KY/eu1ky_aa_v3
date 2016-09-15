@@ -50,6 +50,7 @@ typedef enum
     CFG_PARAM_BRIDGE_RM,             //Value of measurement resistor in bridge, float32
     CFG_PARAM_BRIDGE_RADD,           //Value of series resistor in bridge, float32
     CFG_PARAM_BRIDGE_RLOAD,          //Value of load resistor in bridge, float32
+    CFG_PARAM_COM_PORT,              //Serial (COM) port to be used: COM1 or COM6
 
     //---------------------
     CFG_NUM_PARAMS

@@ -15,8 +15,6 @@
 #include "aauart.h"
 #include "fifo.h"
 
-#define AAUART_USED COM1
-
 static FIFO_Descr rxfifo, txfifo;
 static volatile int32_t AAUART_busy = 0;
 static volatile uint32_t rx_overflow_ctr = 0;
@@ -25,6 +23,7 @@ static UART_HandleTypeDef UartHandle = {0};
 
 void AAUART_Init(void)
 {
+    uint32_t comport = CFG_GetParam(CFG_PARAM_COM_PORT);
     FIFO_Init(&rxfifo);
     FIFO_Init(&txfifo);
 
@@ -35,12 +34,21 @@ void AAUART_Init(void)
     UartHandle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
     UartHandle.Init.Mode = UART_MODE_TX_RX;
 
-    BSP_COM_Init(AAUART_USED, &UartHandle);
+    BSP_COM_Init(comport, &UartHandle);
 
     // NVIC for USART
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
-    MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_RXNEIE); //Enable RXNE interrupts
+    if (COM1 == comport)
+    {
+        HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
+        HAL_NVIC_EnableIRQ(USART1_IRQn);
+        MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_RXNEIE); //Enable RXNE interrupts
+    }
+    else if (COM2 == comport)
+    {
+        HAL_NVIC_SetPriority(USART6_IRQn, 0, 1);
+        HAL_NVIC_EnableIRQ(USART6_IRQn);
+        MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_RXNEIE); //Enable RXNE interrupts
+    }
 }
 
 //======================================================
