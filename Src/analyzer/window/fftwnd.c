@@ -31,7 +31,7 @@ static float rfft_mags[NSAMPLES/2];
 static const float complex *prfft   = (float complex*)rfft_output;
 static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
 static float wnd[NSAMPLES];
-static enum {W_NONE, W_SINUS, W_HANN, W_HAMMING, W_BLACKMAN, W_FLATTOP} wndtype = W_NONE;
+static enum {W_NONE, W_SINUS, W_HANN, W_HAMMING, W_BLACKMAN, W_FLATTOP} wndtype = W_BLACKMAN;
 static const char* wndstr[] = {"None", "Sinus", "Hann", "Hamming", "Blackman", "Flattop"};
 static uint32_t oscilloscope = 1;
 static uint32_t rqExit = 0;
@@ -255,6 +255,7 @@ void FFTWND_Proc(void)
             {
                 LCD_Line(LCD_MakePoint(0, i), LCD_MakePoint(LCD_GetWidth()-1, i), 0xFF303070);
             }
+            LCD_Line(LCD_MakePoint(240, 140), LCD_MakePoint(240, LCD_GetHeight()-1), 0xFF303070);
 
             for (int ch = 0; ch < 2; ch++)
             {
@@ -278,19 +279,6 @@ void FFTWND_Proc(void)
                     P += powf(rfft_mags[i], 2);
                 maxmag = sqrtf(P);
 
-                if (0 == ch)
-                {
-                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
-                    FONT_SetAttributes(FONT_FRANBIG, LCD_RED, LCD_BLACK);
-                    FONT_Printf(0, 64, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
-                }
-                else
-                {
-                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
-                    FONT_SetAttributes(FONT_FRANBIG, LCD_GREEN, LCD_BLACK);
-                    FONT_Printf(0, 100, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
-                }
-
                 //Draw spectrum
                 for (int x = 0; x < 240; x++)
                 {
@@ -302,6 +290,20 @@ void FFTWND_Proc(void)
                     }
                     if (x >= LCD_GetWidth()-1)
                         break;
+                }
+
+                while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
+                if (0 == ch)
+                {
+                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+                    FONT_SetAttributes(FONT_FRANBIG, LCD_RED, LCD_BLACK);
+                    FONT_Printf(0, 64, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
+                }
+                else
+                {
+                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
+                    FONT_SetAttributes(FONT_FRANBIG, LCD_GREEN, LCD_BLACK);
+                    FONT_Printf(0, 100, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
                 }
             }
         }
