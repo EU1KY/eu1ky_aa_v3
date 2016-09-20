@@ -195,6 +195,14 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Select serial port to be used for remote control. Requires reset."
     },
+    {
+        .id = CFG_PARAM_COM_SPEED,
+        .idstring = "COM_SPEED",
+        .nvalues = 5,
+        .values = CFG_IARR(9600, 19200, 38400, 57600, 115200),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Serial port baudrate. Requires reset."
+    },
     /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
@@ -241,6 +249,7 @@ void CFG_Init(void)
     tmp = 51.f;
     CFG_SetParam(CFG_PARAM_BRIDGE_RLOAD, *((uint32_t*)&tmp));
     CFG_SetParam(CFG_PARAM_COM_PORT, COM1);
+    CFG_SetParam(CFG_PARAM_COM_SPEED, 38400);
 
     //Load parameters from file on SD card
     FRESULT res;

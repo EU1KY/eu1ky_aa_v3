@@ -24,10 +24,19 @@ static UART_HandleTypeDef UartHandle = {0};
 void AAUART_Init(void)
 {
     uint32_t comport = CFG_GetParam(CFG_PARAM_COM_PORT);
+    uint32_t comspeed = CFG_GetParam(CFG_PARAM_COM_SPEED);
     FIFO_Init(&rxfifo);
     FIFO_Init(&txfifo);
 
-    UartHandle.Init.BaudRate = 38400;
+    int IRQn;
+    if (COM1 == comport)
+        IRQn = DISCOVERY_COM1_IRQn;
+    else if (COM2 == comport)
+        IRQn = DISCOVERY_COM2_IRQn;
+    else
+        return;
+
+    UartHandle.Init.BaudRate = comspeed;
     UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
     UartHandle.Init.StopBits = UART_STOPBITS_1;
     UartHandle.Init.Parity = UART_PARITY_NONE;
@@ -35,20 +44,10 @@ void AAUART_Init(void)
     UartHandle.Init.Mode = UART_MODE_TX_RX;
 
     BSP_COM_Init(comport, &UartHandle);
-
     // NVIC for USART
-    if (COM1 == comport)
-    {
-        HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
-        HAL_NVIC_EnableIRQ(USART1_IRQn);
-        MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_RXNEIE); //Enable RXNE interrupts
-    }
-    else if (COM2 == comport)
-    {
-        HAL_NVIC_SetPriority(USART6_IRQn, 0, 1);
-        HAL_NVIC_EnableIRQ(USART6_IRQn);
-        MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_RXNEIE); //Enable RXNE interrupts
-    }
+    HAL_NVIC_SetPriority(IRQn, 0, 1);
+    HAL_NVIC_EnableIRQ(IRQn);
+    MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_RXNEIE); //Enable RXNE interrupts
 }
 
 //======================================================

@@ -32,7 +32,7 @@ typedef enum
     CFG_PARAM_PAN_SPAN,              //Span for panoramic window
     CFG_PARAM_MEAS_F,                //Measurement window frequency
     CFG_PARAM_SYNTH_TYPE,            //Synthesizer type used: 0 - Si5351a
-    CFG_PARAM_SI5351_XTAL_FREQ,      //Si5351a Xtal frequenccy, Hz
+    CFG_PARAM_SI5351_XTAL_FREQ,      //Si5351a Xtal frequency, Hz
     CFG_PARAM_SI5351_BUS_BASE_ADDR,  //Si5351a I2C bus base address
     CFG_PARAM_SI5351_CORR,           //Si5351a Xtal correction (signed, int16_t)
     CFG_PARAM_OSL_SELECTED,          //Selected OSL file
@@ -46,11 +46,12 @@ typedef enum
     CFG_PARAM_LIN_ATTENUATION,       //Linear audio input attenuation, dB
     CFG_PARAM_F_LO_DIV_BY_TWO,       //LO frequency is divided by two in quadrature mixer
     CFG_PARAM_GEN_F,                 //Frequency for generator window, Hz
-    CFG_PARAM_PAN_CENTER_F,          //Way of setting panoramic window. 0: F0+bandspan, 1: Fcenter +- Bandspan/2
+    CFG_PARAM_PAN_CENTER_F,          //Way of setting panoramic window. 0: F0+bandspan, 1: Fcenter +/- Bandspan/2
     CFG_PARAM_BRIDGE_RM,             //Value of measurement resistor in bridge, float32
     CFG_PARAM_BRIDGE_RADD,           //Value of series resistor in bridge, float32
     CFG_PARAM_BRIDGE_RLOAD,          //Value of load resistor in bridge, float32
-    CFG_PARAM_COM_PORT,              //Serial (COM) port to be used: COM1 or COM6
+    CFG_PARAM_COM_PORT,              //Serial (COM) port to be used: COM1 or COM2
+    CFG_PARAM_COM_SPEED,             //Serial (COM) port speed, bps
 
     //---------------------
     CFG_NUM_PARAMS
