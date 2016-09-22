@@ -53,7 +53,7 @@ void Sleep(uint32_t nms);
 
 typedef enum
 {
-    BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M
+    BS200, BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M
 } BANDSPAN;
 
 typedef enum
@@ -89,10 +89,10 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
 
-static const char* BSSTR[] = {"400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
-static const char* BSSTR_HALF[] = {"200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
+static const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
+static const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
 
-static const uint32_t BSVALUES[] = {400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
+static const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
 static uint32_t f1 = 14000;
 static BANDSPAN span = BS800;
 static char buf[64];
@@ -178,10 +178,10 @@ static void DrawCursorText()
     else
         fstart = f1 - BSVALUES[span] / 2;
 
-    float fcur = ((float)(fstart + cursorPos * BSVALUES[span] / WWIDTH))/1000.;
+    float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
     if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
         fcur = 0.f;
-    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
         fcur,
         crealf(rx),
         cimagf(rx),
@@ -196,6 +196,8 @@ static void DrawSaveText(void)
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_YELLOW, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
                Y0 + WHEIGHT + 16 + 16, txt);
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
 }
 
 static void DrawSavingText(void)
@@ -213,6 +215,8 @@ static void DrawSavedText(void)
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
                Y0 + WHEIGHT + 16 + 16, txt);
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
 }
 
 static void DecrCursor()
@@ -348,7 +352,7 @@ static void nextspan(BANDSPAN *sp)
 {
     if (*sp == BS40M)
     {
-        *sp = BS400;
+        *sp = BS200;
     }
     else
     {
@@ -358,7 +362,7 @@ static void nextspan(BANDSPAN *sp)
 
 static void prevspan(BANDSPAN *sp)
 {
-    if (*sp == BS400)
+    if (*sp == BS200)
     {
         *sp = BS40M;
     }
@@ -473,13 +477,14 @@ static void ScanRX()
         fstart = f1;
     else
         fstart = f1 - BSVALUES[span] / 2;
+    fstart *= 1000; //Convert to Hz
 
     DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
 
     for(i = 0; i < WWIDTH; i++)
     {
         uint32_t freq;
-        freq = (fstart + (i * BSVALUES[span]) / WWIDTH) * 1000;
+        freq = fstart + (i * BSVALUES[span] * 1000) / WWIDTH;
         if (freq == 0) //To overcome special case in DSP_Measure, where 0 is valid value
             freq = 1;
         DSP_Measure(freq, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
@@ -917,7 +922,11 @@ static void RedrawWindow()
         DrawCursorText();
         DrawSaveText();
     }
-    //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
+    else
+    {
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    }
 }
 
 static const uint8_t bmp_hdr[] =
@@ -1093,6 +1102,9 @@ void PANVSWR2_Proc(void)
     else
         RedrawWindow();
 
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+
     for(;;)
     {
         Sleep(50);
@@ -1126,7 +1138,7 @@ void PANVSWR2_Proc(void)
                     continue;
                 }
             }
-            else if (pt.y > 180 && pt.y < 255)
+            else if (pt.y > 200)
             {
                 if (pt.x < 140)
                 {// Lower left corner
@@ -1134,16 +1146,13 @@ void PANVSWR2_Proc(void)
                     Sleep(100);
                     return;
                 }
-                else if (pt.x > 340)
+                if (pt.x > 340)
                 {//Lower right corner: perform scan
                     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
                     ScanRX();
                     RedrawWindow();
                 }
-            }
-            else if (pt.y > 260)
-            {
-                if (pt.x > 160 && pt.x < 320 && isMeasured && !isSaved)
+                else if (pt.x > 160 && pt.x < 320 && isMeasured && !isSaved)
                 {
                     save_snapshot();
                 }

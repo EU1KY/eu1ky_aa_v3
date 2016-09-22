@@ -1,6 +1,7 @@
 #include "touch.h"
 #include "stm32746g_discovery_ts.h"
 #include "stm32746g_discovery_lcd.h"
+#include "lcd.h"
 #include "config.h"
 
 void TOUCH_Init(void)
@@ -11,14 +12,10 @@ void TOUCH_Init(void)
 static uint32_t wakeup_touch(void)
 {
     extern volatile uint32_t autosleep_timer;
-    extern volatile uint32_t lcd_brightness;
     autosleep_timer = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
-    //if (0 == (LCD_BL_CTRL_GPIO_PORT->ODR & LCD_BL_CTRL_PIN))
-    if (0 == lcd_brightness)
+    if (LCD_IsOff())
     {
-        //BSP_LCD_DisplayOn();
-        //HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_PORT, LCD_BL_CTRL_PIN, GPIO_PIN_SET);
-        lcd_brightness = 15;
+        BSP_LCD_DisplayOn();
         TS_StateTypeDef ts = { 0 };
         do
         {

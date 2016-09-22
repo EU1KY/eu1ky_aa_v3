@@ -92,6 +92,18 @@ void LCD_TurnOff(void)
 {
 }
 
+uint32_t LCD_IsOff(void)
+{
+    return (0 == (LCD_BL_CTRL_GPIO_PORT->ODR & LCD_BL_CTRL_PIN));
+}
+
+void LCD_WaitForRedraw(void)
+{
+    if (LCD_IsOff())
+        return;
+    while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
+}
+
 void LCD_FillRect(LCDPoint p1, LCDPoint p2, LCDColor color)
 {
     int32_t numPixels;

@@ -157,16 +157,6 @@ void SysTick_Handler(void)
     {
         autosleep_timer--;
     }
-    extern volatile uint32_t lcd_brightness;
-    uint32_t brtick = HAL_GetTick() & 0x0F;
-    if (brtick <= lcd_brightness)
-    {
-        LCD_BL_CTRL_GPIO_PORT->BSRR = LCD_BL_CTRL_PIN; //Backlight on
-    }
-    else
-    {
-        LCD_BL_CTRL_GPIO_PORT->BSRR = (uint32_t)LCD_BL_CTRL_PIN << 16; //Backlight off
-    }
 }
 
 /******************************************************************************/

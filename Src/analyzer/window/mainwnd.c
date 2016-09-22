@@ -58,7 +58,7 @@ static void USBD_Proc()
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 10, 0, "USB storage access via USB HS port");
-    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLUE, 10, 200, "Reset to exit");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 80, 200, "Reset device to exit");
 
     FATFS_UnLinkDriver(SDPath);
     BSP_SD_DeInit();
@@ -70,9 +70,12 @@ static void USBD_Proc()
     USBD_Start(&USBD_Device);
 
     //USBD works in interrupts only, no need to leave CPU running in main.
-    HAL_PWR_EnableSleepOnExit();
-    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-    for(;;);
+    for(;;)
+    {
+        Sleep(50); //To enter low power if necessary
+        TOUCH_IsPressed(); //To wake up from low power mode if necessary
+    }
+
     /*
     LCDPoint coord;
     while (!TOUCH_Poll(&coord))

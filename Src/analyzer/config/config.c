@@ -210,7 +210,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(0, 30000, 60000, 120000, 180000, 300000),
         .strvalues = CFG_SARR("Off", "30s", "1 min", "2 min", "3 min", "5 min"),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Enter low power mode after this period of inactivity (until next touchscreen tap)"
+        .dstring = "Enter low power mode (display off) after this period of inactivity. Tap to wake up."
     },
     /*
     {
@@ -616,5 +616,6 @@ void CFG_ParamWnd(void)
             }
             Sleep(50);
         }
+        Sleep(0);
     }
 }

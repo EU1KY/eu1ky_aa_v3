@@ -25,6 +25,7 @@ static char progresstxt[16];
 static int progressval;
 static TEXTBOX_t hbEx;
 static TEXTBOX_t hbScanShort;
+static uint32_t hbScanShortIdx;
 static TEXTBOX_t hbScanOpen;
 static TEXTBOX_t hbScanLoad;
 static TEXTBOX_t hbScanProgress;
@@ -172,6 +173,7 @@ void OSL_CalWnd(void)
             }
             Sleep(50);
         }
+        Sleep(0);
     }
 }
 
@@ -186,6 +188,7 @@ static void _hit_err_scan(void)
     OSL_ScanErrCorr(progress_cb);
 
     hbScanShort.bgcolor = LCD_RGB(0, 128, 0);
+    TEXTBOX_SetText(&osl_ctx, hbScanShortIdx, "  Success  ");
 
     progresstxt[0] = '\0';
     TEXTBOX_SetText(&osl_ctx, hbScanProgressId, progresstxt);
@@ -216,7 +219,7 @@ void OSL_CalErrCorr(void)
     //Reusing hbScanShort
     hbScanShort = (TEXTBOX_t){.x0 = 100, .y0 = 120, .text = " Start HW calibration ", .font = FONT_FRANBIG,
                             .fgcolor = LCD_RED, .bgcolor = LCD_RGB(64, 64, 64), .cb = _hit_err_scan };
-    TEXTBOX_Append(&osl_ctx, &hbScanShort);
+    hbScanShortIdx = TEXTBOX_Append(&osl_ctx, &hbScanShort);
 
     hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1,
                                  .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
@@ -232,5 +235,6 @@ void OSL_CalErrCorr(void)
                 return;
             Sleep(50);
         }
+        Sleep(0);
     }
 }

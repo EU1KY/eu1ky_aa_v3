@@ -154,6 +154,8 @@ void GENERATOR_Window_Proc(void)
         LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
     }
 
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, 240, "  Exit  ");
+
     rqExit = 0;
     fChanged = 0;
 

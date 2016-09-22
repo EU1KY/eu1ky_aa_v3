@@ -33,7 +33,7 @@ static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
 static float wnd[NSAMPLES];
 static enum {W_NONE, W_SINUS, W_HANN, W_HAMMING, W_BLACKMAN, W_FLATTOP} wndtype = W_BLACKMAN;
 static const char* wndstr[] = {"None", "Sinus", "Hann", "Hamming", "Blackman", "Flattop"};
-static uint32_t oscilloscope = 1;
+static uint32_t oscilloscope = 0;
 static uint32_t rqExit = 0;
 
 static void prepare_windowing(void);
@@ -146,6 +146,7 @@ void FFTWND_Proc(void)
     int i;
 
     rqExit = 0;
+    oscilloscope = 0;
     prepare_windowing();
     LCD_FillAll(LCD_BLACK);
 
@@ -154,6 +155,11 @@ void FFTWND_Proc(void)
     FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
 
     GEN_SetMeasurementFreq(3500000);
+
+    while(TOUCH_IsPressed())
+    {
+        Sleep(10);
+    }
 
     while (1)
     {
@@ -186,7 +192,7 @@ void FFTWND_Proc(void)
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
 
-            while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
+            LCD_WaitForRedraw();
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
 
@@ -246,7 +252,7 @@ void FFTWND_Proc(void)
         }
         else //Spectrum
         {
-            while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
+            LCD_WaitForRedraw();
             //Draw spectrum
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
@@ -292,7 +298,7 @@ void FFTWND_Proc(void)
                         break;
                 }
 
-                while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
+                LCD_WaitForRedraw();
                 if (0 == ch)
                 {
                     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);

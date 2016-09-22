@@ -118,7 +118,7 @@ static int Scan500(void)
 //Display measured data
 static void MeasurementModeDraw(DSP_RX rx)
 {
-    while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS)); //Wait for LCD output cycle finished to avoid flickering
+    LCD_WaitForRedraw();
 
     char str[50] = "";
     sprintf(str, "Magnitude diff %.2f dB     ", DSP_MeasuredDiffdB());

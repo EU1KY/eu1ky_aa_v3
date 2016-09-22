@@ -98,6 +98,10 @@ uint16_t LCD_GetWidth(void);
 
 uint16_t LCD_GetHeight(void);
 
+void LCD_WaitForRedraw(void);
+
+uint32_t LCD_IsOff(void);
+
 #ifdef __cplusplus
 }
 #endif
