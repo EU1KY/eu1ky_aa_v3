@@ -351,6 +351,7 @@ void MainWnd(void)
     //Main loop
     for(;;)
     {
+        Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&main_ctx))
         {
             Sleep(50);

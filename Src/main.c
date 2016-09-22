@@ -19,8 +19,22 @@ static void CPU_CACHE_Enable(void);
 static void MPU_Config(void);
 
 volatile uint32_t main_sleep_timer = 0;
+volatile uint32_t autosleep_timer = 0xFFFFFFFFul;
+volatile uint32_t lcd_brightness = 15; //0..15
+
 void Sleep(uint32_t nms)
 {
+    uint32_t ts = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
+    if (ts != 0)
+    {
+        if (autosleep_timer == 0)
+        {
+            lcd_brightness = 0;
+            //HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_PORT, LCD_BL_CTRL_PIN, GPIO_PIN_RESET);
+            //BSP_LCD_DisplayOff();
+        }
+    }
+
     if (nms == 0)
         return;
 
@@ -68,6 +82,8 @@ int main(void)
     DSP_Init(); //Initialize DSP module. Also loads calibration files inside.
 
     AAUART_Init(); //Initialize remote control protocol handler
+
+    autosleep_timer = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
 
     //Run main window function
     MainWnd(); //Never returns

@@ -203,6 +203,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Serial port baudrate. Requires reset."
     },
+    {
+        .id = CFG_PARAM_LOWPWR_TIME,
+        .idstring = "LOW POWER TIMER",
+        .nvalues = 6,
+        .values = CFG_IARR(0, 30000, 60000, 120000, 180000, 300000),
+        .strvalues = CFG_SARR("Off", "30s", "1 min", "2 min", "3 min", "5 min"),
+        .type = CFG_PARAM_T_U32,
+        .dstring = "Enter low power mode after this period of inactivity (until next touchscreen tap)"
+    },
     /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
@@ -250,6 +259,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_BRIDGE_RLOAD, *((uint32_t*)&tmp));
     CFG_SetParam(CFG_PARAM_COM_PORT, COM1);
     CFG_SetParam(CFG_PARAM_COM_SPEED, 38400);
+    CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
 
     //Load parameters from file on SD card
     FRESULT res;

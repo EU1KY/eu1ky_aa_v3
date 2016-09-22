@@ -52,6 +52,7 @@ typedef enum
     CFG_PARAM_BRIDGE_RLOAD,          //Value of load resistor in bridge, float32
     CFG_PARAM_COM_PORT,              //Serial (COM) port to be used: COM1 or COM2
     CFG_PARAM_COM_SPEED,             //Serial (COM) port speed, bps
+    CFG_PARAM_LOWPWR_TIME,           //Time in milliseconds after which to lower power consumption mode (0 - disabled)
 
     //---------------------
     CFG_NUM_PARAMS

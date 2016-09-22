@@ -144,6 +144,7 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
     extern volatile uint32_t main_sleep_timer;
+    extern volatile uint32_t autosleep_timer;
     HAL_IncTick();
     if (0 != main_sleep_timer)
     {
@@ -151,6 +152,20 @@ void SysTick_Handler(void)
         {
             HAL_PWR_DisableSleepOnExit(); //Leave the CPU running after exit from interrupt
         }
+    }
+    if (0 != autosleep_timer)
+    {
+        autosleep_timer--;
+    }
+    extern volatile uint32_t lcd_brightness;
+    uint32_t brtick = HAL_GetTick() & 0x0F;
+    if (brtick <= lcd_brightness)
+    {
+        LCD_BL_CTRL_GPIO_PORT->BSRR = LCD_BL_CTRL_PIN; //Backlight on
+    }
+    else
+    {
+        LCD_BL_CTRL_GPIO_PORT->BSRR = (uint32_t)LCD_BL_CTRL_PIN << 16; //Backlight off
     }
 }
 
