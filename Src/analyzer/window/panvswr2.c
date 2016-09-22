@@ -1040,8 +1040,8 @@ static void save_snapshot(void)
     for (i = 0; i < WWIDTH; i++)
     {
         float complex g = OSL_GFromZ(values[i], 50.f);
-        float fmhz = (float)(fstart + i * BSVALUES[span] / WWIDTH) / 1000.0f;
-        sprintf(wbuf, "%.3f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
+        float fmhz = ((float)fstart + (float)i * BSVALUES[span] / WWIDTH) / 1000.0f;
+        sprintf(wbuf, "%.4f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
         fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
         if (FR_OK != fr) goto CRASH_WR;
     }
