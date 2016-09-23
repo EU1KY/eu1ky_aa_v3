@@ -82,6 +82,11 @@ int main(void)
     AAUART_Init(); //Initialize remote control protocol handler
 
     autosleep_timer = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
+    if (autosleep_timer != 0 && autosleep_timer < 10000)
+    {//Disable too low value for autosleep timer. Minimal value is 10 seconds.
+        CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
+        autosleep_timer = 0;
+    }
 
     //Run main window function
     MainWnd(); //Never returns
