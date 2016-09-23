@@ -13,6 +13,7 @@
 #include "dsp.h"
 #include "mainwnd.h"
 #include "aauart.h"
+#include "custom_spi2.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -64,6 +65,7 @@ int main(void)
     BSP_LED_Init(LED1);
     LCD_Init();
     TOUCH_Init();
+    SPI2_Init();
 
     Sleep(300);
 

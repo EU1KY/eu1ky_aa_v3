@@ -324,6 +324,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\BSP\Components\wm8994\wm8994.h" />
+		<Unit filename="Src\BSP\STM32746G-Discovery\custom_spi2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\BSP\STM32746G-Discovery\custom_spi2.h" />
 		<Unit filename="Src\BSP\STM32746G-Discovery\stm32746g_discovery.c">
 			<Option compilerVar="CC" />
 		</Unit>
