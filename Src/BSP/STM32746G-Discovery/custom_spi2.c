@@ -114,5 +114,5 @@ void SPI2_DeselectSlave(void)
 
 void SPI2_Exchange(uint8_t *pDataTx, uint8_t *pDataRx, uint32_t nBytes)
 {
-    HAL_SPI_TransmitReceive(&SpiHandle, pDataTx, pDataRx, nBytes, nBytes);
+    HAL_SPI_TransmitReceive(&SpiHandle, pDataTx, pDataRx, nBytes, 500 /* ms */);
 }
