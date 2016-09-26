@@ -5,18 +5,6 @@
 
 #define AAVERSION "3.0d" //Must be 4 characters
 
-//If quadrature mixer is used (RF2713), define F_LO_DIVIDED_BY_TWO
-//If two mixers are used without quadrature (e.g. two of AD8342), comment it out
-//#define F_LO_DIVIDED_BY_TWO
-
-//Custom XTAL frequency (in Hz) of Si5351a can be set here. Uncomment and edit if
-//you are using not a 27 MHz crystal with it. Enter your crystal frequency in Hz.
-//#define SI5351_XTAL_FREQ                    27000000
-
-//Uncomment if your Si5351a has alternative I2C address (there was a batch of
-//defected chips sold through Mouser, they have this address instead of documented)
-//#define SI5351_BUS_BASE_ADDR 0xCE
-
 //Frequency range of the analyzer
 #define BAND_FMIN 500000ul    //BAND_FMIN must be multiple 100000
 #define BAND_FMAX 150000000ul //BAND_FMAX must be multiple of 100000
