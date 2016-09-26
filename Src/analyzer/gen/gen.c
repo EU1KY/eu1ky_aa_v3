@@ -5,6 +5,7 @@
  *   This code can be used on terms of WTFPL Version 2 (http://www.wtfpl.net/).
  */
 #include "si5351.h"
+#include "adf4350.h"
 #include "gen.h"
 #include "dsp.h"
 #include "config.h"
@@ -36,7 +37,13 @@ void GEN_Init(void)
         gen.SetF0 = si5351_SetF0;
         gen.SetLO = si5351_SetLO;
     }
-    //Todo: add other generator variants using CFG_PARAM_SYNTH_TYPE
+    else if (CFG_SYNTH_ADF4350 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
+    {
+        gen.Init = adf4350_Init;
+        gen.Off = adf4350_Off;
+        gen.SetF0 = adf4350_SetF0;
+        gen.SetLO = adf4350_SetLO;
+    }
     else
     {
         CRASH("Unexpected frequency synthesizer type in configuration");

@@ -15,7 +15,8 @@
 
 typedef enum
 {
-    CFG_SYNTH_SI5351 = 0,
+    CFG_SYNTH_SI5351  = 0,
+    CFG_SYNTH_ADF4350 = 1,
 } CFG_SYNTH_TYPE_t;
 
 typedef enum
