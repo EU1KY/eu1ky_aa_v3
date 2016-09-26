@@ -216,6 +216,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\gen\gen.h" />
+		<Unit filename="Src\analyzer\gen\rational.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\gen\rational.h" />
 		<Unit filename="Src\analyzer\gen\si5351.c">
 			<Option compilerVar="CC" />
 		</Unit>
