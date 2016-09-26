@@ -112,7 +112,7 @@ void SPI2_DeselectSlave(void)
     HAL_GPIO_WritePin(SPIx_SLAVE1_GPIO_PORT, SPIx_SLAVE1_PIN, GPIO_PIN_SET);
 }
 
-void SPI2_Exchange(uint8_t *pDataTx, uint8_t *pDataRx, uint32_t nBytes)
+void SPI2_Transmit(uint8_t *pDataTx, uint32_t nBytes)
 {
-    HAL_SPI_TransmitReceive(&SpiHandle, pDataTx, pDataRx, nBytes, 500 /* ms */);
+    HAL_SPI_Transmit(&SpiHandle, pDataTx, nBytes, 500);
 }

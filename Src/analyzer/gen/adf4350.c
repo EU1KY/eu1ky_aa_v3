@@ -22,7 +22,7 @@ static void adf4350_SendDW(uint32_t dw, SPI2_Slave_t slave)
     bytes[3] = (uint8_t)(dw & 0xFF);
 
     SPI2_SelectSlave(slave);
-    SPI2_Exchange(bytes, bytes, 4);
+    SPI2_Transmit(bytes, 4);
     SPI2_DeselectSlave();
 }
 

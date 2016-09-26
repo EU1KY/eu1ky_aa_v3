@@ -15,6 +15,6 @@ void SPI2_SelectSlave(SPI2_Slave_t slave);
 
 void SPI2_DeselectSlave(void);
 
-void SPI2_Exchange(uint8_t *pDataTx, uint8_t *pDataRx, uint32_t nBytes);
+void SPI2_Transmit(uint8_t *pDataTx, uint32_t nBytes);
 
 #endif //_CUSTOM_SPI2_H_
