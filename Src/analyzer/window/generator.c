@@ -18,6 +18,7 @@
 
 static uint32_t fChanged = 0;
 static uint32_t rqExit = 0;
+static uint32_t f_maxstep = 500000;
 
 void Sleep(uint32_t ms);
 
@@ -88,7 +89,7 @@ static void FIncr(uint32_t step)
 
 static void GENERATOR_FDecr_500k(void)
 {
-    FDecr(500000);
+    FDecr(f_maxstep);
 }
 static void GENERATOR_FDecr_100k(void)
 {
@@ -108,7 +109,7 @@ static void GENERATOR_FIncr_100k(void)
 }
 static void GENERATOR_FIncr_500k(void)
 {
-    FIncr(500000);
+    FIncr(f_maxstep);
 }
 
 static const struct HitRect hitArr[] =
@@ -141,6 +142,9 @@ void GENERATOR_Window_Proc(void)
     Sleep(250);
 
     while(TOUCH_IsPressed());
+
+    uint32_t speedcnt = 0;
+    f_maxstep = 500000;
 
     //Draw freq change areas bar
     uint16_t y;
@@ -176,10 +180,17 @@ void GENERATOR_Window_Proc(void)
             if (fChanged)
             {
                 ShowF();
-                //SCB_CleanDCache();
             }
-            Sleep(50);
+            speedcnt++;
+            if (speedcnt < 20)
+                Sleep(100);
+            else
+                Sleep(30);
+            if (speedcnt > 50)
+                f_maxstep = 2000000;
         }
+        speedcnt = 0;
+        f_maxstep = 500000;
         if (fChanged)
         {
             CFG_Flush();

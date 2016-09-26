@@ -374,13 +374,15 @@ static void prevspan(BANDSPAN *sp)
 
 static void SELFREQ_Proc(void)
 {
-    static BANDSPAN spantmp;
-    static uint32_t f1tmp;
-    static uint32_t speedcnt;
+    BANDSPAN spantmp;
+    uint32_t f1tmp;
+    uint32_t speedcnt;
+    uint32_t speedstep;
 
     spantmp = span;
     f1tmp = f1;
     speedcnt = 0;
+    speedstep = 100;
 
     LCD_FillAll(LCD_BLACK);
     while(TOUCH_IsPressed());
@@ -399,6 +401,7 @@ static void SELFREQ_Proc(void)
             if (pt.y < 90)
             { //Span
                 speedcnt = 0;
+                speedstep = 100;
                 if (pt.x < 140)
                 { //minus
                     prevspan(&spantmp);
@@ -418,17 +421,15 @@ static void SELFREQ_Proc(void)
                 {
                     if (f1tmp > BAND_FMIN/1000)
                     {
-                        f1tmp -= 100;
-                        if (f1tmp < BAND_FMIN/1000)
-                            f1tmp = BAND_FMIN;
-                        else if (f1tmp > BAND_FMAX/1000)
-                            f1tmp = BAND_FMAX/1000;
+                        f1tmp -= speedstep;
+                        if (f1tmp < BAND_FMIN/1000 || f1tmp > BAND_FMAX/1000)
+                            f1tmp = BAND_FMIN/1000;
                         print_f1(f1tmp);
                     }
                 }
                 else if (pt.x > 180)
                 {
-                    f1tmp += 100;
+                    f1tmp += speedstep;
                     if (f1tmp > BAND_FMAX/1000)
                         f1tmp = BAND_FMAX/1000;
                     print_f1(f1tmp);
@@ -437,6 +438,7 @@ static void SELFREQ_Proc(void)
             else if (pt.y > 200)
             {
                 speedcnt = 0;
+                speedstep = 100;
                 if (pt.x < 140)
                 {//OK
                     f1 = f1tmp;
@@ -460,11 +462,18 @@ static void SELFREQ_Proc(void)
         else
         {
             speedcnt = 0;
+            speedstep = 100;
         }
+        if (speedcnt > 200)
+            speedstep = 500;
+        else if (speedcnt > 100)
+            speedstep = 200;
+        else
+            speedstep = 100;
         if (speedcnt < 10)
             Sleep(150);
         else if (speedcnt < 20)
-            Sleep(30);
+            Sleep(50);
     }
 }
 

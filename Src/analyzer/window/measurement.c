@@ -28,6 +28,7 @@ static float vswr500[21];
 static uint32_t rqExit = 0;
 static uint32_t fChanged = 0;
 static uint32_t isMatch = 0;
+static uint32_t meas_maxstep = 500000;
 
 #define SCAN_ORIGIN_X 20
 #define SCAN_ORIGIN_Y 209
@@ -257,7 +258,7 @@ static void FIncr(uint32_t step)
 
 static void MEASUREMENT_FDecr_500k(void)
 {
-    FDecr(500000);
+    FDecr(meas_maxstep);
 }
 static void MEASUREMENT_FDecr_100k(void)
 {
@@ -277,7 +278,7 @@ static void MEASUREMENT_FIncr_100k(void)
 }
 static void MEASUREMENT_FIncr_500k(void)
 {
-    FIncr(500000);
+    FIncr(meas_maxstep);
 }
 static void MEASUREMENT_SmithMatch(void)
 {
@@ -376,6 +377,9 @@ void MEASUREMENT_Proc(void)
         FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 36, "HW cal: NO");
     }
 
+    uint32_t speedcnt = 0;
+    meas_maxstep = 500000;
+
     for(;;)
     {
         int scanres = Scan500();
@@ -414,8 +418,17 @@ void MEASUREMENT_Proc(void)
             {
                 ShowF();
             }
-            Sleep(50);
+            speedcnt++;
+            if (speedcnt < 20)
+                Sleep(100);
+            else
+                Sleep(30);
+            if (speedcnt > 50)
+                meas_maxstep = 2000000;
         }
+        speedcnt = 0;
+        meas_maxstep = 500000;
+
         if (fChanged)
         {
             CFG_Flush();
