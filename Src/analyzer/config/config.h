@@ -15,6 +15,11 @@
 
 typedef enum
 {
+    CFG_SYNTH_SI5351 = 0,
+} CFG_SYNTH_TYPE_t;
+
+typedef enum
+{
     CFG_PARAM_VERSION,               //4 characters of version string
     CFG_PARAM_PAN_F1,                //Initial frequency for panoramic window
     CFG_PARAM_PAN_SPAN,              //Span for panoramic window

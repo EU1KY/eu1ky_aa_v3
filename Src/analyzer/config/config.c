@@ -45,7 +45,7 @@ typedef struct
 //Callback that returns nonzero if Si5351 frequency synthesizer is selected
 static uint32_t isSi5351(void)
 {
-    return (uint32_t)(0 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
+    return (uint32_t)(CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
 }
 
 //Array of user changeable parameters descriptors
@@ -217,7 +217,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
         .nvalues = 1,
-        .values = CFG_IARR(   0),
+        .values = CFG_IARR(CFG_SYNTH_SI5351),
         .strvalues = CFG_SARR("Si5351A"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used"

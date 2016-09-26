@@ -35,7 +35,9 @@ struct Si5351IntStatus dev_int_status;
 /******************************/
 /* Suggested private functions */
 /******************************/
-
+static void si5351_set_freq(uint32_t, enum si5351_clock);
+static void si5351_clock_enable(enum si5351_clock clk, uint8_t enable);
+static uint8_t si5351_read_device_reg(uint8_t reg);
 static void rational_best_approximation(
     uint64_t given_numerator, uint64_t given_denominator,
     uint32_t max_numerator, uint32_t max_denominator,
@@ -59,12 +61,12 @@ extern void     CAMERA_IO_WriteBulk(uint8_t addr, uint8_t reg, uint8_t* values, 
 /******************************/
 
 /*
- * si5351_init(void)
+ * si5351_Init(void)
  *
  * Call this to initialize I2C communications and get the
  * Si5351 ready for use.
  */
-void si5351_init(void)
+void si5351_Init(void)
 {
     CAMERA_IO_Init();
 
@@ -80,6 +82,27 @@ void si5351_init(void)
     si5351_write(SI5351_FANOUT_ENABLE, 0);
 }
 
+void si5351_SetF0(uint32_t fhz)
+{
+    si5351_set_freq(fhz, SI5351_CLK0);
+    si5351_clock_enable(SI5351_CLK0, 1);
+}
+
+void si5351_SetLO(uint32_t fhz)
+{
+    si5351_set_freq(fhz, SI5351_CLK1);
+    si5351_clock_enable(SI5351_CLK1, 1);
+}
+
+void si5351_Off(void)
+{
+    si5351_clock_enable(SI5351_CLK0, 0);
+    si5351_clock_enable(SI5351_CLK1, 0);
+}
+
+
+//-----------------------------------------------------------------------------------------
+
 /*
  * si5351_set_freq(uint32_t freq, enum si5351_clock output)
  *
@@ -90,7 +113,7 @@ void si5351_init(void)
  *   (use the si5351_clock enum)
  */
 
-void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
+static void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
 {
     set_multisynth_alt(freq, clk);
 }
@@ -103,7 +126,7 @@ void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
  *   (use the si5351_clock enum)
  * enable - Set to 1 to enable, 0 to disable
  */
-void si5351_clock_enable(enum si5351_clock clk, uint8_t enable)
+static void si5351_clock_enable(enum si5351_clock clk, uint8_t enable)
 {
     uint8_t reg_val;
 
@@ -452,7 +475,7 @@ static void si5351_set_clk_control(enum si5351_clock clk, enum si5351_pll pll, i
     si5351_write(SI5351_CLK0_CTRL + (uint8_t)clk, reg_val);
 }
 
-uint8_t si5351_read_device_reg(uint8_t reg)
+static uint8_t si5351_read_device_reg(uint8_t reg)
 {
     uint8_t data = 0;
     si5351_read(reg, &data);

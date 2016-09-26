@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 
+void GEN_Init(void);
 void GEN_SetMeasurementFreq(uint32_t fhz);
 uint32_t GEN_GetLastFreq(void);
 

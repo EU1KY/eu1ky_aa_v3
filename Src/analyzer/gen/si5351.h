@@ -237,10 +237,10 @@ extern "C" {
 
 /* Suggested public function prototypes */
 
-void si5351_init(void);
-void si5351_set_freq(uint32_t, enum si5351_clock);
-void si5351_clock_enable(enum si5351_clock clk, uint8_t enable);
-uint8_t si5351_read_device_reg(uint8_t reg);
+void si5351_Init(void);
+void si5351_Off(void);
+void si5351_SetF0(uint32_t fhz);
+void si5351_SetLO(uint32_t fhz);
 
 #ifdef __cplusplus
 }

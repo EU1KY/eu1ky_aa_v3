@@ -14,6 +14,7 @@
 #include "mainwnd.h"
 #include "aauart.h"
 #include "custom_spi2.h"
+#include "gen.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -77,7 +78,7 @@ int main(void)
 
     CFG_Init(); //Load configuration
 
-    si5351_init(); //Initialize frequency synthesizer
+    GEN_Init(); //Initialize frequency synthesizer (only after CFG_Init())
 
     DSP_Init(); //Initialize DSP module. Also loads calibration files inside.
 
