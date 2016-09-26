@@ -1,6 +1,7 @@
 #include "config.h"
 #include "ff.h"
 #include "crash.h"
+#include "gen.h"
 #include <string.h>
 #include <stdint.h>
 
@@ -73,7 +74,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350),
         .strvalues = CFG_SARR("Si5351A", "2x ADF4350"),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Frequency synthesizer type used. Change requires reset."
+        .dstring = "Frequency synthesizer type used."
     },
     {
         .id = CFG_PARAM_R0,
@@ -535,6 +536,7 @@ static void _hit_next(void)
 static void _hit_save(void)
 {
     CFG_Flush();
+    GEN_Init(); //In case if synthesizer type has changed
     rqExit = 1;
 }
 

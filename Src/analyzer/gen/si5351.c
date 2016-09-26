@@ -94,10 +94,17 @@ void si5351_SetLO(uint32_t fhz)
     si5351_clock_enable(SI5351_CLK1, 1);
 }
 
+void si5351_SetF2(uint32_t fhz)
+{
+    si5351_set_freq(fhz, SI5351_CLK2);
+    si5351_clock_enable(SI5351_CLK2, 1);
+}
+
 void si5351_Off(void)
 {
     si5351_clock_enable(SI5351_CLK0, 0);
     si5351_clock_enable(SI5351_CLK1, 0);
+    si5351_clock_enable(SI5351_CLK2, 0);
 }
 
 
@@ -417,6 +424,12 @@ static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
         si5351_set_clk_control(clk, SI5351_PLLA, (a == 4) || (a == 6), SI5351_DRIVE_8MA);
     }
     else if (clk == SI5351_CLK1)
+    {
+        si5351_set_pll(ap, bp, cp, SI5351_PLLB);
+        si5351_set_ms(a, b, c, rdiv, clk);
+        si5351_set_clk_control(clk, SI5351_PLLB, (a == 4) || (a == 6), SI5351_DRIVE_8MA);
+    }
+    else if (clk == SI5351_CLK2)
     {
         si5351_set_pll(ap, bp, cp, SI5351_PLLB);
         si5351_set_ms(a, b, c, rdiv, clk);

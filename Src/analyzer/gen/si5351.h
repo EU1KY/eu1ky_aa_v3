@@ -241,6 +241,7 @@ void si5351_Init(void);
 void si5351_Off(void);
 void si5351_SetF0(uint32_t fhz);
 void si5351_SetLO(uint32_t fhz);
+void si5351_SetF2(uint32_t fhz);
 
 #ifdef __cplusplus
 }
