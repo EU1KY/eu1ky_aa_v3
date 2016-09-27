@@ -2,6 +2,7 @@
 #include "si5351.h"
 #include "custom_spi2.h"
 #include "rational.h"
+#include "stm32746g_discovery.h"
 
 //Input clocks to 2x ADF4350's are taken from CLK2 output of Si5351a
 //ADF4350 interface CLK pins are connected to SPI2 SCK
@@ -9,7 +10,45 @@
 //ADF4350 LE signals are connected to SPI2_SLAVE_0 (F0 generator) and SPI2_SLAVE_1 (F1 generator)
 //ADF4350 CS signals are connected to logic 1
 
+#define ADF4350_MIN_OUT_FREQ 140000000ul //140 MHz
+#define ADF4350_MAX_OUT_FREQ 1500000000ul //1500 MHz
+
 #define ADF4350_REF_CLK 27000000ul
+#define ADF4350_FPFD 108000ul      //This PFD frequency provides better than 0.25 Hz accuracy
+#define ADF4350_R_VALUE (ADF4350_REF_CLK / ADF4350_FPFD) //250
+#define ADF4350_FVCO_MIN 2200000000ul //2.2 GHz
+#define ADF4350_FVCO_MAX 4400000000ul //4.4 GHz - limited by 8/9 prescaler in use
+
+//Calculate output RF divider (1..16), INT, FRAC and MOD for given fhz
+static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_int, uint32_t* div_frac, uint32_t* div_mod)
+{
+    //Check fhz valid value (140 MHz ... 1500 MHz)
+    assert_param(fhz >= ADF4350_MIN_OUT_FREQ && fhz <= ADF4350_MAX_OUT_FREQ);
+    //Determine RF divider value
+    uint32_t rfd = ADF4350_FVCO_MAX / fhz;
+    uint32_t mask = 16;
+    *rfdiv_out = 4;
+    while (mask)
+    {
+        if (rfd & mask) //Find the most significant 1 bit in the rfd
+            break;
+        mask >>= 1;
+        *rfdiv_out--;
+    }
+    // rfd is 1, 2, 4, 8 or 16 at this point
+    // *rfdiv_out is 4, 3, 2, 1 or 0 respectively at this point - the value to be placed to ADF4350 register R4
+
+    //Now, calculate div_int
+    *div_int = (fhz * rfd) / ADF4350_FPFD;
+
+    //Now calculate the best fraction ratio (*div_frac / *div_mod)
+    double fracmod = (double)(fhz * rfd) / ADF4350_FPFD - (double)*div_int;
+    uint32_t num = (uint32_t)(fracmod * ADF4350_FPFD * 128ul);
+    uint32_t den = ADF4350_FPFD * 128ul;
+    rational_best_approximation(num, den, 4095, 4095, div_frac, div_mod);
+    //Verify result:
+    //TODO
+}
 
 //Send 32-bit data to ADF4350
 static void adf4350_SendDW(uint32_t dw, SPI2_Slave_t slave)
@@ -33,7 +72,7 @@ static void adf4350_SendDW(uint32_t dw, SPI2_Slave_t slave)
     @param DBB           3-bit RF divider select
     @param slave         SPI2 slave identificator
 */
-static void adf4350_SendR4(uint32_t RF_Out_en, uint32_t RBS, uint32_t DBB, SPI2_Slave_t slave)
+static void adf4350_SendR4(uint32_t RF_Out_en, int32_t DBB, SPI2_Slave_t slave)
 {
     uint32_t dw = 0;
     dw |=  (0x03 << 3); //DB4:3 - output power
@@ -43,14 +82,14 @@ static void adf4350_SendR4(uint32_t RF_Out_en, uint32_t RBS, uint32_t DBB, SPI2_
     dw |=  (0 << 9);    //DB9 - AUX output select
     dw |=  (1 << 10);   //DB10 - Mute till lock detect
     dw |=  (0 << 11);   //DB11 - VCO powered down (0 to power up)
-    dw |=  ((RBS & 0xFF) << 12);   //DB19:12 - 8-bit band select clock divider (R) value
+    dw |=  (1 << 12);   //DB19:12 - 8-bit band select clock divider (R) value - using hardcoded 1 for Fpfd <= 125 kHz
     dw |=  ((DBB & 0x07) << 20);   //DB22:20 - 3-bit RF divider select
     adf4350_SendDW(dw | 0x04, slave); //Write register 4
 }
 
 
 /**
-    @brief Set ADF4350 R3 value
+    @brief Set ADF4350 R3 valueband select clock divider
     @param clkdiv        12-bit clock divider value
     @param clkdivmode    2-bit clock divider mode
     @param csr           1-bit cycle slip reduction
@@ -85,16 +124,15 @@ static void adf4350_SendR2(uint32_t pwrdown, uint32_t rcounter, SPI2_Slave_t sla
 /**
     @brief Set ADF4350 R1 value
     @param mod           12-bit modulus (MOD) value
-    @param presc         1-bit prescaler value (0 - 4/5, 1 - 8/9)
     @param slave         SPI2 slave identificator
 */
-static void adf4350_SendR1(uint32_t mod, uint32_t presc, SPI2_Slave_t slave)
+static void adf4350_SendR1(uint32_t mod, SPI2_Slave_t slave)
 {
     uint32_t dw = 0;
     dw |= ((mod & 0xFFF) << 3);
     //Phase value (DBR) is ignored, always setting it to recommended 1 in this application
     dw |= (1 << 15);
-    dw |= ((presc & 0x01) << 27);
+    dw |= (1 << 27); // 8/9 prescaler is in use. It limits lowest INT value to 75
     adf4350_SendDW(dw | 0x01, slave);
 }
 
@@ -108,6 +146,7 @@ static void adf4350_SendR1(uint32_t mod, uint32_t presc, SPI2_Slave_t slave)
 */
 static void adf4350_SendR0(uint32_t integ, uint32_t frac, SPI2_Slave_t slave)
 {
+    assert_param(integ >= 75 && integ <= 65535);
     uint32_t dw = 0;
     dw |= ((frac & 0xFFF) << 3);
     dw |= ((integ & 0xFFFF) << 15);
@@ -134,17 +173,17 @@ void adf4350_Init(void)
 
     //Initialize ADF4350 chips here
     adf4350_SendDW(0x00400000ul | 0x05, SPI2_SLAVE_0); //Register 5 : LD pin mode = {0 1}
-    adf4350_SendR4(0, 0, 0, SPI2_SLAVE_0);
+    adf4350_SendR4(0, 0, SPI2_SLAVE_0);
     adf4350_SendR3(0, 0, 0, SPI2_SLAVE_0);
     adf4350_SendR2(1, 1, SPI2_SLAVE_0);
-    adf4350_SendR1(0, 0, SPI2_SLAVE_0);
+    adf4350_SendR1(0, SPI2_SLAVE_0);
     adf4350_SendR0(75, 0, SPI2_SLAVE_0);
 
     adf4350_SendDW(0x00400000ul | 0x05, SPI2_SLAVE_1); //Register 5 : LD pin mode = {0 1}
-    adf4350_SendR4(0, 0, 0, SPI2_SLAVE_1);
+    adf4350_SendR4(0, 0, SPI2_SLAVE_1);
     adf4350_SendR3(0, 0, 0, SPI2_SLAVE_1);
     adf4350_SendR2(1, 1, SPI2_SLAVE_1);
-    adf4350_SendR1(0, 0, SPI2_SLAVE_1);
+    adf4350_SendR1(0, SPI2_SLAVE_1);
     adf4350_SendR0(75, 0, SPI2_SLAVE_1);
 }
 
@@ -164,10 +203,10 @@ void adf4350_Off(void)
 void adf4350_SetF0(uint32_t fhz)
 {
     //TODO : implement setting frequency in F0 generator
-    //adf4350_SendR4(0, 0, 0, SPI2_SLAVE_0);
+    //adf4350_SendR4(0, 0, SPI2_SLAVE_0);
     //adf4350_SendR3(0, 0, 0, SPI2_SLAVE_0);
     //adf4350_SendR2(1, 1, SPI2_SLAVE_0);
-    //adf4350_SendR1(0, 0, SPI2_SLAVE_0);
+    //adf4350_SendR1(0, SPI2_SLAVE_0);
     //adf4350_SendR0(75, 0, SPI2_SLAVE_0);
 }
 
@@ -179,9 +218,9 @@ void adf4350_SetF0(uint32_t fhz)
 void adf4350_SetLO(uint32_t fhz)
 {
     //TODO : implement setting frequency in LO generator
-    //adf4350_SendR4(0, 0, 0, SPI2_SLAVE_1);
+    //adf4350_SendR4(0, 0, SPI2_SLAVE_1);
     //adf4350_SendR3(0, 0, 0, SPI2_SLAVE_1);
     //adf4350_SendR2(1, 1, SPI2_SLAVE_1);
-    //adf4350_SendR1(0, 0, SPI2_SLAVE_1);
+    //adf4350_SendR1(0, SPI2_SLAVE_1);
     //adf4350_SendR0(75, 0, SPI2_SLAVE_1);
 }
