@@ -1,3 +1,6 @@
+#if defined (DEBUG)
+#    include <math.h>
+#endif
 #include "adf4350.h"
 #include "si5351.h"
 #include "custom_spi2.h"
@@ -14,14 +17,13 @@
 #define ADF4350_MAX_OUT_FREQ 4400000000ul //4400 MHz
 
 #define ADF4350_REF_CLK 27000000ul
-#define ADF4350_FPFD 108000ul      //This PFD frequency provides better than 0.25 Hz accuracy
-#define ADF4350_R_VALUE (ADF4350_REF_CLK / ADF4350_FPFD) //250
+#define ADF4350_FPFD 100000ul
+#define ADF4350_R_VALUE (ADF4350_REF_CLK / ADF4350_FPFD)
 #define ADF4350_FVCO_MIN 2200000000ul //2.2 GHz
-#define ADF4350_FVCO_MAX 4400000000ul //4.4 GHz - limited by 8/9 prescaler in use
+#define ADF4350_FVCO_MAX 4400000000ul //4.4 GHz
 
 extern void Sleep(uint32_t);
 
-//Calculate output RF divider (1..16), INT, FRAC and MOD for given fhz
 static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_int, uint32_t* div_frac, uint32_t* div_mod)
 {
     //Check fhz valid value (140 MHz ... 4200 MHz)
@@ -43,18 +45,19 @@ static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_in
     // rfd is 16, 8, 4, 2 or 1 at this point
     // *rfdiv_out is 4, 3, 2, 1 or 0 respectively at this point - the value to be placed to ADF4350 register R4
 
-    //Now, calculate div_int
-    *div_int = (uint32_t)((uint64_t)fhz * (uint64_t)rfd) / (uint64_t)ADF4350_FPFD;
+    uint32_t numerator;
+    uint32_t denominator;
+    rational_best_approximation((uint64_t)fhz * rfd, ADF4350_FPFD, 0xFFFFFFFF, 4095, &numerator, &denominator);
 
-    //Now calculate the best fraction ratio (*div_frac / *div_mod)
-    double fracmod = ((double)((uint64_t)fhz * (uint64_t)rfd)) / ADF4350_FPFD - (double)*div_int;
-    uint32_t num = (uint32_t)(fracmod * ADF4350_FPFD * 128ul);
-    uint32_t den = ADF4350_FPFD * 128ul;
-    rational_best_approximation(num, den, 4095, 4095, div_frac, div_mod);
-    //Verify result:
+    *div_int = numerator / denominator;
+    *div_frac = numerator % denominator;
+    *div_mod = denominator;
+
     #if defined (DEBUG)
-    uint32_t fact = (uint32_t)(((uint64_t)*div_int * (uint64_t)ADF4350_FPFD + (((uint64_t)*div_frac * (uint64_t)ADF4350_FPFD * 4096ull) / ((uint64_t)*div_mod * 4096ull))) / (uint64_t)rfd);
-    assert_param(fact == fhz || fact == (fhz + 1) || fact == (fhz - 1));
+    //Verify result:
+    uint32_t actual_f = (uint32_t)(round((double)ADF4350_FPFD * ((double)*div_int + (double)*div_frac / (double)*div_mod)) / (double)rfd);
+    uint32_t diff = (actual_f > fhz) ? (actual_f - fhz) : (fhz - actual_f);
+    assert_param(diff < 30);
     #endif
 }
 
