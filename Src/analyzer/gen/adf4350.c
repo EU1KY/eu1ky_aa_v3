@@ -55,7 +55,7 @@ static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_in
 
     #if defined (DEBUG)
     //Verify result:
-    uint32_t actual_f = (uint32_t)(round((double)ADF4350_FPFD * ((double)*div_int + (double)*div_frac / (double)*div_mod)) / (double)rfd);
+    uint32_t actual_f = (uint32_t)(round(((double)ADF4350_FPFD * ((double)*div_int + (double)*div_frac / (double)*div_mod)) / (double)rfd));
     uint32_t diff = (actual_f > fhz) ? (actual_f - fhz) : (fhz - actual_f);
     assert_param(diff < 30);
     #endif
