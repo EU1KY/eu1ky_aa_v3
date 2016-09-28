@@ -14,13 +14,13 @@
 //ADF4350 CS signals are connected to logic 1
 
 #define ADF4350_MIN_OUT_FREQ 137500000ul  //137.5 MHz
-#define ADF4350_MAX_OUT_FREQ 4400000000ul //4400 MHz
+#define ADF4350_MAX_OUT_FREQ 4294000000ul //4294 MHz (to fit into uint32_t)
 
 #define ADF4350_REF_CLK 27000000ul
 #define ADF4350_FPFD 100000ul
 #define ADF4350_R_VALUE (ADF4350_REF_CLK / ADF4350_FPFD)
-#define ADF4350_FVCO_MIN 2200000000ul //2.2 GHz
-#define ADF4350_FVCO_MAX 4400000000ul //4.4 GHz
+#define ADF4350_FVCO_MIN 2200000000ull //2.2 GHz
+#define ADF4350_FVCO_MAX 4400000000ull //4.4 GHz
 
 extern void Sleep(uint32_t);
 
@@ -29,7 +29,7 @@ static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_in
     //Check fhz valid value (140 MHz ... 4200 MHz)
     assert_param(fhz >= ADF4350_MIN_OUT_FREQ && fhz <= ADF4350_MAX_OUT_FREQ);
     //Determine RF divider value
-    uint32_t rfd = ADF4350_FVCO_MAX / fhz;
+    uint32_t rfd = (uint32_t)(ADF4350_FVCO_MAX / (uint64_t)fhz);
     uint32_t mask = 16;
     *rfdiv_out = 4;
     while (mask)
