@@ -116,7 +116,7 @@ int isatty(int file)
     return 1;
 }
 
-void _exit (int a)
+__attribute__((weak)) void _exit (int a)
 {
     while(1) {};
 }

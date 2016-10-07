@@ -29,7 +29,7 @@ void Sleep(uint32_t nms)
     if (ts != 0)
     {
         if (autosleep_timer == 0 &&
-           !LCD_IsOff() )
+                !LCD_IsOff() )
         {
             BSP_LCD_DisplayOff();
         }
@@ -86,7 +86,8 @@ int main(void)
 
     autosleep_timer = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
     if (autosleep_timer != 0 && autosleep_timer < 10000)
-    {//Disable too low value for autosleep timer. Minimal value is 10 seconds.
+    {
+        //Disable too low value for autosleep timer. Minimal value is 10 seconds.
         CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
         autosleep_timer = 0;
     }

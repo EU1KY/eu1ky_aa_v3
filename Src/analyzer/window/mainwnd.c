@@ -58,7 +58,7 @@ static void USBD_Proc()
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 10, 0, "USB storage access via USB HS port");
-    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 80, 200, "Reset device to exit");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 80, 200, "Exit (Reset device)");
 
     FATFS_UnLinkDriver(SDPath);
     BSP_SD_DeInit();
@@ -73,32 +73,19 @@ static void USBD_Proc()
     for(;;)
     {
         Sleep(50); //To enter low power if necessary
-        TOUCH_IsPressed(); //To wake up from low power mode if necessary
-    }
-
-    /*
-    LCDPoint coord;
-    while (!TOUCH_Poll(&coord))
-    {
-        if (coord.x < 150 && coord.y > 200)
+        LCDPoint coord;
+        if (TOUCH_Poll(&coord))
         {
-            USBD_Stop(&USBD_Device);
-            USBD_DeInit(&USBD_Device);
-            BSP_SD_DeInit();
-
-            Sleep(100);
-
-            //Mount SD card
-            if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
-                CRASH("FATFS_LinkDriver failed");
-            if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
-                CRASH("f_mount failed");
-
             while(TOUCH_IsPressed());
-            return;
+            if (coord.x > 80 && coord.x < 200 && coord.y > 200 && coord.y < 240)
+            {
+                USBD_Stop(&USBD_Device);
+                USBD_DeInit(&USBD_Device);
+                BSP_SD_DeInit();
+                NVIC_SystemReset(); //Never returns
+            }
         }
     }
-    */
 }
 
 //==========================================================================================
