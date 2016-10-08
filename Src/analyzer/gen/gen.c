@@ -6,6 +6,7 @@
  */
 #include "si5351.h"
 #include "adf4350.h"
+#include "adf4351.h"
 #include "gen.h"
 #include "dsp.h"
 #include "config.h"
@@ -43,6 +44,13 @@ void GEN_Init(void)
         gen.Off = adf4350_Off;
         gen.SetF0 = adf4350_SetF0;
         gen.SetLO = adf4350_SetLO;
+    }
+    else if (CFG_SYNTH_ADF4351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
+    {
+        gen.Init = ADF4351_Init;
+        gen.Off = ADF4351_Off;
+        gen.SetF0 = ADF4351_SetF0;
+        gen.SetLO = ADF4351_SetLO;
     }
     else
     {

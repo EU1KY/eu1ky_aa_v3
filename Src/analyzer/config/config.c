@@ -55,6 +55,12 @@ static uint32_t isADF4350(void)
     return (uint32_t)(CFG_SYNTH_ADF4350 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
 }
 
+//Callback that returns nonzero if ADF4351 frequency synthesizer is selected
+static uint32_t isADF4351(void)
+{
+    return (uint32_t)(CFG_SYNTH_ADF4351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
+}
+
 //Array of user changeable parameters descriptors
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 {
@@ -70,9 +76,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
-        .nvalues = 2,
-        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350),
-        .strvalues = CFG_SARR("Si5351A", "2x ADF4350"),
+        .nvalues = 3,
+        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351),
+        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used."
     },

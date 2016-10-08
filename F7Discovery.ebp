@@ -212,6 +212,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\gen\adf4350.h" />
+		<Unit filename="Src\analyzer\gen\adf4351.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\gen\adf4351.h" />
 		<Unit filename="Src\analyzer\gen\gen.c">
 			<Option compilerVar="CC" />
 		</Unit>
