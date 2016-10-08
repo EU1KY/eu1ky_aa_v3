@@ -77,7 +77,7 @@ static void USBD_Proc()
         if (TOUCH_Poll(&coord))
         {
             while(TOUCH_IsPressed());
-            if (coord.x > 80 && coord.x < 200 && coord.y > 200 && coord.y < 240)
+            if (coord.x > 80 && coord.x < 320 && coord.y > 200 && coord.y < 240)
             {
                 USBD_Stop(&USBD_Device);
                 USBD_DeInit(&USBD_Device);
