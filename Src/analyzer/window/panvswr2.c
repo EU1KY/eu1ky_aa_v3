@@ -480,7 +480,7 @@ static void SELFREQ_Proc(void)
 
 static void ScanRX()
 {
-    int i;
+    uint64_t i;
     uint32_t fstart;
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
         fstart = f1;
