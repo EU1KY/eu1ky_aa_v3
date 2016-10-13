@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32f746xx.h
   * @author  MCD Application Team
-  * @version V1.1.0
-  * @date    22-April-2016
+  * @version V1.1.2
+  * @date    23-September-2016 
   * @brief   CMSIS Cortex-M7 Device Peripheral Access Layer Header File.
   *
   *          This file contains:
@@ -6044,7 +6044,7 @@ typedef struct
 #define RTC_CR_OSEL_1                        0x00400000U
 #define RTC_CR_POL                           0x00100000U
 #define RTC_CR_COSEL                         0x00080000U
-#define RTC_CR_BCK                           0x00040000U
+#define RTC_CR_BKP                           0x00040000U
 #define RTC_CR_SUB1H                         0x00020000U
 #define RTC_CR_ADD1H                         0x00010000U
 #define RTC_CR_TSIE                          0x00008000U
@@ -6063,6 +6063,9 @@ typedef struct
 #define RTC_CR_WUCKSEL_0                     0x00000001U
 #define RTC_CR_WUCKSEL_1                     0x00000002U
 #define RTC_CR_WUCKSEL_2                     0x00000004U
+
+/* Legacy define */
+#define RTC_CR_BCK                           RTC_CR_BKP
 
 /********************  Bits definition for RTC_ISR register  ******************/
 #define RTC_ISR_ITSF                         0x00020000U

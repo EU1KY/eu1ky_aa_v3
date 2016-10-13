@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_usart.c
   * @author  MCD Application Team
-  * @version V1.1.0
-  * @date    22-April-2016
+  * @version V1.1.2
+  * @date    23-September-2016 
   * @brief   USART HAL module driver.
   *          This file provides firmware functions to manage the following 
   *          functionalities of the Universal Synchronous/Asynchronous Receiver Transmitter
@@ -221,7 +221,7 @@ HAL_StatusTypeDef HAL_USART_Init(USART_HandleTypeDef *husart)
   /* In Synchronous mode, the following bits must be kept cleared:
   - LINEN bit in the USART_CR2 register
   - HDSEL, SCEN and IREN bits in the USART_CR3 register.*/
-  CLEAR_BIT(husart->Instance->CR2, (USART_CR2_LINEN | USART_CR2_CLKEN));
+  CLEAR_BIT(husart->Instance->CR2, USART_CR2_LINEN);
   CLEAR_BIT(husart->Instance->CR3, (USART_CR3_SCEN | USART_CR3_HDSEL | USART_CR3_IREN));
 
   /* Enable the Peripheral */
@@ -675,14 +675,11 @@ HAL_StatusTypeDef HAL_USART_Receive_IT(USART_HandleTypeDef *husart, uint8_t *pRx
     husart->ErrorCode = HAL_USART_ERROR_NONE;
     husart->State = HAL_USART_STATE_BUSY_RX;
 
-    /* Enable the USART Parity Error Interrupt */
-    SET_BIT(husart->Instance->CR1, USART_CR1_PEIE);
+    /* Enable the USART Parity Error and Data Register not empty Interrupts */
+    SET_BIT(husart->Instance->CR1, USART_CR1_PEIE | USART_CR1_RXNEIE);
 
     /* Enable the USART Error Interrupt: (Frame error, noise error, overrun error) */
     SET_BIT(husart->Instance->CR3, USART_CR3_EIE);
-
-    /* Enable the USART Data Register not empty Interrupt */
-    SET_BIT(husart->Instance->CR1, USART_CR1_RXNEIE);
 
     /* Process Unlocked */
     __HAL_UNLOCK(husart);
@@ -1165,7 +1162,9 @@ void HAL_USART_IRQHandler(USART_HandleTypeDef *husart)
   }
   
   /* If some errors occur */
-  if((errorflags != RESET) && ((cr3its & (USART_CR3_EIE | USART_CR1_PEIE)) != RESET))
+  if(   (errorflags != RESET)
+     && (   ((cr3its & USART_CR3_EIE) != RESET)
+         || ((cr1its & (USART_CR1_RXNEIE | USART_CR1_PEIE)) != RESET)) )
   {
     
     /* USART parity error interrupt occurred ------------------------------------*/
