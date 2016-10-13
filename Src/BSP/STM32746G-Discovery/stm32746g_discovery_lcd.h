@@ -53,7 +53,6 @@
 #include "stm32746g_discovery_sdram.h"
 
 #include "stm32746g_discovery.h"
-#include "../Utilities/Fonts/fonts.h"
 
 /** @addtogroup BSP
   * @{
@@ -70,6 +69,23 @@
 /** @defgroup STM32746G_DISCOVERY_LCD_Exported_Types STM32746G_DISCOVERY_LCD Exported Types
   * @{
   */
+
+typedef struct _tFont
+{
+  const uint8_t *table;
+  uint16_t Width;
+  uint16_t Height;
+
+} sFONT;
+
+extern sFONT Font24;
+extern sFONT Font20;
+extern sFONT Font16;
+extern sFONT Font12;
+extern sFONT Font8;
+
+#define LINE(x) ((x) * (((sFONT *)BSP_LCD_GetFont())->Height))
+
 typedef struct
 {
   uint32_t TextColor;
