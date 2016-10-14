@@ -93,7 +93,7 @@ static const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz
 static const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
 
 static const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
-static uint32_t f1 = 14000;
+static uint32_t f1 = 14000; //Scan range start frequency, in kHz
 static BANDSPAN span = BS800;
 static char buf[64];
 static LCDPoint pt;
@@ -257,13 +257,23 @@ static void DrawGrid(int drawSwr)
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
 
     uint32_t fstart;
+    uint32_t pos = modstrw + 10;
+    if (!drawSwr)
+    { //  Print colored R/X
+        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "R");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "R");
+        FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, "/");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "/");
+        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, pos, 0, "X");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "X");
+    }
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
         fstart = f1;
         if (drawSwr)
             sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
         else
-            sprintf(buf, "R/X graph: %d kHz + %s", (int)fstart, BSSTR[span]);
+            sprintf(buf, " graph: %d kHz + %s", (int)fstart, BSSTR[span]);
     }
     else
     {
@@ -271,10 +281,10 @@ static void DrawGrid(int drawSwr)
         if (drawSwr)
             sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %d)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
         else
-            sprintf(buf, "R/X graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
+            sprintf(buf, " graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
     }
 
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, modstrw + 10, 0, buf);
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, buf);
 
     //Mark ham bands with colored background
     for (i = 0; i < WWIDTH; i++)
@@ -611,12 +621,10 @@ static void LoadBkups()
     }
 }
 
-static void DrawHelp()
+static void DrawHelp(void)
 {
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 15, "(Tap here to set F and Span)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 10, 190, "(Tap to exit to main window)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to change graph)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 360, 190, "(Tap to run scan)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to here change graph type)");
 }
 
 /*
@@ -881,11 +889,12 @@ static void DrawSmith()
             uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
             if (i != 0)
             {
-                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), LCD_RGB(0, SM_INTENSITY, 0));
+                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), SMITH_LINE_FG); //LCD_RGB(0, SM_INTENSITY, 0));
             }
             lastx = x;
             lasty = y;
         }
+        /*
         //Draw smoothed
         lastx = lasty = 0;
         for(i = 0; i < WWIDTH; i++)
@@ -900,6 +909,7 @@ static void DrawSmith()
             lastx = x;
             lasty = y;
         }
+        */
 
         //Mark the end of sweep range with red cross
         LCD_SetPixel(LCD_MakePoint(lastx, lasty), LCD_RED);
