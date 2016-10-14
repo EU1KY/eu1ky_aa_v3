@@ -363,21 +363,21 @@ static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
     //Write PLL parameters
     if (clk == SI5351_CLK0)
     {
-        si5351_set_pll(ap, bp, cp, SI5351_PLLA);
-        si5351_set_ms(a, b, c, rdiv, clk);
         si5351_set_clk_control(clk, SI5351_PLLA, (a == 4) || (a == 6), SI5351_DRIVE_8MA);
+        si5351_set_ms(a, b, c, rdiv, clk);
+        si5351_set_pll(ap, bp, cp, SI5351_PLLA);
     }
     else if (clk == SI5351_CLK1)
     {
-        si5351_set_pll(ap, bp, cp, SI5351_PLLB);
-        si5351_set_ms(a, b, c, rdiv, clk);
         si5351_set_clk_control(clk, SI5351_PLLB, (a == 4) || (a == 6), SI5351_DRIVE_8MA);
+        si5351_set_ms(a, b, c, rdiv, clk);
+        si5351_set_pll(ap, bp, cp, SI5351_PLLB);
     }
     else if (clk == SI5351_CLK2)
     {
-        si5351_set_pll(ap, bp, cp, SI5351_PLLB);
-        si5351_set_ms(a, b, c, rdiv, clk);
         si5351_set_clk_control(clk, SI5351_PLLB, (a == 4) || (a == 6), SI5351_DRIVE_8MA);
+        si5351_set_ms(a, b, c, rdiv, clk);
+        si5351_set_pll(ap, bp, cp, SI5351_PLLB);
     }
     #if 0
     {
