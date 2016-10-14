@@ -276,6 +276,10 @@ static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum
     {
         si5351_write_bulk(SI5351_CLK1_PARAMETERS, 8, params);
     }
+    else if (clk == SI5351_CLK2)
+    {
+        si5351_write_bulk(SI5351_CLK2_PARAMETERS, 8, params);
+    }
 }
 
 static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
