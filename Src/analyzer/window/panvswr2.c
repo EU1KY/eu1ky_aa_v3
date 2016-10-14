@@ -261,11 +261,11 @@ static void DrawGrid(int drawSwr)
     if (!drawSwr)
     { //  Print colored R/X
         FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "R");
-        pos += FONT_GetStrPixelWidth(FONT_FRAN, "R");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "R") + 1;
         FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, "/");
-        pos += FONT_GetStrPixelWidth(FONT_FRAN, "/");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "/") + 1;
         FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, pos, 0, "X");
-        pos += FONT_GetStrPixelWidth(FONT_FRAN, "X");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "X") + 1;
     }
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
