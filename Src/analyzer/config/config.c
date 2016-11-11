@@ -73,6 +73,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_S32,
         .dstring = "Selected OSL file"
     },
+    /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
@@ -82,6 +83,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used."
     },
+    */
     {
         .id = CFG_PARAM_R0,
         .idstring = "Z0",
@@ -99,6 +101,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Si5351 XTAL frequency, Hz",
         .isvalid = isSi5351,
     },
+    /*
     {
         .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
         .idstring = "SI5351_BUS_BASE_ADDR",
@@ -109,6 +112,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Si5351 i2c bus base address (default C0h)",
         .isvalid = isSi5351,
     },
+    */
     {
         .id = CFG_PARAM_SI5351_CORR,
         .idstring = "SI5351_CORR",
@@ -117,6 +121,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .isvalid = isSi5351,
         .repeatdelay = 20,
     },
+    /*
     {
         .id = CFG_PARAM_F_LO_DIV_BY_TWO,
         .idstring = "F_LO_DIV_BY_TWO",
@@ -126,6 +131,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .strvalues = CFG_SARR("No", "Yes"),
         .dstring = "Set to Yes if LO frequency is divided by 2 (quadrature mixer is used)",
     },
+    */
     {
         .id = CFG_PARAM_OSL_RLOAD,
         .idstring = "OSL_RLOAD",
@@ -183,6 +189,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U8,
         .dstring = "Linear audio inputs attenuation, dB. Requires reset."
     },
+    /*
     {
         .id = CFG_PARAM_BRIDGE_RM,
         .idstring = "BRIDGE_RM",
@@ -199,6 +206,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_F32,
         .dstring = "Bridge Radd value, Ohm"
     },
+    */
     {
         .id = CFG_PARAM_PAN_CENTER_F,
         .idstring = "PAN_CENTER_F",
