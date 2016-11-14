@@ -101,18 +101,16 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Si5351 XTAL frequency, Hz",
         .isvalid = isSi5351,
     },
-    /*
     {
         .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
         .idstring = "SI5351_BUS_BASE_ADDR",
-        .nvalues = 2,
-        .values = CFG_IARR(   0xC0,   0xCE),
-        .strvalues = CFG_SARR("C0h", "CEh"),
+        .nvalues = 3,
+        .values = CFG_IARR(   0xC0, 0xC4, 0xCE),
+        .strvalues = CFG_SARR("C0h", "C4h", "CEh"),
         .type = CFG_PARAM_T_U8,
         .dstring = "Si5351 i2c bus base address (default C0h)",
         .isvalid = isSi5351,
     },
-    */
     {
         .id = CFG_PARAM_SI5351_CORR,
         .idstring = "SI5351_CORR",
