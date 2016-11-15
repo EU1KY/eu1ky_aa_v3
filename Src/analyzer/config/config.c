@@ -179,6 +179,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Number of scans to average in panoramic window"
     },
+    /*
     {
         .id = CFG_PARAM_LIN_ATTENUATION,
         .idstring = "LIN_ATTENUATION",
@@ -187,6 +188,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U8,
         .dstring = "Linear audio inputs attenuation, dB. Requires reset."
     },
+    */
     /*
     {
         .id = CFG_PARAM_BRIDGE_RM,
@@ -438,7 +440,7 @@ const char * CFG_GetStringValue(uint32_t param_idx)
     switch (pd->type)
     {
         case CFG_PARAM_T_U8:
-            sprintf(tstr, "%u", (unsigned int)((uint8_t)uval));
+            sprintf(tstr, "%u (%02Xh)", (unsigned int)((uint8_t)uval), (unsigned int)((uint8_t)uval));
             break;
         case CFG_PARAM_T_U16:
             sprintf(tstr, "%u", (unsigned int)((uint16_t)uval));

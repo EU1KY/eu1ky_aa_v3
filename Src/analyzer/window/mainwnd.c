@@ -28,6 +28,7 @@
 #include "dsp.h"
 #include "gen.h"
 #include "aauart.h"
+#include "build_timestamp.h"
 
 extern void Sleep(uint32_t);
 
@@ -41,6 +42,7 @@ static TEXTBOX_t hbGen;
 static TEXTBOX_t hbRemote;
 static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
+static TEXTBOX_t hbTimestamp;
 
 #define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
@@ -333,6 +335,9 @@ void MainWnd(void)
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
     TEXTBOX_Append(&main_ctx, &hbUSBD);
 
+    hbTimestamp = (TEXTBOX_t) {.x0 = 80, .y0 = 256, .text = "EU1KY AA v." AAVERSION " Build:" BUILD_TIMESTAMP, .font = FONT_FRAN,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+    TEXTBOX_Append(&main_ctx, &hbTimestamp);
     //Draw context
     TEXTBOX_DrawContext(&main_ctx);
 
