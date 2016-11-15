@@ -48,6 +48,9 @@ typedef enum
     CFG_PARAM_COM_PORT,              //Serial (COM) port to be used: COM1 or COM2
     CFG_PARAM_COM_SPEED,             //Serial (COM) port speed, bps
     CFG_PARAM_LOWPWR_TIME,           //Time in milliseconds after which to lower power consumption mode (0 - disabled)
+    CFG_PARAM_SWR_MAX,               //Value of msx SWR displayed in panoramic window, uint32_t
+    CFG_PARAM_SMITH_ENABLE,          //Enable/disable show smith chart in panoramic window
+
 
     //---------------------
     CFG_NUM_PARAMS

@@ -73,7 +73,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_S32,
         .dstring = "Selected OSL file"
     },
-    /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
@@ -83,7 +82,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used."
     },
-    */
     {
         .id = CFG_PARAM_R0,
         .idstring = "Z0",
@@ -104,9 +102,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
         .idstring = "SI5351_BUS_BASE_ADDR",
-        .nvalues = 3,
-        .values = CFG_IARR(   0xC0, 0xC4, 0xCE),
-        .strvalues = CFG_SARR("C0h", "C4h", "CEh"),
+        .nvalues = 2,
+        .values = CFG_IARR(   0xC0,   0xCE),
+        .strvalues = CFG_SARR("C0h", "CEh"),
         .type = CFG_PARAM_T_U8,
         .dstring = "Si5351 i2c bus base address (default C0h)",
         .isvalid = isSi5351,
@@ -119,7 +117,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .isvalid = isSi5351,
         .repeatdelay = 20,
     },
-    /*
     {
         .id = CFG_PARAM_F_LO_DIV_BY_TWO,
         .idstring = "F_LO_DIV_BY_TWO",
@@ -129,7 +126,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .strvalues = CFG_SARR("No", "Yes"),
         .dstring = "Set to Yes if LO frequency is divided by 2 (quadrature mixer is used)",
     },
-    */
     {
         .id = CFG_PARAM_OSL_RLOAD,
         .idstring = "OSL_RLOAD",
@@ -187,7 +183,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U8,
         .dstring = "Linear audio inputs attenuation, dB. Requires reset."
     },
-    /*
     {
         .id = CFG_PARAM_BRIDGE_RM,
         .idstring = "BRIDGE_RM",
@@ -204,7 +199,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_F32,
         .dstring = "Bridge Radd value, Ohm"
     },
-    */
     {
         .id = CFG_PARAM_PAN_CENTER_F,
         .idstring = "PAN_CENTER_F",
@@ -240,6 +234,24 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Enter low power mode (display off) after this period of inactivity. Tap to wake up."
     },
+    {
+        .id = CFG_PARAM_SWR_MAX,
+        .idstring = "SWR_MAX",
+        .nvalues = 3,
+        .values = CFG_IARR(200, 15, 30),
+        .strvalues = CFG_SARR("20.0", "1.5", "3.0"),
+        .type = CFG_PARAM_T_U8,
+        .dstring = "Select max displayed SWR in panoramic window."
+    },
+    {
+        .id = CFG_PARAM_SMITH_ENABLE,
+        .idstring = "SMITH_ENABLE",
+        .nvalues = 2,
+        .values = CFG_IARR(0, 1),
+        .strvalues = CFG_SARR("No", "Yes"),
+        .type = CFG_PARAM_T_U8,
+        .dstring = "Enable/disable show smith chart in panoramic window."
+    }
 };
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
@@ -277,6 +289,8 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_COM_PORT, COM1);
     CFG_SetParam(CFG_PARAM_COM_SPEED, 38400);
     CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
+    CFG_SetParam(CFG_PARAM_SWR_MAX, 30);
+    CFG_SetParam(CFG_PARAM_SMITH_ENABLE, 0);
 
     //Load parameters from file on SD card
     FRESULT res;

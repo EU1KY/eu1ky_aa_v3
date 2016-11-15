@@ -16,26 +16,30 @@
 #include "hit.h"
 #include "main.h"
 
+extern void ShowF(void);
+extern void FDecr(uint32_t step);
+extern void FIncr(uint32_t step);
+extern void SELFREQ_Proc(uint8_t mode_pan);
+
 static uint32_t fChanged = 0;
 static uint32_t rqExit = 0;
-static uint32_t f_maxstep = 500000;
 
 void Sleep(uint32_t ms);
 
-static void ShowF()
+/*static void ShowF()
 {
     char str[50];
     sprintf(str, "F: %u kHz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) / 1000));
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 40);
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 160 - FONT_GetStrPixelWidth(FONT_FRANBIG, str) / 2, 40, str);
-}
+}*/
 
-static void GENERATOR_SwitchWindow(void)
+/*static void GENERATOR_SwitchWindow(void)
 {
     rqExit = 1;
-}
+}*/
 
-static void FDecr(uint32_t step)
+/*static void FDecr(uint32_t step)
 {
     uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_GEN_F);
     if(MeasurementFreq > step && MeasurementFreq % step != 0)
@@ -85,15 +89,19 @@ static void FIncr(uint32_t step)
         CFG_SetParam(CFG_PARAM_GEN_F, MeasurementFreq);
         fChanged = 1;
     }
-}
+}*/
 
 static void GENERATOR_FDecr_500k(void)
 {
-    FDecr(f_maxstep);
+    FDecr(500000);
 }
 static void GENERATOR_FDecr_100k(void)
 {
     FDecr(100000);
+}
+static void GENERATOR_FDecr_50k(void)
+{
+    FDecr(50000);
 }
 static void GENERATOR_FDecr_5k(void)
 {
@@ -103,15 +111,20 @@ static void GENERATOR_FIncr_5k(void)
 {
     FIncr(5000);
 }
+static void GENERATOR_FIncr_50k(void)
+{
+    FIncr(50000);
+}
 static void GENERATOR_FIncr_100k(void)
 {
     FIncr(100000);
 }
 static void GENERATOR_FIncr_500k(void)
 {
-    FIncr(f_maxstep);
+    FIncr(500000);
 }
 
+/*
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
@@ -124,80 +137,110 @@ static const struct HitRect hitArr[] =
     HITRECT( 400,   0,  80, 150, GENERATOR_FIncr_500k),
     HITEND
 };
-
+*/
 
 void GENERATOR_Window_Proc(void)
 {
+    uint8_t update = 1;
+    uint16_t y;
+    uint32_t speedcnt = 0;
+    uint32_t fbkup = CFG_GetParam(CFG_PARAM_GEN_F);
+
+
+    if ( !(fbkup >= BAND_FMIN && fbkup <= BAND_FMAX /*&& (fbkup % 5000) == 0*/) )
     {
-        uint32_t fbkup = CFG_GetParam(CFG_PARAM_GEN_F);
-        if (!(fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 5000) == 0))
-        {
-            CFG_SetParam(CFG_PARAM_GEN_F, 14000000);
-            CFG_Flush();
-        }
+        CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
+        CFG_SetParam(CFG_PARAM_GEN_F, 14000000ul);
+        CFG_SetParam(CFG_PARAM_PAN_F1, 14000ul);
+        CFG_Flush();
     }
 
-    LCD_FillAll(LCD_BLACK);
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 70, 2, "Generator mode");
-    Sleep(250);
-
+    //FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 70, 2, "Generator mode");
     while(TOUCH_IsPressed());
 
-    uint32_t speedcnt = 0;
-    f_maxstep = 500000;
-
-    //Draw freq change areas bar
-    uint16_t y;
-    for (y = 0; y <2; y++)
-    {
-        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
-        LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
-    }
-
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, 240, "  Exit  ");
-
-    rqExit = 0;
-    fChanged = 0;
-
     GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
-    ShowF();
+    Sleep(250);
+
     while(1)
     {
-        LCDPoint pt;
-        while (TOUCH_Poll(&pt))
+        if( update )
         {
-            HitTest(hitArr, pt.x, pt.y);
-            if (rqExit)
-            {
-                GEN_SetMeasurementFreq(0);
-                while(TOUCH_IsPressed());
-                return; //Change window
-            }
-            if (fChanged)
-            {
-                ShowF();
-            }
-            speedcnt++;
-            if (speedcnt < 20)
-                Sleep(100);
-            else
-                Sleep(30);
-            if (speedcnt > 50)
-                f_maxstep = 2000000;
-        }
-        speedcnt = 0;
-        f_maxstep = 500000;
-        if (fChanged)
-        {
-            CFG_Flush();
-            GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
+            update = 0;
+
+            LCD_FillAll(LCD_BLACK);
+
+            //Draw freq change areas bar
+            FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 25, 0, "F, kHz");
+            LCD_Line(LCD_MakePoint(110, 0), LCD_MakePoint(110+180,0), LCD_WHITE);
+            LCD_Line(LCD_MakePoint(110, 0), LCD_MakePoint(110,0+34), LCD_WHITE);
+            LCD_Line(LCD_MakePoint(110+180, 0), LCD_MakePoint(110+180,0+34), LCD_WHITE);
+            LCD_Line(LCD_MakePoint(110, 0+34), LCD_MakePoint(110+180,0+34), LCD_WHITE);
+            LCD_Line(LCD_MakePoint(110+34, 0), LCD_MakePoint(110+34,0+34), LCD_WHITE);
+            LCD_Line(LCD_MakePoint(110+180-34, 0), LCD_MakePoint(110+180-34,0+34), LCD_WHITE);
+            FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 110+13, 1, "-");
+            FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 110+180-34+10, 1, "+");
+
+            FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, 240, "  Exit  ");
+
+            ShowF();
             fChanged = 0;
         }
 
+        LCDPoint pt;
+        if(TOUCH_Poll(&pt))
+        {
+            if( pt.y < 34+10 )
+            {
+                if( pt.x > 110+34 && pt.x < 110+180-34 ) // Set F
+                {
+                    SELFREQ_Proc(0);
+                    update = 1;
+                }
+                else if( pt.x > 110 && pt.x < 110+34 ) // Dec F
+                {
+                    if( speedcnt < 10 )
+                        GENERATOR_FDecr_5k();
+                    else
+                        GENERATOR_FDecr_50k();
+
+                    fChanged = 1;
+                    speedcnt++;
+                }
+                else if( pt.x > 110+180-34 && pt.x < 110+180 ) // Inc F
+                {
+                    if( speedcnt < 10 )
+                        GENERATOR_FIncr_5k();
+                    else
+                        GENERATOR_FIncr_50k();
+
+                    fChanged = 1;
+                    speedcnt++;
+                }
+            }
+            else if( pt.y > 200 && pt.y < LCD_GetHeight() )
+            {
+                if( pt.x < 100 ) // 'Exit'
+                {
+                    GEN_SetMeasurementFreq(0);
+                    while(TOUCH_IsPressed());
+                    return;
+                }
+            }
+        }
+        else
+        {
+            speedcnt = 0;
+        }
+
+        if( fChanged )
+        {
+            fChanged = 0;
+            GEN_SetMeasurementFreq( CFG_GetParam(CFG_PARAM_GEN_F) );
+            Sleep(10);
+            ShowF();
+        }
+
+        //LCD_WaitForRedraw();
         //Measure without changing current frequency and without any corrections
         DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
@@ -219,7 +262,10 @@ void GENERATOR_Window_Proc(void)
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
+
         //SCB_CleanDCache();
         Sleep(100);
+
+
     }
 }

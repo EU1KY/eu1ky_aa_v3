@@ -53,7 +53,7 @@ void Sleep(uint32_t nms);
 
 typedef enum
 {
-    BS200, BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M
+    BS100, BS200, BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M
 } BANDSPAN;
 
 typedef enum
@@ -89,11 +89,11 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
 
-static const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
-static const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
+static const char* BSSTR[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
+static const char* BSSTR_HALF[] = {"50 kHz", "100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
 
-static const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
-static uint32_t f1 = 14000; //Scan range start frequency, in kHz
+static const uint32_t BSVALUES[] = {100, 200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
+static uint32_t f1 = 14000;
 static BANDSPAN span = BS800;
 static char buf[64];
 static LCDPoint pt;
@@ -110,7 +110,7 @@ static float complex SmoothRX(int idx, int useHighSmooth);
 
 static int swroffset(float swr)
 {
-    int offs = (int)roundf(150. * log10f(swr));
+    int offs = (int)roundf( (WHEIGHT-3) * log10f(swr) / log10f((float)CFG_GetParam(CFG_PARAM_SWR_MAX)/10.0));
     if (offs >= WHEIGHT)
         offs = WHEIGHT - 1;
     else if (offs < 0)
@@ -181,10 +181,11 @@ static void DrawCursorText()
     float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
     if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
         fcur = 0.f;
-    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.5f   Z: %.1f%+.1fj (%.1f)   SWR: %.2f   MCL: %.2f dB          ",
         fcur,
         crealf(rx),
         cimagf(rx),
+        cabsf(rx),
         DSP_CalcVSWR(rx),
         (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f // Matched cable loss
     );
@@ -194,10 +195,17 @@ static void DrawSaveText(void)
 {
     static const char* txt = "  Save snapshot  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_YELLOW, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+    FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0)/*LCD_BLUE*/, LCD_MakeRGB(0, 0, 128)/*LCD_YELLOW*/, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
                Y0 + WHEIGHT + 16 + 16, txt);
+
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    if( grType == GRAPH_VSWR )
+    {
+        sprintf(buf, "  Exit  ");
+        int strw = FONT_GetStrPixelWidth(FONT_FRAN, buf);
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5 + strw + 50, Y0 + WHEIGHT + 16 + 16, "  SWR  ");
+    }
 }
 
 static void DrawSavingText(void)
@@ -215,8 +223,15 @@ static void DrawSavedText(void)
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
                Y0 + WHEIGHT + 16 + 16, txt);
+
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    if( grType == GRAPH_VSWR )
+    {
+        sprintf(buf, "  Exit  ");
+        int strw = FONT_GetStrPixelWidth(FONT_FRAN, buf);
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5 + strw + 50, Y0 + WHEIGHT + 16 + 16, "  SWR  ");
+    }
 }
 
 static void DecrCursor()
@@ -230,8 +245,8 @@ static void DecrCursor()
     DrawCursor();
     DrawCursorText();
     //SCB_CleanDCache();
-    if (cursorChangeCount++ < 10)
-        Sleep(100); //Slow down at first steps
+    if (cursorChangeCount++ < 7)
+        Sleep(130); //Slow down at first steps
 }
 
 static void AdvCursor()
@@ -245,46 +260,93 @@ static void AdvCursor()
     DrawCursor();
     DrawCursorText();
     //SCB_CleanDCache();
-    if (cursorChangeCount++ < 10)
-        Sleep(100); //Slow down at first steps
+    if (cursorChangeCount++ < 7)
+        Sleep(130); //Slow down at first steps
 }
 
 static void DrawGrid(int drawSwr)
 {
     int i;
+    int strw;
+
     LCD_FillAll(LCD_BLACK);
 
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
 
-    uint32_t fstart;
-    uint32_t pos = modstrw + 10;
-    if (!drawSwr)
-    { //  Print colored R/X
-        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "R");
-        pos += FONT_GetStrPixelWidth(FONT_FRAN, "R") + 1;
-        FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, "/");
-        pos += FONT_GetStrPixelWidth(FONT_FRAN, "/") + 1;
-        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, pos, 0, "X");
-        pos += FONT_GetStrPixelWidth(FONT_FRAN, "X") + 1;
+    strw = modstrw + 10;
+    if (drawSwr)
+    {
+        sprintf(buf, " VSWR graph ");
+        FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0)/*LCD_BLUE*/, LCD_MakeRGB(0, 0, 128)/*LCD_BLACK*/, strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+10;
     }
+    else
+    {
+        sprintf(buf, " ");
+        FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+1;
+
+        sprintf(buf, "R");
+        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+1;
+
+        sprintf(buf, "X");
+        FONT_Write(FONT_FRAN, LCD_RED, LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+1;
+
+        sprintf(buf, "Z");
+        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+1;
+
+        sprintf(buf, " graph ");
+        FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+10;
+    }
+
+    //FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0)/*LCD_BLUE*/, LCD_MakeRGB(0, 0, 128)/*LCD_BLACK*/, modstrw + 10, 0, buf);
+    //strw = FONT_GetStrPixelWidth(FONT_FRAN, buf);
+
+    uint32_t fstart;
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
         fstart = f1;
         if (drawSwr)
-            sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+        {
+            //sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+            sprintf(buf, " %d kHz + %s  ", (int)fstart, BSSTR[span]);
+            FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+            strw += FONT_GetStrPixelWidth(FONT_FRAN, buf);
+
+            sprintf(buf, " (Z0 = %d) ", CFG_GetParam(CFG_PARAM_R0));
+            FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, strw, 0, buf);
+        }
         else
-            sprintf(buf, " graph: %d kHz + %s", (int)fstart, BSSTR[span]);
+        {
+            //sprintf(buf, "R/X graph: %d kHz + %s", (int)fstart, BSSTR[span]);
+            sprintf(buf, " %d kHz + %s ", (int)fstart, BSSTR[span]);
+            FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        }
     }
     else
     {
         fstart = f1 - BSVALUES[span] / 2;
         if (drawSwr)
-            sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %d)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
-        else
-            sprintf(buf, " graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
-    }
+        {
+            //sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %d)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
+            sprintf(buf, " %d kHz +/- %s  ", (int)f1, BSSTR_HALF[span]);
+            FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+            strw += FONT_GetStrPixelWidth(FONT_FRAN, buf);
 
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, buf);
+            sprintf(buf, " (Z0 = %d) ", CFG_GetParam(CFG_PARAM_R0));
+            FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, strw, 0, buf);
+        }
+        else
+        {
+            //sprintf(buf, "R/X graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
+            sprintf(buf, " %d kHz +/- %s ", (int)f1, BSSTR_HALF[span]);
+            FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        }
+    }
 
     //Mark ham bands with colored background
     for (i = 0; i < WWIDTH; i++)
@@ -308,7 +370,7 @@ static void DrawGrid(int drawSwr)
             float flabel = ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f;
             if (flabel * 1000000.f > (float)(BAND_FMAX+1))
                 continue;
-            sprintf(f, "%.2f", ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f);
+            sprintf(f, "%.3f", ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
             FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, x - w / 2, Y0 + WHEIGHT + 5, f);
             LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLORBR);
@@ -323,8 +385,32 @@ static void DrawGrid(int drawSwr)
     {
         //Draw SWR grid and labels
         static const float swrs[]  = { 1., 1.1, 1.2, 1.3, 1.4, 1.5, 2., 2.5, 3., 4., 5., 6., 7., 8., 9., 10., 13., 16., 20.};
-        static const char labels[] = { 1,  0,   0,   0,    0,   1,  1,   1,  1,  1,  1,  0,  1,  0,  0,   1,   1,   1,   1 };
-        static const int nswrs = sizeof(swrs) / sizeof(float);
+        static const char labels_long[] = { 1,  0,   0,   0,    0,   1,  1,   1,  1,  1,  1,  0,  1,  0,  0,   1,   1,   1,   1 };
+        static const char labels_short[] = { 1,  1,   1,   1,   1,   1,   1,  1,   1};
+
+        int nswrs;
+        char const *labels;
+        int maxswr = CFG_GetParam(CFG_PARAM_SWR_MAX);
+        labels = labels_short;
+
+        if( maxswr == 15 )
+        {
+            nswrs = 6;
+        }
+        else if( maxswr == 20 )
+        {
+            nswrs = 7;
+        }
+        else if( maxswr == 30)
+        {
+            nswrs = 9;
+        }
+        else
+        {
+            nswrs = 19;
+            labels = labels_long;
+        }
+
         for (i = 0; i < nswrs; i++)
         {
             int yofs = swroffset(swrs[i]);
@@ -346,14 +432,14 @@ static inline const char* bsstr(BANDSPAN bs)
 
 static void print_span(BANDSPAN sp)
 {
-    sprintf(buf, "<<  <  Span: %s  >  >>", bsstr(sp));
+    sprintf(buf, "-     Span: %s     +", bsstr(sp));
     FONT_ClearLine(FONT_CONSBIG, LCD_BLACK, 50);
     FONT_Write(FONT_CONSBIG, LCD_BLUE, LCD_BLACK, 0, 50, buf);
 }
 
 static void print_f1(uint32_t f)
 {
-    sprintf(buf, "<<  <  %s: %d kHz  >  >>", CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "Fc" : "F0", (int)f);
+    sprintf(buf, "-     %s: %d kHz     +", CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "Fc" : "F0", (int)f);
     FONT_ClearLine(FONT_CONSBIG, LCD_BLACK, 100);
     FONT_Write(FONT_CONSBIG, LCD_BLUE, LCD_BLACK, 0, 100, buf);
 }
@@ -362,7 +448,7 @@ static void nextspan(BANDSPAN *sp)
 {
     if (*sp == BS40M)
     {
-        *sp = BS200;
+        *sp = BS100;
     }
     else
     {
@@ -372,7 +458,7 @@ static void nextspan(BANDSPAN *sp)
 
 static void prevspan(BANDSPAN *sp)
 {
-    if (*sp == BS200)
+    if (*sp == BS100)
     {
         *sp = BS40M;
     }
@@ -382,12 +468,392 @@ static void prevspan(BANDSPAN *sp)
     }
 }
 
+#define INPUTBUFSIZE        6
+void SELFREQ_Proc(uint8_t mode_pan)
+{
+    BANDSPAN spantmp;
+    uint32_t f1tmp;
+    uint8_t frq_update = 1;
+    uint8_t span_update = 1;
+    uint8_t ch;
+    uint8_t inputbuf[INPUTBUFSIZE+1];
+    const uint8_t *STR_SPACE = "        ";// 9*' '
+    uint8_t len = 0;
+
+
+    spantmp = span;
+    f1tmp = f1;
+    inputbuf[0] = 0;
+
+    LCD_FillAll(LCD_BLACK);
+
+    // freq input value
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 30, 0, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "Fc, kHz" : "F0, kHz");
+
+    LCD_Line(LCD_MakePoint(0, 33), LCD_MakePoint(150, 33), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(0, 33), LCD_MakePoint(0, 67), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(150, 33), LCD_MakePoint(150, 67), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(0, 67), LCD_MakePoint(150, 67), LCD_WHITE);
+    //FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 3, 34, "02345678");
+    //
+
+    // draw num keys
+    LCD_Line(LCD_MakePoint(0, 72), LCD_MakePoint(0, LCD_GetHeight()-1), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(50, 72), LCD_MakePoint(50, LCD_GetHeight()-1), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(100, 72), LCD_MakePoint(100, LCD_GetHeight()-1), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(150, 72), LCD_MakePoint(150, LCD_GetHeight()-1), LCD_WHITE);
+
+    LCD_Line(LCD_MakePoint(0, 72), LCD_MakePoint(150, 72), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(0, 122), LCD_MakePoint(150, 122), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(0, 172), LCD_MakePoint(150, 172), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(0, 222), LCD_MakePoint(150, 222), LCD_WHITE);
+    LCD_Line(LCD_MakePoint(0, LCD_GetHeight()-1), LCD_MakePoint(150, LCD_GetHeight()-1), LCD_WHITE);
+
+    #define H_SHIFT     15
+    #define V_SHIFT     10
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0+H_SHIFT, 72+V_SHIFT, "1"); // '1'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 50+H_SHIFT, 72+V_SHIFT, "2"); // '2'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 100+H_SHIFT, 72+V_SHIFT, "3"); // '3'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0+H_SHIFT, 122+V_SHIFT, "4"); // '4'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 50+H_SHIFT, 122+V_SHIFT, "5"); // '5'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 100+H_SHIFT, 122+V_SHIFT, "6"); // '6'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0+H_SHIFT, 172+V_SHIFT, "7"); // '7'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 50+H_SHIFT, 172+V_SHIFT, "8"); // '8'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 100+H_SHIFT, 172+V_SHIFT, "9"); // '9'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0+H_SHIFT, 222+V_SHIFT, "."); // '.'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 50+H_SHIFT, 222+V_SHIFT, "0"); // '0'
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 100+H_SHIFT, 222+V_SHIFT, "<-"); // '<-'
+    //
+
+    // Span value
+    if( mode_pan )
+    {
+        // draw span window
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 300, 0, "Span");
+
+        LCD_Line(LCD_MakePoint(250, 33), LCD_MakePoint(430, 33), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(250, 33), LCD_MakePoint(250, 67), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(430, 33), LCD_MakePoint(430, 67), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(250, 67), LCD_MakePoint(430, 67), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(284, 33), LCD_MakePoint(284, 67), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(396, 33), LCD_MakePoint(396, 67), LCD_WHITE);
+
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 263, 34, "-");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 405, 34, "+");
+        //FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 290, 34, "200 kHz");
+        //
+
+        // draw presets
+        LCD_Line(LCD_MakePoint(250, 72), LCD_MakePoint(250, 222), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(310, 72), LCD_MakePoint(310, 222), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(370, 72), LCD_MakePoint(370, 222), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(430, 72), LCD_MakePoint(430, 222), LCD_WHITE);
+
+        LCD_Line(LCD_MakePoint(250, 72), LCD_MakePoint(430, 72), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(250, 122), LCD_MakePoint(430, 122), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(250, 172), LCD_MakePoint(430, 172), LCD_WHITE);
+        LCD_Line(LCD_MakePoint(250, 222), LCD_MakePoint(430, 222), LCD_WHITE);
+
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 250+5, 72+V_SHIFT, "160");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 310+12, 72+V_SHIFT, "80");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 370+12, 72+V_SHIFT, "40");
+
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 250+12, 122+V_SHIFT, "30");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 310+12, 122+V_SHIFT, "20");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 370+12, 122+V_SHIFT, "17");
+
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 250+12, 172+V_SHIFT, "15");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 310+12, 172+V_SHIFT, "12");
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 370+12, 172+V_SHIFT, "10");
+        //
+    }
+    //
+
+    FONT_Write(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 250, 230, "OK");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 320, 230, "Cancel");
+
+    //while(TOUCH_IsPressed());
+
+    while(1)
+    {
+        // Freq
+        if( frq_update )
+        {
+            frq_update = 0;
+            LCD_FillRect(LCD_MakePoint(1, 34), LCD_MakePoint(149, 66), LCD_BLACK);
+            FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 3, 34, inputbuf);
+        }
+
+        // Span
+        if( mode_pan && span_update )
+        {
+            span_update = 0;
+            LCD_FillRect(LCD_MakePoint(285, 34), LCD_MakePoint(395, 66), LCD_BLACK);
+            FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 290, 34, bsstr(spantmp));
+        }
+
+        ch = 0;
+        if( TOUCH_Poll(&pt) )
+        {
+            if(pt.y > 72 && pt.y < 122) // '1', '2', '3'
+            {
+                if(pt.x < 50) // '1'
+                {
+                    ch = '1';
+                }
+                else if(pt.x > 50 && pt.x < 100) // '2'
+                {
+                    ch = '2';
+                }
+                else if(pt.x > 100 && pt.x < 150) // '3'
+                {
+                    ch = '3';
+                }
+                else if( mode_pan)
+                {
+                    if( pt.x > 250 && pt.x < 310 ) // '160'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "1900" : "1800");
+                        spantmp = BS200;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                    else if( pt.x > 310 && pt.x < 370 ) // '80'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "3650" : "3500");
+                        spantmp = BS400;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                    else if( pt.x > 370 && pt.x < 430 ) // '40'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "7100" : "7000");
+                        spantmp = BS200;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                }
+            }
+            else if(pt.y > 122 && pt.y < 172) // '4', '5', '6'
+            {
+                if(pt.x < 50) // '4'
+                {
+                    ch = '4';
+                }
+                else if(pt.x > 50 && pt.x < 100) // '5'
+                {
+                    ch = '5';
+                }
+                else if(pt.x > 100 && pt.x < 150) // '6'
+                {
+                    ch = '6';
+                }
+                else if( mode_pan)
+                {
+                    if( pt.x > 250 && pt.x < 310 ) // '30'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "10150" : "10100");
+                        spantmp = BS100;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                    else if( pt.x > 310 && pt.x < 370 ) // '20'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "14200" : "14000");
+                        spantmp = BS400;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                    else if( pt.x > 370 && pt.x < 430 ) // '17'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "18100" : "18000");
+                        spantmp = BS200;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                }
+            }
+            else if(pt.y > 172 && pt.y < 222) // '7', '8', '9'
+            {
+                if(pt.x < 50) // '7'
+                {
+                    ch = '7';
+                }
+                else if(pt.x > 50 && pt.x < 100) // '8'
+                {
+                    ch = '8';
+                }
+                else if(pt.x > 100 && pt.x < 150) // '9'
+                {
+                    ch = '9';
+                }
+                else if( mode_pan)
+                {
+                    if( pt.x > 250 && pt.x < 310 ) // '15'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "21300" : "20900");
+                        spantmp = BS800;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                    else if( pt.x > 310 && pt.x < 370 ) // '12'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "24950" : "24850");
+                        spantmp = BS200;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                    else if( pt.x > 370 && pt.x < 430 ) // '10'
+                    {
+                        strcpy(inputbuf, CFG_GetParam(CFG_PARAM_PAN_CENTER_F) ? "28400" : "28000");
+                        spantmp = BS800;
+                        len = strlen(inputbuf);
+                        span_update = 1;
+                        frq_update = 1;
+                        continue;
+                    }
+                }
+            }
+            else if( pt.y > 222 && pt.y < LCD_GetHeight() ) // '.', '0', '<-'
+            {
+                if(pt.x < 50) // '.'
+                {
+                    ch = '.';
+                }
+                else if(pt.x > 50 && pt.x < 100) // '0'
+                {
+                    ch = '0';
+                }
+                else if(pt.x > 100 && pt.x < 150) // '<-'
+                {
+                    ch = 0xFF;
+                }
+            }
+
+            // 'Ok', 'Cancel'
+            if( pt.y > 220 && pt.y < LCD_GetHeight() )
+            {
+                if( pt.x > 240 && pt.x < 310 ) // 'Ok'
+                {
+                    ch = 0xFF-1;
+                }
+                else if( pt.x > 310 && pt.x < 410 ) // 'Cancel'
+                {
+                    ch = 0xFF-2;
+                }
+            }
+
+            // Span
+            if( mode_pan )
+            {
+                if( pt.y > 33 && pt.y < 67+10 )
+                {
+                    if( pt.x > 250 && pt.x < 284 )// '-'
+                    {
+                        prevspan(&spantmp);
+                        span_update = 1;
+                    }
+                    else if( pt.x > 396 && pt.x < 430 )// '+'
+                    {
+                        nextspan(&spantmp);
+                        span_update = 1;
+                    }
+                }
+            }
+        }
+
+        while(TOUCH_IsPressed());
+
+        if( ch )
+        {
+            if( ch == 0xFF ) // '<-'
+            {
+                if( len > 0 )
+                {
+                    inputbuf[len-1] = 0;
+                    len--;
+                    frq_update = 1;
+                }
+            }
+            else if( ch == 0xFF-1 ) // 'Ok'
+            {
+                f1tmp = atol(inputbuf);
+
+                if( f1tmp > 0 )
+                {
+                    f1tmp = f1tmp / 5 * 5;
+
+                    if( f1tmp > BAND_FMAX / 1000 )
+                        f1tmp = BAND_FMAX / 1000;
+
+                    if( f1tmp < BAND_FMIN / 1000 )
+                        f1tmp = BAND_FMIN / 1000;
+
+                    f1 = f1tmp;
+                }
+
+                if( mode_pan )
+                {
+                    span = spantmp;
+                    CFG_SetParam(CFG_PARAM_PAN_SPAN, span);
+                }
+
+                CFG_SetParam(CFG_PARAM_PAN_F1, f1);
+                CFG_SetParam(CFG_PARAM_MEAS_F, f1*1000);
+                CFG_SetParam(CFG_PARAM_GEN_F, f1*1000);
+                CFG_Flush();
+
+                isMeasured = 0;
+                Sleep(100);
+                return;
+            }
+            else if( ch == 0xFF-2 ) // 'Cancel'
+            {
+                Sleep(100);
+                return;
+            }
+            else
+            {
+                if( len < INPUTBUFSIZE )
+                {
+                    if( ch < '9'+1 )
+                    {
+                        inputbuf[len] = ch;
+                        inputbuf[len+1] = 0;
+                        len++;
+                        frq_update = 1;
+                    }
+                }
+            }
+        }
+
+        Sleep(50);
+    }
+}
+/*
 static void SELFREQ_Proc(void)
 {
     BANDSPAN spantmp;
     uint32_t f1tmp;
     uint32_t speedcnt;
     uint32_t speedstep;
+
 
     spantmp = span;
     f1tmp = f1;
@@ -422,7 +888,7 @@ static void SELFREQ_Proc(void)
                     nextspan(&spantmp);
                     print_span(spantmp);
                 }
-                Sleep(100); //slow down span cycling
+                Sleep(200); //slow down span cycling
             }
             else if (pt.y < 140)
             { //f1
@@ -433,7 +899,8 @@ static void SELFREQ_Proc(void)
                     {
                         f1tmp -= speedstep;
                         if (f1tmp < BAND_FMIN/1000 || f1tmp > BAND_FMAX/1000)
-                            f1tmp = BAND_FMIN/1000;
+                            f1tmp = BAND_FMAX/1000;
+
                         print_f1(f1tmp);
                     }
                 }
@@ -442,13 +909,14 @@ static void SELFREQ_Proc(void)
                     f1tmp += speedstep;
                     if (f1tmp > BAND_FMAX/1000)
                         f1tmp = BAND_FMAX/1000;
+
                     print_f1(f1tmp);
                 }
+                Sleep(50);
             }
             else if (pt.y > 200)
             {
                 speedcnt = 0;
-                speedstep = 100;
                 if (pt.x < 140)
                 {//OK
                     f1 = f1tmp;
@@ -474,28 +942,40 @@ static void SELFREQ_Proc(void)
             speedcnt = 0;
             speedstep = 100;
         }
+
         if (speedcnt > 200)
             speedstep = 500;
         else if (speedcnt > 100)
             speedstep = 200;
         else
             speedstep = 100;
+
         if (speedcnt < 10)
             Sleep(150);
         else if (speedcnt < 20)
             Sleep(50);
+
+
+        //if (speedcnt < 7)
+          //  Sleep(170);
+        //else if (speedcnt < 15)
+          //  Sleep(100);
+
     }
 }
-
+*/
 
 static void ScanRX()
 {
     uint64_t i;
     uint32_t fstart;
+
+
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
         fstart = f1;
     else
         fstart = f1 - BSVALUES[span] / 2;
+
     fstart *= 1000; //Convert to Hz
 
     DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
@@ -596,7 +1076,7 @@ static void LoadBkups()
 {
     //Load saved frequency and span values from config file
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_PAN_F1);
-    if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && fbkup <= BAND_FMAX/1000 && (fbkup % 100) == 0)
+    if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && fbkup <= BAND_FMAX/1000 && (fbkup % 5) == 0)
     {
         f1 = fbkup;
     }
@@ -621,10 +1101,12 @@ static void LoadBkups()
     }
 }
 
-static void DrawHelp(void)
+static void DrawHelp()
 {
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 15, "(Tap here to set F and Span)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to here change graph type)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 10, 190, "(Tap to exit to main window)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to change graph)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 360, 190, "(Tap to run scan)");
 }
 
 /*
@@ -681,10 +1163,9 @@ static void DrawRX()
             minRX = crealf(values[i]);
         if (cimagf(values[i]) < minRX)
             minRX = cimagf(values[i]);
-        if (crealf(values[i]) > maxRX)
-            maxRX = crealf(values[i]);
-        if (cimagf(values[i]) > maxRX)
-            maxRX = cimagf(values[i]);
+
+        if (cabsf(values[i]) > maxRX)
+            maxRX = cabsf(values[i]);
     }
 
     if (minRX < -1999.f)
@@ -784,18 +1265,62 @@ static void DrawRX()
         lastoffset = yofs;
         lastoffset_sm = yofs_sm;
     }
+
+    //Now draw full Z graph
+    lastoffset = 0;
+    lastoffset_sm = 0;
+    for(i = 0; i < WWIDTH; i++)
+    {
+        float z = cabsf(values[i]);
+
+        if (z > 1999.f)
+            z = 1999.f;
+
+        yofs = RXOFFS(z);
+        int x = X0 + i;
+        if(i == 0)
+        {
+            LCD_SetPixel(LCD_MakePoint(x, WY(yofs)), LCD_YELLOW);
+        }
+        else
+        {
+            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_YELLOW);
+        }
+
+        lastoffset = yofs;
+    }
 }
 
 static void DrawSmith()
 {
-    int i;
+    int i, strw;
 
     LCD_FillAll(LCD_BLACK);
+
+    strw = modstrw + 10;
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
+    sprintf(buf, " Smith chart ");
+    FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0)/*LCD_BLUE*/, LCD_MakeRGB(0, 0, 128)/*LCD_BLACK*/, strw, 0, buf);
+    strw += FONT_GetStrPixelWidth(FONT_FRAN, buf)+10;
+
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
-        sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+    {
+        sprintf(buf, " %d kHz + %s ", (int)f1, BSSTR[span]);
+        FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf);
+    }
     else
-        sprintf(buf, "Smith chart: %d kHz +/- %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
+    {
+        sprintf(buf, " %d kHz +/- %s ", (int)f1, BSSTR_HALF[span]);
+        FONT_Write(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), strw, 0, buf);
+        strw += FONT_GetStrPixelWidth(FONT_FRAN, buf);
+    }
+
+    sprintf(buf, " red pt. is end. Z0 = %d", CFG_GetParam(CFG_PARAM_R0));
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, strw, 0, buf);
+
+
+
     LCD_FillCircle(LCD_MakePoint(cx0, cy0), 100, SMITH_CIRCLE_BG); //Chart circle
     LCD_Circle(LCD_MakePoint(cx0, cy0), 33, WGRIDCOLOR); //VSWR 2.0 circle
     LCD_Circle(LCD_MakePoint(cx0, cy0), 20, WGRIDCOLOR); //VSWR 1.5 circle
@@ -889,12 +1414,11 @@ static void DrawSmith()
             uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
             if (i != 0)
             {
-                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), SMITH_LINE_FG); //LCD_RGB(0, SM_INTENSITY, 0));
+                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), LCD_RGB(0, SM_INTENSITY, 0));
             }
             lastx = x;
             lasty = y;
         }
-        /*
         //Draw smoothed
         lastx = lasty = 0;
         for(i = 0; i < WWIDTH; i++)
@@ -909,7 +1433,6 @@ static void DrawSmith()
             lastx = x;
             lasty = y;
         }
-        */
 
         //Mark the end of sweep range with red cross
         LCD_SetPixel(LCD_MakePoint(lastx, lasty), LCD_RED);
@@ -935,8 +1458,10 @@ static void RedrawWindow()
     }
     else
         DrawSmith();
+
     DrawCursor();
-    if (isMeasured)
+
+    if(isMeasured)
     {
         DrawCursorText();
         DrawSaveText();
@@ -967,8 +1492,322 @@ static const uint8_t bmp_hdr[] =
     0x00, 0x00, 0x00, 0x00  //important colours
 };
 
+static uint8_t isascii_key(uint8_t key_idx)
+{
+    if( key_idx && key_idx != 40 && key_idx != 38 )
+        return 1;
+
+    return 0;
+}
+
+#define BTN_W               40
+#define BTN_H               40
+#define KEYB_X0             40
+#define KEYB_Y0             40
+#define MAX_FILENAME_LEN    8
+const char LCD_Chars[] = {'1','2','3','4','5','6','7','8','9','0','Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','-','Z','X','C','V','B','N','M',' ','_'};
+
+uint8_t EnterFileName(char *str)
+{
+    uint8_t i, len, update = 1;
+    uint16_t x, y;
+    char buf[MAX_FILENAME_LEN+1];
+
+
+    LCD_FillAll(LCD_COLOR_BLACK);
+
+    FONT_Write(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 160, 230, "OK");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 230, 230, "Cancel");
+
+    LCD_Line(LCD_MakePoint(0, 35), LCD_MakePoint(LCD_GetWidth(), 35), LCD_WHITE);
+
+    // draw horz lines of keyboard
+    for( i = 0; i < 5; i++)
+    {
+        y = i*BTN_H + KEYB_Y0;
+        LCD_Line(LCD_MakePoint(KEYB_X0, y), LCD_MakePoint(KEYB_X0 + BTN_W*10, y), LCD_WHITE);
+    }
+
+    // draw vert lines of keyboard
+    for( i = 0; i < 11; i++)
+    {
+        x = i*BTN_W + KEYB_X0;
+        LCD_Line(LCD_MakePoint(x, KEYB_Y0), LCD_MakePoint(x, BTN_H*4 + KEYB_Y0), LCD_WHITE);
+    }
+
+    i = 0;
+    for( y = KEYB_Y0 + 4; y < KEYB_Y0 + BTN_H*4; y += BTN_H )
+    {
+        for( x = KEYB_X0 + 7; x < KEYB_X0 + BTN_W*10; x += BTN_W )
+        {
+            if( i == 39 )// '<-' key
+            {
+                FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, x, y, "<-");
+            }
+            else
+            {
+                sprintf(buf, "%c", LCD_Chars[i]);
+                FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, x, y, buf);
+            }
+
+            i++;
+        }
+    }
+
+    buf[0] = 0;
+    len = strlen(str);
+    strcpy(buf, str);
+
+    while(TOUCH_IsPressed());
+
+    while(1)
+    {
+        if( update )
+        {
+            update = 0;
+            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
+            FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 0, 0, buf);
+        }
+
+        if( TOUCH_Poll(&pt) )
+        {
+            i = 0;
+            if( pt.x > KEYB_X0 && pt.x < BTN_W*10 + KEYB_X0 && pt.y > KEYB_Y0 && pt.y < BTN_H*4 + KEYB_Y0 )
+            {
+                // index of pressed btn
+                //for( i = )
+                x = (pt.x - KEYB_X0) / BTN_W;
+                y = (pt.y - KEYB_Y0) / BTN_H;
+                i = x + y*10 + 1;
+            }
+            else if( pt.y > 230 )
+            {
+                if( pt.x > 160 && pt.x < 230 ) // 'Ok' btn
+                {
+                    strcpy(str, buf);
+                    while(TOUCH_IsPressed());
+                    return 1;
+                }
+                else if( pt.x > 230 && pt.x < 300 ) // 'Cancel' btn
+                {
+                    while(TOUCH_IsPressed());
+                    return 0;
+                }
+            }
+
+            if(i) // btn pressed
+            {
+                if( isascii_key(i) ) // pressed printable btn
+                {
+                    if( len < MAX_FILENAME_LEN )
+                    {
+                        buf[len] = LCD_Chars[i-1];
+                        buf[++len] = 0;
+                        update = 1;
+                    }
+                }
+                else if( i== 40 ) // pressed '<-' btn
+                {
+                    if( len > 0 )
+                    {
+                        buf[--len] = 0;
+                        update = 1;
+                    }
+                }
+            }
+
+            while(TOUCH_IsPressed());
+        }
+    }
+}
 
 static void save_snapshot(void)
+{
+    static const TCHAR *sndir = "/aa/snapshot";
+    char path[64];
+    char path_new[64];
+    char wbuf[256];
+    char filename[MAX_FILENAME_LEN+1];
+    FIL fo = { 0 };
+    UINT bw;
+    uint32_t fmax = 0;
+    uint32_t fmin = 0xFFFFFFFFul;
+    DIR dir = { 0 };
+    FILINFO fno = { 0 };
+    FRESULT fr;
+    uint32_t numfiles = 0;
+    int i;
+    uint32_t fstart;
+    int x = 0;
+    int y = 0;
+    float complex g;
+    float fmhz;
+    uint32_t line[480];
+    uint32_t hexn = 0;
+    char* endptr;
+    int len;
+
+
+    if( !isMeasured/* || isSaved*/ )
+        return;
+
+    while( TOUCH_Poll(&pt) );
+
+    filename[0] = 0;
+    DrawSavingText();
+
+    SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
+    Sleep(100);
+    f_mkdir(sndir);
+
+    //Scan dir for snapshot files
+    fr = f_opendir(&dir, sndir);
+    if( fr == FR_OK )
+    {
+        for (;;)
+        {
+            fr = f_readdir(&dir, &fno); //Iterate through the directory
+            if(fr != FR_OK || !fno.fname[0])
+                break; //Nothing to do
+
+            if(_FS_RPATH && fno.fname[0] == '.')
+                continue; //bypass hidden files
+
+            if(fno.fattrib & AM_DIR)
+                continue; //bypass subdirs
+
+            len = strlen(fno.fname);
+
+            if( len != 12 ) //Bypass filenames with unexpected name length
+                continue;
+
+            if( strcasecmp(&fno.fname[8], ".s1p") != 0 )
+                continue; //Bypass files that are not s1p
+
+            for( i = 0; i < 8; i++ )
+                if(!isdigit(fno.fname[i]))
+                    break;
+
+            if( i != 8 )
+                continue; //Bypass file names that are not 8-digit hex numbers
+
+            numfiles++;
+
+            //Now convert file name to number
+            hexn = strtoul(fno.fname, &endptr, 10);
+            if (hexn < fmin)
+                fmin = hexn;
+
+            if (hexn > fmax)
+                fmax = hexn;
+        }
+
+        f_closedir(&dir);
+    }
+    else
+    {
+        CRASHF("Failed to open directory %s", sndir);
+    }
+
+    //Erase one oldest file if needed
+    if( numfiles >= 100 )
+    {
+        sprintf(path, "%s/%08d.s1p", sndir, fmin);
+        f_unlink(path);
+        sprintf(path, "%s/%08d.bmp", sndir, fmin);
+        f_unlink(path);
+    }
+
+    sprintf(filename, "%08d", fmax+1);
+
+    //Now write measured data to file fmax+1/userfilename in s1p format
+    //sprintf(path, "%s/%08d.s1p", sndir, fmax+1);
+    sprintf(path, "%s/tmp.s1p", sndir);
+    fr = f_open(&fo, path, FA_CREATE_ALWAYS | FA_WRITE);
+    if( FR_OK != fr )
+        CRASHF("Failed to open file %s", path);
+
+    sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
+                  "# MHz S RI R 50\r\n"
+                  "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
+
+    fr = f_write( &fo, wbuf, strlen(wbuf), &bw );
+    if( FR_OK != fr )
+        goto CRASH_WR;
+
+    if( CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0 )
+        fstart = f1;
+    else
+        fstart = f1 - BSVALUES[span] / 2;
+
+    for( i = 0; i < WWIDTH; i++ )
+    {
+        g = OSL_GFromZ(values[i], 50.f);
+        fmhz = ((float)fstart + (float)i * BSVALUES[span] / WWIDTH) / 1000.0f;
+        sprintf( wbuf, "%.5f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g) );
+        fr = f_write( &fo, wbuf, strlen(wbuf), &bw );
+
+        if( FR_OK != fr )
+            goto CRASH_WR;
+    }
+
+    f_close(&fo);
+
+    //Now write screenshot as bitmap
+    //sprintf(path, "%s/%08d.bmp", sndir, fmax+1);
+    sprintf( path, "%s/tmp.bmp", sndir );
+    fr = f_open( &fo, path, FA_CREATE_ALWAYS | FA_WRITE );
+
+    if( FR_OK != fr )
+        CRASHF("Failed to open file %s", path);
+
+    fr = f_write( &fo, bmp_hdr, sizeof(bmp_hdr), &bw );
+    if( FR_OK != fr )
+        goto CRASH_WR;
+
+    for( y = 271; y >= 0; y-- )
+    {
+        BSP_LCD_ReadLine(y, line);
+        for( x = 0; x < 480; x++ )
+        {
+            fr = f_write( &fo, &line[x], 3, &bw );
+            if( FR_OK != fr )
+                goto CRASH_WR;
+        }
+    }
+
+    f_close(&fo);
+
+    // enter user filename
+    if( EnterFileName(filename) == 1 )
+    {
+        sprintf(path_new, "%s/%s.s1p", sndir, filename);
+        sprintf(path, "%s/tmp.s1p", sndir);
+        fr = f_rename(path, path_new);
+        if( fr != FR_OK )
+            goto CRASH_WR;
+
+        sprintf(path_new, "%s/%s.bmp", sndir, filename);
+        sprintf(path, "%s/tmp.bmp", sndir);
+        fr = f_rename(path, path_new);
+        if( fr != FR_OK )
+            goto CRASH_WR;
+    }
+    //
+
+    //isSaved = 1;
+    //DrawSavedText();
+    sprintf(path, "%s/tmp.bmp", sndir);
+    f_unlink(path);
+    sprintf(path, "%s/tmp.s1p", sndir);
+    f_unlink(path);
+    return;
+
+CRASH_WR:
+    CRASHF("Failed to write to file %s", path);
+}
+
+/*static void save_snapshot(void)
 {
     static const TCHAR *sndir = "/aa/snapshot";
     char path[64];
@@ -1060,7 +1899,7 @@ static void save_snapshot(void)
     {
         float complex g = OSL_GFromZ(values[i], 50.f);
         float fmhz = ((float)fstart + (float)i * BSVALUES[span] / WWIDTH) / 1000.0f;
-        sprintf(wbuf, "%.4f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
+        sprintf(wbuf, "%.5f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
         fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
         if (FR_OK != fr) goto CRASH_WR;
     }
@@ -1093,6 +1932,24 @@ static void save_snapshot(void)
 CRASH_WR:
     CRASHF("Failed to write to file %s", path);
 }
+*/
+static void nextSWR(void)
+{
+    switch( CFG_GetParam(CFG_PARAM_SWR_MAX) )
+    {
+        case 200:
+            CFG_SetParam(CFG_PARAM_SWR_MAX, 15);
+            break;
+
+        case 15:
+            CFG_SetParam(CFG_PARAM_SWR_MAX, 30);
+            break;
+
+        case 30:
+            CFG_SetParam(CFG_PARAM_SWR_MAX, 200);
+            break;
+    }
+}
 
 void PANVSWR2_Proc(void)
 {
@@ -1108,74 +1965,102 @@ void PANVSWR2_Proc(void)
     {
         isSaved = 0;
     }
+
     if (0 == modstrw)
     {
         modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
     }
-    if (!isMeasured)
-    {
-        DrawGrid(1);
-        DrawHelp();
-        //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
-    }
-    else
-        RedrawWindow();
 
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+    RedrawWindow();
+
+    /*FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
-
+    sprintf(buf, "  Exit  ");
+    int strw = FONT_GetStrPixelWidth(FONT_FRAN, buf);
+    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5 + strw + 50, Y0 + WHEIGHT + 16 + 16, "  SWR  ");
+*/
     for(;;)
     {
-        Sleep(50);
-        if (TOUCH_Poll(&pt))
+        Sleep(10);
+        if(TOUCH_Poll(&pt))
         {
-            if (pt.y < 80)
+            if (pt.y < 40)
             {// Top
-                SELFREQ_Proc();
-                RedrawWindow();
+                if( pt.x > 100 && pt.x < 190 )
+                {
+                    if (grType == GRAPH_VSWR)
+                        grType = GRAPH_RX;
+                    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_SMITH_ENABLE) == 1) )
+                        grType = GRAPH_SMITH;
+                    else
+                        grType = GRAPH_VSWR;
+
+                    RedrawWindow();
+                }
+
+                if( pt.x > 200 && pt.x < 350 )
+                {
+                    SELFREQ_Proc(1);
+                    RedrawWindow();
+                }
             }
-            else if (pt.y > 90 && pt.y <= 170)
+            else if(pt.y > Y0 && (pt.y <= Y0 + WHEIGHT) )
             {
-                if (pt.x < 50)
+                if (pt.x < 40)
                 {
                     DecrCursor();
                     continue;
                 }
-                else if (pt.x > 70 && pt.x < 410)
+                else if(pt.x > 40 && pt.x < 440)
                 {
-                    if (grType == GRAPH_VSWR)
-                        grType = GRAPH_RX;
-                    else if (grType == GRAPH_RX)
-                        grType = GRAPH_SMITH;
-                    else
-                        grType = GRAPH_VSWR;
-                    RedrawWindow();
+                    if(isMeasured && grType != GRAPH_SMITH)
+                    {
+                        if(pt.x != cursorPos+X0)
+                        {
+                            DrawCursor();
+                            cursorPos = pt.x-X0;
+                            DrawCursor();
+                            DrawCursorText();
+                            continue;
+                        }
+                    }
                 }
-                else if (pt.x > 430)
+                else if (pt.x > 440)
                 {
                     AdvCursor();
                     continue;
                 }
             }
-            else if (pt.y > 200)
+            else if (pt.y > 240)
             {
-                if (pt.x < 140)
-                {// Lower left corner
+                if (pt.x < 50) // exit button
+                {
                     while(TOUCH_IsPressed());
                     Sleep(100);
                     return;
                 }
-                if (pt.x > 340)
-                {//Lower right corner: perform scan
+
+                if (pt.x > 390) // Scan button
+                {
                     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
                     ScanRX();
                     RedrawWindow();
                 }
-                else if (pt.x > 160 && pt.x < 320 && isMeasured && !isSaved)
+                else if (pt.x > 160 && pt.x < 320 && isMeasured && !isSaved) // save snapshot
                 {
                     save_snapshot();
+                    RedrawWindow();
+                }
+                else if( pt.x > 80 && pt.x < 140) // SWR button
+                {
+                    if( grType == GRAPH_VSWR && isMeasured )
+                    {
+                        nextSWR();
+                        RedrawWindow();
+                    }
                 }
             }
+
             while(TOUCH_IsPressed())
             {
                 Sleep(50);
