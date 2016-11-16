@@ -208,6 +208,9 @@ int FONT_GetStrPixelWidth(FONTS fnt, const char* pStr)
     int w = 0;
     struct _fontparams fp = {0};
 
+    if (0 == pStr)
+        return 0;
+
     FONT_GetParams(fnt, &fp);
 
     while (*pStr != '\0')

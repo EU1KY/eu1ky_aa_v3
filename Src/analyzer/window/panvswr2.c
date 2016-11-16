@@ -1187,3 +1187,100 @@ void PANVSWR2_Proc(void)
         }
     }
 }
+
+//===============================================================================================
+// Experimienting with keyboard
+//===============================================================================================
+
+#include "textbox.h"
+
+static uint32_t kbdRqExit = 0;
+static char kbdKeyCode = '\0';
+static void KeybHitCb(const TEXTBOX_t* tb)
+{
+    //Just set key code
+    kbdKeyCode = tb->text[0];
+}
+
+static void KeybHitBackspaceCb(void)
+{
+    //Handle backspace
+}
+
+static void KeybHitExitCb(void)
+{
+    kbdRqExit = 1;
+}
+
+#define KEYW 33
+#define KEYH 33
+#define KBDX0 20
+#define KBDY0 50
+#define KBDX(col) (KBDX0 + col * KEYW + 2 * col)
+#define KBDY(row) (KBDY0 + row * KEYH + 2 * row)
+
+static const TEXTBOX_t tb_keybd[] = {
+    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(0), .text = "1", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(0), .text = "2", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(0), .text = "3", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(1), .text = "4", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(1), .text = "5", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(1), .text = "6", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(2), .text = "7", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(2), .text = "8", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(2), .text = "9", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(3), .text = "0", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))KeybHitCb, .cbparam = 1 },
+    (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(3), .text = "<-", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = KeybHitBackspaceCb },
+    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(4), .text = "Exit", .font = FONT_FRANBIG,
+                 .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = KeybHitExitCb },
+};
+#define KBDNUMKEYS (sizeof(tb_keybd) / sizeof(TEXTBOX_t))
+
+static void KeybdWnd(void)
+{
+    LCD_FillAll(LCD_BLACK);
+
+    kbdRqExit = 0;
+    kbdKeyCode = '\0';
+
+    TEXTBOX_CTX_t keybd_ctx;
+    TEXTBOX_InitContext(&keybd_ctx);
+
+    uint32_t i;
+    for (i = 0; i < KBDNUMKEYS; i++)
+    {
+        TEXTBOX_Append(&keybd_ctx, (TEXTBOX_t*)&tb_keybd[i]);
+    }
+    TEXTBOX_DrawContext(&keybd_ctx);
+
+    for(;;)
+    {
+        if (TEXTBOX_HitTest(&keybd_ctx))
+        {
+            if ('\0' != kbdKeyCode)
+            {
+                //Handle key code
+                kbdKeyCode = '\0';
+            }
+            Sleep(50);
+            TEXTBOX_DrawContext(&keybd_ctx);
+        }
+        if (kbdRqExit)
+            break;
+        Sleep(10);
+    }
+
+    while(TOUCH_IsPressed());
+        Sleep(0);
+}

@@ -66,7 +66,9 @@ void TEXTBOX_Clear(TEXTBOX_CTX_t *ctx, uint32_t idx)
         return;
     if (TEXTBOX_TYPE_HITRECT == tb->type)
         return;
-    LCD_FillRect(LCD_MakePoint(tb->x0, tb->y0), LCD_MakePoint(tb->x0 + tb->width, tb->y0 + tb->height), tb->bgcolor);
+    LCD_FillRect(LCD_MakePoint(tb->x0, tb->y0),
+                 LCD_MakePoint(tb->x0 + tb->width, tb->y0 + tb->height),
+                 tb->bgcolor);
 }
 
 void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char* txt)
@@ -83,6 +85,12 @@ void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char* txt)
     tb->width = FONT_GetStrPixelWidth(tb->font, tb->text);
     tb->height = FONT_GetHeight(tb->font);
     FONT_Write(tb->font, tb->fgcolor, tb->bgcolor, tb->x0, tb->y0, tb->text);
+    if (tb->border)
+    {
+        LCD_Rectangle(LCD_MakePoint(tb->x0, tb->y0),
+                      LCD_MakePoint(tb->x0 + tb->width, tb->y0 + tb->height),
+                      tb->fgcolor);
+    }
 }
 
 void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
@@ -91,7 +99,26 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
     while (pbox)
     {
         if (TEXTBOX_TYPE_TEXT == pbox->type)
+        {
+            if (0 != pbox->width)
+            {
+                LCD_FillRect(LCD_MakePoint(pbox->x0, pbox->y0),
+                             LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
+                             pbox->bgcolor);
+            }
+            else
+            {
+                pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                pbox->height = FONT_GetHeight(pbox->font);
+            }
             FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
+            if (pbox->border)
+            {
+                LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
+                              LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
+                              pbox->fgcolor);
+            }
+        }
         pbox = pbox->next;
     }
 }
@@ -115,18 +142,37 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
         {
             if (coord.y >= pbox->y0 && coord.y < pbox->y0 + pbox->height)
             {
+                //Execute hit callback
                 if (pbox->cb)
-                    pbox->cb();
+                {
+                    if (pbox->cbparam)
+                    {
+                        ((void(*)(const TEXTBOX_t*))pbox->cb)(pbox);
+                    }
+                    else
+                        pbox->cb();
+                }
                 if (pbox->nowait)
                 {
                     Sleep(pbox->nowait);
                     return 0;
                 }
+                //Invert text colors while touch is pressed
                 if (TEXTBOX_TYPE_TEXT == pbox->type)
                     FONT_Write(pbox->font, pbox->bgcolor, pbox->fgcolor, pbox->x0, pbox->y0, pbox->text);
                 while (TOUCH_IsPressed());
+                //Restore textbox colors
                 if (TEXTBOX_TYPE_TEXT == pbox->type)
+                if (TEXTBOX_TYPE_TEXT == pbox->type)
+                {
                     FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
+                    if (pbox->border)
+                    {
+                        LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
+                                      LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
+                                      pbox->fgcolor);
+                    }
+                }
                 return 1;
             }
         }
