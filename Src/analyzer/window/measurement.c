@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
+#include <string.h>
 #include "config.h"
 #include "LCD.h"
 #include "font.h"
@@ -31,7 +32,7 @@ static uint32_t redrawWindow = 0;
 static uint32_t fChanged = 0;
 static uint32_t isMatch = 0;
 static uint32_t meas_maxstep = 500000;
-
+static float complex z500[21] = { 0 };
 #define SCAN_ORIGIN_X 20
 #define SCAN_ORIGIN_Y 209
 
@@ -79,14 +80,26 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
     }
     float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     LCDColor sc = LCD_RGB(96, 96, 96);
-    //LCD_FillCircle(LCD_MakePoint(X0, Y0), R + 2, LCD_BLACK);
     LCD_Circle(LCD_MakePoint(X0, Y0), R, sc);
     LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, sc);
     LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, sc);
     LCD_Line(LCD_MakePoint(X0 - R, Y0), LCD_MakePoint(X0 + R, Y0), sc);
 
-    int x = (int)(crealf(G) * R) + X0;
-    int y = Y0 - (int)(cimagf(G) * R);
+    //Draw mini-scan points
+    uint32_t i;
+    int x, y;
+    for (i = 0; i < 21; i++)
+    {
+        if (i == 10)
+            continue;
+        float complex Gx = OSL_GFromZ(z500[i], CFG_GetParam(CFG_PARAM_R0));
+        x = (int)(crealf(Gx) * R) + X0;
+        y = Y0 - (int)(cimagf(Gx) * R);
+        LCD_SetPixel(LCD_MakePoint(x, y), LCD_RGB(0, 0, 128));
+    }
+
+    x = (int)(crealf(G) * R) + X0;
+    y = Y0 - (int)(cimagf(G) * R);
     LCD_Line(LCD_MakePoint(x - 1, y), LCD_MakePoint(x + 1, y), LCD_GREEN);
     LCD_Line(LCD_MakePoint(x, y - 1), LCD_MakePoint(x, y + 1), LCD_GREEN);
 }
@@ -101,7 +114,8 @@ static int Scan500(void)
         GEN_SetMeasurementFreq(fq);
         Sleep(10);
         DSP_Measure(fq, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
-        vswr500[i] = DSP_CalcVSWR(DSP_MeasuredZ());
+        z500[i] = DSP_MeasuredZ();
+        vswr500[i] = DSP_CalcVSWR(z500[i]);
     }
     else
     {
@@ -128,7 +142,14 @@ static void MeasurementModeDraw(DSP_RX rx)
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, 38, str);
 
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 62);
-    sprintf(str, "R: %.1f  X: %.1f", crealf(rx), cimagf(rx));
+    if (crealf(rx) > 1000.f)
+        sprintf(str, "R: %.2fk  ", crealf(rx) / 1000.f);
+    else
+        sprintf(str, "R: %.1f  ", crealf(rx));
+    if (cimagf(rx) > 1000.f)
+        sprintf(&str[strlen(str)], "X: %.2fk", cimagf(rx) / 1000.f);
+    else
+        sprintf(&str[strlen(str)], "X: %.1f", cimagf(rx));
     FONT_Write(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 0, 62, str);
 
     float VSWR = DSP_CalcVSWR(rx);
@@ -163,7 +184,7 @@ static void MeasurementModeDraw(DSP_RX rx)
         float cl = -10. * log10f(ga);
         if (cl < 0.001f)
             cl = 0.f;
-        sprintf(str, "MCL: %.2f dB", cl);
+        sprintf(str, "MCL: %.2f dB  |Z|: %.1f", cl, cabsf(rx));
         FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 158, str);
     }
 
@@ -417,7 +438,7 @@ MEASUREMENT_REDRAW:
         }
 
         Sleep(5);
-        SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
+        //SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
 
         LCDPoint pt;
         while (TOUCH_Poll(&pt))
