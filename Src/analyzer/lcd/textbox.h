@@ -17,6 +17,7 @@ typedef struct
     uint8_t nowait : 1;  //Set to 1 to bypass waiting for touch release and to return 0 from hit test func
     uint8_t border : 1;  //Set to 1 to draw border
     uint8_t cbparam : 1; //Set to 1 to use callback with parameter
+    uint8_t center : 1;  //Set to 1 to center text in the box with predefined width and height
     uint16_t x0;       //Origin x
     uint16_t y0;       //Origin y
     const char* text;  //Text of the box for TEXTBOX_TYPE_TEXT type

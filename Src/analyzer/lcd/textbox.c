@@ -2,6 +2,10 @@
 #include "LCD.h"
 #include "touch.h"
 
+//TODO: make it more portable
+extern void* _sdata; //Taken from linker script
+#define IS_IN_RAM(ptr) ((void*)ptr >= _sdata)
+
 extern void Sleep(uint32_t);
 
 void TEXTBOX_InitContext(TEXTBOX_CTX_t* ctx)
@@ -45,15 +49,17 @@ uint32_t TEXTBOX_Append(TEXTBOX_CTX_t* ctx, TEXTBOX_t* hbox)
             pbox = pbox->next;
             idx++;
         }
-        pbox->next = hbox;
-        hbox->next = 0;
+        if (IS_IN_RAM(pbox))
+            pbox->next = hbox;
+        if (IS_IN_RAM(hbox))
+            hbox->next = 0;
         idx++;
     }
     if (TEXTBOX_TYPE_TEXT == hbox->type)
     {
-        if (0 == hbox->width)
+        if ( IS_IN_RAM(hbox) && 0 == hbox->width)
             hbox->width = FONT_GetStrPixelWidth(hbox->font, hbox->text);
-        if (0 == pbox->height)
+        if ( IS_IN_RAM(hbox) && 0 == hbox->height)
             hbox->height = FONT_GetHeight(hbox->font);
     }
     return idx;
@@ -76,7 +82,7 @@ void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char* txt)
     if (0 == ctx || 0 == txt)
         return;
     TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
-    if (0 == tb)
+    if (0 == tb || !IS_IN_RAM(tb))
         return;
     if (TEXTBOX_TYPE_HITRECT == tb->type)
         return;
@@ -108,10 +114,22 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
             }
             else
             {
-                pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
-                pbox->height = FONT_GetHeight(pbox->font);
+                if (IS_IN_RAM(pbox))
+                {
+                    pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                    pbox->height = FONT_GetHeight(pbox->font);
+                }
             }
-            FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
+            if (pbox->center && pbox->width && pbox->height)
+            {
+                int h = FONT_GetHeight(pbox->font);
+                int w = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                int x = (int)pbox->x0 + (int)pbox->width / 2  - w / 2;
+                int y = (int)pbox->y0 + (int)pbox->height / 2  - h / 2;
+                FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, x, y, pbox->text);
+            }
+            else
+                FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
             if (pbox->border)
             {
                 LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
@@ -158,21 +176,11 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                     return 0;
                 }
                 //Invert text colors while touch is pressed
-                if (TEXTBOX_TYPE_TEXT == pbox->type)
-                    FONT_Write(pbox->font, pbox->bgcolor, pbox->fgcolor, pbox->x0, pbox->y0, pbox->text);
+                LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
+                //Wait for touch release
                 while (TOUCH_IsPressed());
                 //Restore textbox colors
-                if (TEXTBOX_TYPE_TEXT == pbox->type)
-                if (TEXTBOX_TYPE_TEXT == pbox->type)
-                {
-                    FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
-                    if (pbox->border)
-                    {
-                        LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
-                                      LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
-                                      pbox->fgcolor);
-                    }
-                }
+                LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
                 return 1;
             }
         }

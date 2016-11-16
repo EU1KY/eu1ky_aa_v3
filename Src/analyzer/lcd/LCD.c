@@ -121,6 +121,22 @@ void LCD_FillRect(LCDPoint p1, LCDPoint p2, LCDColor color)
     BSP_LCD_FillRect(p1.x, p1.y, p2.x - p1.x + 1, p2.y - p1.y + 1);
 }
 
+void LCD_InvertRect(LCDPoint p1, LCDPoint p2)
+{
+    if (p1.x >= LCD_GetWidth()) p1.x = LCD_GetWidth() - 1;
+    if (p2.x >= LCD_GetWidth()) p2.x = LCD_GetWidth() - 1;
+    if (p1.y >= LCD_GetHeight()) p1.y = LCD_GetHeight() - 1;
+    if (p2.y >= LCD_GetHeight()) p2.y = LCD_GetHeight() - 1;
+    uint16_t x, y;
+    for (x = p1.x; x <= p2.x; x++)
+    {
+        for (y = p1.y; y <= p2.y; y++)
+        {
+            BSP_LCD_DrawPixel(x, y, BSP_LCD_ReadPixel(x, y) ^ 0x00FFFFFF);
+        }
+    }
+}
+
 void LCD_FillAll(LCDColor c)
 {
     c |= 0xFF000000;

@@ -92,6 +92,8 @@ void LCD_BacklightOff(void);
 ///Invert color of display pixel
 void LCD_InvertPixel(LCDPoint p);
 
+void LCD_InvertRect(LCDPoint p1, LCDPoint p2);
+
 LCDColor LCD_ReadPixel(LCDPoint p);
 
 uint16_t LCD_GetWidth(void);
