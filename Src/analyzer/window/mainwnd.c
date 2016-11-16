@@ -283,8 +283,6 @@ static void PROTOCOL_Handler(void)
     AAUART_PutString("ERROR\r");
 }
 
-extern void KeybdWnd(void);
-
 // ================================================================================================
 // Main window procedure (never returns)
 void MainWnd(void)
@@ -334,10 +332,10 @@ void MainWnd(void)
 
     //USB access
     hbUSBD = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text =   " USB access     ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = KeybdWnd };
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
     TEXTBOX_Append(&main_ctx, &hbUSBD);
 
-    hbTimestamp = (TEXTBOX_t) {.x0 = 80, .y0 = 256, .text = "EU1KY AA v." AAVERSION " Build:" BUILD_TIMESTAMP, .font = FONT_FRAN,
+    hbTimestamp = (TEXTBOX_t) {.x0 = 80, .y0 = 256, .text = "EU1KY AA v." AAVERSION " Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
     //Draw context

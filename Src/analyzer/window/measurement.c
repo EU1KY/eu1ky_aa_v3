@@ -20,12 +20,14 @@
 #include "oslfile.h"
 #include "stm32746g_discovery_lcd.h"
 #include "match.h"
+#include "num_keypad.h"
 
 extern void Sleep(uint32_t ms);
 
 //==============================================================================
 static float vswr500[21];
 static uint32_t rqExit = 0;
+static uint32_t redrawWindow = 0;
 static uint32_t fChanged = 0;
 static uint32_t isMatch = 0;
 static uint32_t meas_maxstep = 500000;
@@ -199,7 +201,7 @@ static void MeasurementModeGraph(DSP_RX in)
     }
 }
 
-static void MEASUREMENT_SwitchWindowing(void)
+static void MEASUREMENT_Exit(void)
 {
     rqExit = 1;
 }
@@ -287,10 +289,20 @@ static void MEASUREMENT_SmithMatch(void)
     Sleep(50);
 }
 
+static void MEASUREMENT_SetFreq(void)
+{
+    while(TOUCH_IsPressed());
+    uint32_t val = NumKeypad(CFG_GetParam(CFG_PARAM_MEAS_F)/1000, BAND_FMIN/1000, BAND_FMAX/1000, "Set measurement frequency, kHz");
+    CFG_SetParam(CFG_PARAM_MEAS_F, val * 1000);
+    CFG_Flush();
+    redrawWindow = 1;
+}
+
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
-    HITRECT(   0, 200,   100,     79, MEASUREMENT_SwitchWindowing),
+    HITRECT(   0, 200,   100,     79, MEASUREMENT_Exit),
+    HITRECT( 150, 200,   100,     79, MEASUREMENT_SetFreq),
     HITRECT(   0,   0,  80, 100, MEASUREMENT_FDecr_500k),
     HITRECT(  80,   0,  80, 100, MEASUREMENT_FDecr_100k),
     HITRECT( 160,   0,  70, 100, MEASUREMENT_FDecr_10k),
@@ -310,7 +322,7 @@ void MEASUREMENT_Proc(void)
     //Load saved middle frequency value from BKUP registers 2, 3
     //to MeasurementFreq
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
-    if (!(fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 10000) == 0))
+    if (!(fbkup >= BAND_FMIN && fbkup <= BAND_FMAX && (fbkup % 1000) == 0))
     {
         CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
         CFG_Flush();
@@ -319,6 +331,7 @@ void MEASUREMENT_Proc(void)
     rqExit = 0;
     fChanged = 0;
     isMatch = 0;
+    redrawWindow = 0;
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 60, "Measurement mode");
@@ -330,6 +343,7 @@ void MEASUREMENT_Proc(void)
     Sleep(300);
     while(TOUCH_IsPressed());
 
+MEASUREMENT_REDRAW:
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 25, "VSWR (1.0 ... 3.0), F +/- 500 KHz, step 50:");
     LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
@@ -348,6 +362,7 @@ void MEASUREMENT_Proc(void)
     }
 
     FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 150, 250, "  Set frequency...  ");
     ShowF();
     DSP_RX rx;
 
@@ -413,6 +428,11 @@ void MEASUREMENT_Proc(void)
                 GEN_SetMeasurementFreq(0);
                 while(TOUCH_IsPressed());
                 return;
+            }
+            if (redrawWindow)
+            {
+                redrawWindow = 0;
+                goto MEASUREMENT_REDRAW;
             }
             if (fChanged)
             {

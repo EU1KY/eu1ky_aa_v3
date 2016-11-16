@@ -3,8 +3,7 @@
 #include "touch.h"
 
 //TODO: make it more portable
-extern void* _sdata; //Taken from linker script
-#define IS_IN_RAM(ptr) ((void*)ptr >= _sdata)
+#define IS_IN_RAM(ptr) ((uint32_t)ptr >= 0x20000000)
 
 extern void Sleep(uint32_t);
 
@@ -35,7 +34,7 @@ TEXTBOX_t* TEXTBOX_Find(TEXTBOX_CTX_t *ctx, uint32_t idx)
 
 }
 
-//Returns textbox ID n context
+//Returns textbox ID in context
 uint32_t TEXTBOX_Append(TEXTBOX_CTX_t* ctx, TEXTBOX_t* hbox)
 {
     TEXTBOX_t* pbox = ctx->start;
@@ -151,9 +150,9 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
     {
         if (TEXTBOX_TYPE_TEXT == pbox->type)
         {
-            if (0 == pbox->width)
+            if (0 == pbox->width && IS_IN_RAM(pbox))
                 pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
-            if (0 == pbox->height)
+            if (0 == pbox->height && IS_IN_RAM(pbox))
                 pbox->height = FONT_GetHeight(pbox->font);
         }
         if (coord.x >= pbox->x0 && coord.x < pbox->x0 + pbox->width)
