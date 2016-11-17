@@ -290,6 +290,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\window\hit.h" />
+		<Unit filename="Src\analyzer\window\keyboard.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\window\keyboard.h" />
 		<Unit filename="Src\analyzer\window\mainwnd.c">
 			<Option compilerVar="CC" />
 		</Unit>
