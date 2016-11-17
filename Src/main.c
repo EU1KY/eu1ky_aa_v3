@@ -96,8 +96,6 @@ int main(void)
         autosleep_timer = 0;
     }
 
-    char tbb[32] = "ABCDEFGH";
-    KeyboardWindow(tbb, 16, "Auytfuyiu");
     //Run main window function
     MainWnd(); //Never returns
 

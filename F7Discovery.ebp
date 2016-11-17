@@ -230,6 +230,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\gen\si5351.h" />
+		<Unit filename="Src\analyzer\lcd\bitmaps\bitmaps.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\bitmaps\bitmaps.h" />
 		<Unit filename="Src\analyzer\lcd\consbig.c">
 			<Option compilerVar="CC" />
 		</Unit>
