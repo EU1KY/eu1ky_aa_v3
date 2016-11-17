@@ -16,6 +16,7 @@
 #include "custom_spi2.h"
 #include "gen.h"
 #include "keyboard.h"
+#include "bitmaps/bitmaps.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -24,8 +25,6 @@ static void MPU_Config(void);
 volatile uint32_t main_sleep_timer = 0;
 volatile uint32_t autosleep_timer = 0xFFFFFFFFul;
 
-//Example of big buffer in SDRAM section:
-//uint8_t __attribute__((section (".user_sdram"))) __attribute__((used)) bitmapReadBuffer[1000000];
 
 void Sleep(uint32_t nms)
 {
@@ -56,7 +55,7 @@ void Sleep(uint32_t nms)
     HAL_PWR_EnableSleepOnExit();
     HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 }
-#include "bitmaps/bitmaps.h"
+
 //SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
 __attribute__((aligned(32))) FATFS SDFatFs;  // File system object for SD card logical drive
 char SDPath[4];        // SD card logical drive path
