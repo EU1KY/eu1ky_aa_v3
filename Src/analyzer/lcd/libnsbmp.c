@@ -825,15 +825,19 @@ bmp_result bmp_decode_trans(bmp_image *bmp, uint32_t colour)
  */
 static bmp_result bmp_decode_rgb24(bmp_image *bmp, uint8_t **start, int bytes)
 {
-    uint8_t *top, *bottom, *end, *data;
-    uint32_t *scanline;
+    uint8_t *data;
+    uint8_t *end;
+    //uint8_t *top, *bottom;
+    //uint32_t *scanline;
     uint32_t x, y;
-    uint32_t swidth, skip;
+    //uint32_t swidth;
+    uint32_t skip;
     intptr_t addr;
     uint8_t i;
     uint32_t word;
 
     data = *start;
+    /*
     swidth = bmp->bitmap_callbacks.bitmap_get_bpp(bmp->bitmap) * bmp->width;
     top = bmp->bitmap_callbacks.bitmap_get_buffer(bmp->bitmap);
     if(!top)
@@ -843,6 +847,8 @@ static bmp_result bmp_decode_rgb24(bmp_image *bmp, uint8_t **start, int bytes)
     bottom = top + (uint64_t)swidth * (bmp->height - 1);
     end = data + bytes;
     addr = ((intptr_t)data) & 3;
+    */
+    end = data + bytes;
     skip = bmp->bpp >> 3;
     bmp->decoded = true;
 
@@ -873,6 +879,7 @@ static bmp_result bmp_decode_rgb24(bmp_image *bmp, uint8_t **start, int bytes)
         {
             return BMP_INSUFFICIENT_DATA;
         }
+        /*
         if(bmp->reversed)
         {
             scanline = (void *)(top + (y * swidth));
@@ -881,44 +888,71 @@ static bmp_result bmp_decode_rgb24(bmp_image *bmp, uint8_t **start, int bytes)
         {
             scanline = (void *)(bottom - (y * swidth));
         }
+        */
         if(bmp->encoding == BMP_ENCODING_BITFIELDS)
         {
             for(x = 0; x < bmp->width; x++)
             {
+                uint32_t color = 0;
                 word = read_uint32(data, 0);
                 for(i = 0; i < 4; i++)
                     if(bmp->shift[i] > 0)
                     {
-                        scanline[x] |= ((word & bmp->mask[i]) << bmp->shift[i]);
+                        //scanline[x] |= ((word & bmp->mask[i]) << bmp->shift[i]);
+                        color |= ((word & bmp->mask[i]) << bmp->shift[i]);
                     }
                     else
                     {
-                        scanline[x] |= ((word & bmp->mask[i]) >> (-bmp->shift[i]));
+                        //scanline[x] |= ((word & bmp->mask[i]) >> (-bmp->shift[i]));
+                        color |= ((word & bmp->mask[i]) >> (-bmp->shift[i]));
                     }
                 /* 32-bit BMPs have alpha masks, but sometimes they're not utilized */
                 if(bmp->opaque)
                 {
-                    scanline[x] |= (0xff << 24);
+                    //scanline[x] |= (0xff << 24);
+                    color |= (0xff << 24);
                 }
                 data += skip;
-                scanline[x] = read_uint32((uint8_t *)&scanline[x], 0);
+                //scanline[x] = read_uint32((uint8_t *)&scanline[x], 0);
+                color = read_uint32((uint8_t *)&color, 0);
+                if(bmp->reversed)
+                {
+                    bmp->bitmap_callbacks.bitmap_put_color(color, x, y);
+                }
+                else
+                {
+                    bmp->bitmap_callbacks.bitmap_put_color(color, x, bmp->height - y - 1);
+                }
             }
         }
         else
         {
             for(x = 0; x < bmp->width; x++)
             {
-                scanline[x] = data[2] | (data[1] << 8) | (data[0] << 16);
-                if((bmp->limited_trans) && (scanline[x] == bmp->transparent_index))
+                uint32_t color = data[2] | (data[1] << 8) | (data[0] << 16);
+                //scanline[x] = data[2] | (data[1] << 8) | (data[0] << 16);
+//                if((bmp->limited_trans) && (scanline[x] == bmp->transparent_index))
+                if((bmp->limited_trans) && (color == bmp->transparent_index))
                 {
-                    scanline[x] = bmp->trans_colour;
+                    //scanline[x] = bmp->trans_colour;
+                    color = bmp->trans_colour;
                 }
                 if(bmp->opaque)
                 {
-                    scanline[x] |= (0xff << 24);
+                    //scanline[x] |= (0xff << 24);
+                    color |= (0xff << 24);
                 }
                 data += skip;
-                scanline[x] = read_uint32((uint8_t *)&scanline[x], 0);
+                //scanline[x] = read_uint32((uint8_t *)&scanline[x], 0);
+                color = read_uint32((uint8_t *)&color, 0);
+                if(bmp->reversed)
+                {
+                    bmp->bitmap_callbacks.bitmap_put_color(color, x, y);
+                }
+                else
+                {
+                    bmp->bitmap_callbacks.bitmap_put_color(color, x, bmp->height - y - 1);
+                }
             }
         }
     }
