@@ -6,3 +6,4 @@
  */
 
 //#include "example_bmp.h"
+#include "logo.h"

@@ -56,7 +56,7 @@ void Sleep(uint32_t nms)
     HAL_PWR_EnableSleepOnExit();
     HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 }
-
+#include "bitmaps/bitmaps.h"
 //SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
 __attribute__((aligned(32))) FATFS SDFatFs;  // File system object for SD card logical drive
 char SDPath[4];        // SD card logical drive path
@@ -69,6 +69,9 @@ int main(void)
     SystemClock_Config();
     BSP_LED_Init(LED1);
     LCD_Init();
+
+    LCD_DrawBitmap(LCD_MakePoint(90, 24), logo_bmp, logo_bmp_size);
+
     TOUCH_Init();
     SPI2_Init();
 
@@ -95,6 +98,8 @@ int main(void)
         CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
         autosleep_timer = 0;
     }
+
+    Sleep(1000);
 
     //Run main window function
     MainWnd(); //Never returns

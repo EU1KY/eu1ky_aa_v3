@@ -845,10 +845,9 @@ static bmp_result bmp_decode_rgb24(bmp_image *bmp, uint8_t **start, int bytes)
         return BMP_INSUFFICIENT_MEMORY;
     }
     bottom = top + (uint64_t)swidth * (bmp->height - 1);
-    end = data + bytes;
-    addr = ((intptr_t)data) & 3;
     */
     end = data + bytes;
+    addr = ((intptr_t)data) & 3;
     skip = bmp->bpp >> 3;
     bmp->decoded = true;
 

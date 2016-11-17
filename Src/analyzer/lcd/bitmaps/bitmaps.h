@@ -10,5 +10,6 @@
 
 //extern const unsigned char example_bmp[];
 //extern const unsigned int example_bmp_size;
-
+extern const unsigned char logo_bmp[];
+extern const unsigned int logo_bmp_size;
 #endif
