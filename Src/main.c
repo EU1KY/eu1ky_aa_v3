@@ -15,6 +15,7 @@
 #include "aauart.h"
 #include "custom_spi2.h"
 #include "gen.h"
+#include "keyboard.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -92,6 +93,8 @@ int main(void)
         autosleep_timer = 0;
     }
 
+    char tbb[32] = "ABCDEFGH";
+    KeyboardWindow(tbb, 16, "Auytfuyiu");
     //Run main window function
     MainWnd(); //Never returns
 

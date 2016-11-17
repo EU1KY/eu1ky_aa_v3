@@ -9,6 +9,8 @@
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
 #include "stm32746g_discovery_lcd.h"
+#include "libnsbmp.h"
+#include "crash.h"
 //==============================================================================
 //                  Module's static functions
 //==============================================================================
@@ -211,4 +213,79 @@ void LCD_FillCircle(LCDPoint center, uint16_t r, LCDColor color)
     color |= 0xFF000000;
     BSP_LCD_SetTextColor(color);
     BSP_LCD_FillCircle(center.x, center.y, r);
+}
+
+//===================================================================
+//Drawing bitmap file based on libnsbmp
+//===================================================================
+#define BYTES_PER_PIXEL 4
+#define TRANSPARENT_COLOR 0xFFFFFFFF
+
+static void *bitmap_create(int width, int height, unsigned int state)
+{
+    (void) state;  /* unused */
+    return (void*)0x2003F000; // Fake: the bitmap buffer is not used
+}
+
+static unsigned char *bitmap_get_buffer(void *bitmap)
+{
+    return (unsigned char*)bitmap;
+}
+
+static size_t bitmap_get_bpp(void *bitmap)
+{
+    (void) bitmap;  /* unused */
+    return BYTES_PER_PIXEL;
+}
+
+static void bitmap_destroy(void *bitmap)
+{
+}
+
+static LCDPoint _bmpOrigin;
+
+static void bitmap_putcolor(unsigned int color32, unsigned int x, unsigned int y)
+{
+    //DBGPRINT("LCD bmp color: 0x%08x, x: %d, y: %d\n", color32, x, y);
+    uint16_t r, g, b;
+    r = (uint16_t)(color32 & 0xFF);
+    g = (uint16_t)((color32 & 0xFF00) >> 8);
+    b = (uint16_t)((color32 & 0xFF0000) >> 16);
+    LCDColor clr = LCD_RGB(r, g, b);
+    LCD_SetPixel(LCD_MakePoint(_bmpOrigin.x + x, _bmpOrigin.y + y), clr);
+}
+
+static bmp_bitmap_callback_vt bitmap_callbacks =
+{
+    bitmap_create,
+    bitmap_destroy,
+    bitmap_get_buffer,
+    bitmap_get_bpp,
+    bitmap_putcolor
+};
+
+void LCD_DrawBitmap(LCDPoint origin, const uint8_t *bmpData, uint32_t bmpDataSize)
+{
+    bmp_image bmp;
+    bmp_result code;
+    _bmpOrigin = origin;
+
+    bmp_create(&bmp, &bitmap_callbacks);
+    code = bmp_analyse(&bmp, bmpDataSize, bmpData);
+    if(code != BMP_OK)
+    {
+        CRASHF("bmp_analyse failed, %d\n", code);
+        goto cleanup;
+    }
+    code = bmp_decode(&bmp);
+    if(code != BMP_OK)
+    {
+        CRASHF("bmp_decode failed, %d\n", code);
+        if(code != BMP_INSUFFICIENT_DATA)
+        {
+            goto cleanup;
+        }
+    }
+cleanup:
+    bmp_finalise(&bmp);
 }

@@ -7,6 +7,7 @@
 typedef enum
 {
     TEXTBOX_TYPE_TEXT = 0, //Visible item with text
+    TEXTBOX_TYPE_BMP,      //Visible item with bitmap. User MUST provide correct bmp, bmpsize, width and height parameters. Only 8BPP bitmaps are supported!
     TEXTBOX_TYPE_HITRECT,  //Invisible hit rectangle
 } TEXTBOX_TYPE_t;
 
@@ -20,8 +21,16 @@ typedef struct
     uint8_t center : 1;  //Set to 1 to center text in the box with predefined width and height
     uint16_t x0;       //Origin x
     uint16_t y0;       //Origin y
-    const char* text;  //Text of the box for TEXTBOX_TYPE_TEXT type
-    FONTS font;        //Font of the box for TEXTBOX_TYPE_TEXT type
+    union
+    {
+        const char* text;  //Text of the box for TEXTBOX_TYPE_TEXT type
+        uint8_t *bmp;      //Pointer to 8BPP bitmap file placed in memory, for TEXTBOX_TYPE_BMP type
+    };
+    union
+    {
+        uint32_t font;    //Font of the box for TEXTBOX_TYPE_TEXT type
+        uint32_t bmpsize; //Bitmap data size in bytes for TEXTBOX_TYPE_BMP type
+    };
     uint32_t fgcolor;  //Foreground color for TEXTBOX_TYPE_TEXT type
     uint32_t bgcolor;  //Background color for TEXTBOX_TYPE_TEXT type
     void (*cb)(void);  //Callback function to be called when textbox is tapped

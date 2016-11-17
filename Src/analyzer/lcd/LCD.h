@@ -104,6 +104,8 @@ void LCD_WaitForRedraw(void);
 
 uint32_t LCD_IsOff(void);
 
+void LCD_DrawBitmap(LCDPoint origin, const uint8_t *bmpData, uint32_t bmpDataSize);
+
 #ifdef __cplusplus
 }
 #endif

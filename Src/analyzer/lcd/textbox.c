@@ -83,7 +83,7 @@ void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char* txt)
     TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
     if (0 == tb || !IS_IN_RAM(tb))
         return;
-    if (TEXTBOX_TYPE_HITRECT == tb->type)
+    if (TEXTBOX_TYPE_TEXT != tb->type)
         return;
     TEXTBOX_Clear(ctx, idx);
     tb->text = txt;
@@ -129,6 +129,16 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
             }
             else
                 FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
+            if (pbox->border)
+            {
+                LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
+                              LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
+                              pbox->fgcolor);
+            }
+        }
+        else if (TEXTBOX_TYPE_BMP == pbox->type)
+        {
+            LCD_DrawBitmap(LCD_MakePoint(pbox->x0, pbox->y0), pbox->bmp, pbox->bmpsize);
             if (pbox->border)
             {
                 LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
