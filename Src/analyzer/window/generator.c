@@ -15,10 +15,12 @@
 #include "config.h"
 #include "hit.h"
 #include "main.h"
+#include "num_keypad.h"
 
 static uint32_t fChanged = 0;
 static uint32_t rqExit = 0;
 static uint32_t f_maxstep = 500000;
+static uint32_t redrawWindow = 0;
 
 void Sleep(uint32_t ms);
 
@@ -112,10 +114,20 @@ static void GENERATOR_FIncr_500k(void)
     FIncr(f_maxstep);
 }
 
+static void GENERATOR_SetFreq(void)
+{
+    while(TOUCH_IsPressed());
+    uint32_t val = NumKeypad(CFG_GetParam(CFG_PARAM_GEN_F)/1000, BAND_FMIN/1000, BAND_FMAX/1000, "Set generator frequency, kHz");
+    CFG_SetParam(CFG_PARAM_GEN_F, val * 1000);
+    CFG_Flush();
+    redrawWindow = 1;
+}
+
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
     HITRECT(   0, 200,   100,     79, GENERATOR_SwitchWindow),
+    HITRECT( 150, 200,   100,     79, GENERATOR_SetFreq),
     HITRECT(   0,   0,  80, 150, GENERATOR_FDecr_500k),
     HITRECT(  80,   0,  80, 150, GENERATOR_FDecr_100k),
     HITRECT( 160,   0,  70, 150, GENERATOR_FDecr_5k),
@@ -136,10 +148,9 @@ void GENERATOR_Window_Proc(void)
             CFG_Flush();
         }
     }
-
+GENERATOR_REDRAW:
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 70, 2, "Generator mode");
-    Sleep(250);
 
     while(TOUCH_IsPressed());
 
@@ -158,10 +169,12 @@ void GENERATOR_Window_Proc(void)
         LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
     }
 
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, 240, "  Exit  ");
+    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 150, 250, "  Set frequency...  ");
 
     rqExit = 0;
     fChanged = 0;
+    redrawWindow = 0;
 
     GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
     ShowF();
@@ -176,6 +189,10 @@ void GENERATOR_Window_Proc(void)
                 GEN_SetMeasurementFreq(0);
                 while(TOUCH_IsPressed());
                 return; //Change window
+            }
+            if (redrawWindow)
+            {
+                goto GENERATOR_REDRAW;
             }
             if (fChanged)
             {
