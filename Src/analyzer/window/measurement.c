@@ -142,11 +142,11 @@ static void MeasurementModeDraw(DSP_RX rx)
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, 38, str);
 
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 62);
-    if (crealf(rx) > 1000.f)
+    if (fabsf(crealf(rx)) > 1000.f)
         sprintf(str, "R: %.2fk  ", crealf(rx) / 1000.f);
     else
         sprintf(str, "R: %.1f  ", crealf(rx));
-    if (cimagf(rx) > 1000.f)
+    if (fabsf(cimagf(rx)) > 1000.f)
         sprintf(&str[strlen(str)], "X: %.2fk", cimagf(rx) / 1000.f);
     else
         sprintf(&str[strlen(str)], "X: %.1f", cimagf(rx));
