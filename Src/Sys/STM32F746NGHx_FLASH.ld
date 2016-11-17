@@ -41,8 +41,9 @@ _Min_Stack_Size = 0x8000;; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 1024K
+FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 1024K
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K
+SDRAM (rw)     : ORIGIN = 0xC00FF000, LENGTH = 0x701000 /* SDRAM part available to user, behind LCD framebuffers */
 }
 
 /* Define output sections */
@@ -159,7 +160,11 @@ SECTIONS
     PROVIDE ( _end = . );
   } >RAM
 
-
+  /* User SDRAM section, right after the LCD framebuffer */
+  .user_sdram (NOLOAD):
+  {
+    KEEP(*(.user_sdram))
+  } >SDRAM
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

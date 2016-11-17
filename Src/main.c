@@ -24,6 +24,9 @@ static void MPU_Config(void);
 volatile uint32_t main_sleep_timer = 0;
 volatile uint32_t autosleep_timer = 0xFFFFFFFFul;
 
+//Example of big buffer in SDRAM section:
+//uint8_t __attribute__((section (".user_sdram"))) __attribute__((used)) bitmapReadBuffer[1000000];
+
 void Sleep(uint32_t nms)
 {
     uint32_t ts = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
