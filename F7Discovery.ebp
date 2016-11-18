@@ -250,6 +250,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\lcd\franbig.h" />
+		<Unit filename="Src\analyzer\lcd\hit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\hit.h" />
 		<Unit filename="Src\analyzer\lcd\LCD.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -294,10 +298,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\window\generator.h" />
-		<Unit filename="Src\analyzer\window\hit.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\analyzer\window\hit.h" />
 		<Unit filename="Src\analyzer\window\keyboard.c">
 			<Option compilerVar="CC" />
 		</Unit>

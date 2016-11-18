@@ -106,6 +106,17 @@ uint32_t LCD_IsOff(void);
 
 void LCD_DrawBitmap(LCDPoint origin, const uint8_t *bmpData, uint32_t bmpDataSize);
 
+// Functions that store and recover window bitmaps
+// to be used in temporary windows and pop-ups
+
+/** @brief Store LCD contents to the stack in SDRAM memory
+    @return A pointer to the memory area where the image has been stored to
+*/
+uint8_t* LCD_Push(void);
+
+/** @brief Restore last saved LCD contents from the stack in SDRAM memory */
+void LCD_Pop(void);
+
 #ifdef __cplusplus
 }
 #endif
