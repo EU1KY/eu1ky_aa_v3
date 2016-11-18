@@ -10,6 +10,14 @@
 
 #include <stdint.h>
 
-void KeyboardWindow(char* buffer, uint32_t max_len, const char* header_text);
+/**
+    @brief Alphanumeric keyboard window.
+           Automatically stores and restores LCD contents
+    @param buffer A buffer with string to be edited
+    @param max_len Maximum number of characters to fit in the buffer
+    @param header_text Keyboard window header text
+    @return 1 if the string in buffer has changed, 0 if not changed
+*/
+uint32_t KeyboardWindow(char* buffer, uint32_t max_len, const char* header_text);
 
 #endif

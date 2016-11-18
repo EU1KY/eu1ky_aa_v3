@@ -600,6 +600,27 @@ void BSP_LCD_ReadLine(uint16_t Ypos, uint32_t *buf)
     memcpy(buf, addr, BSP_LCD_GetXSize() * 4);
   }
 }
+
+void BSP_LCD_CopyActiveLayerTo(uint8_t* destination)
+{
+  if(hLtdcHandler.LayerCfg[ActiveLayer].PixelFormat == LTDC_PIXEL_FORMAT_ARGB8888)
+  {
+    void *addr = (void*)hLtdcHandler.LayerCfg[ActiveLayer].FBStartAdress;
+    SCB_CleanInvalidateDCache_by_Addr(addr, 4 * BSP_LCD_GetXSize() * BSP_LCD_GetYSize());
+    memcpy(destination, addr, 4 * BSP_LCD_GetXSize() * BSP_LCD_GetYSize());
+  }
+}
+
+void BSP_LCD_CopyToActiveLayer(uint8_t* source)
+{
+  if(hLtdcHandler.LayerCfg[ActiveLayer].PixelFormat == LTDC_PIXEL_FORMAT_ARGB8888)
+  {
+    void *addr = (void*)hLtdcHandler.LayerCfg[ActiveLayer].FBStartAdress;
+    memcpy(addr, source, BSP_LCD_GetXSize() * BSP_LCD_GetYSize() * 4);
+    SCB_CleanInvalidateDCache_by_Addr(addr, 4 * BSP_LCD_GetXSize() * BSP_LCD_GetYSize());
+  }
+}
+
 /**
   * @brief  Reads an LCD pixel.
   * @param  Xpos: X position

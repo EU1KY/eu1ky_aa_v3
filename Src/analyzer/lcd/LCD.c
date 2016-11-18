@@ -289,3 +289,27 @@ void LCD_DrawBitmap(LCDPoint origin, const uint8_t *bmpData, uint32_t bmpDataSiz
 cleanup:
     bmp_finalise(&bmp);
 }
+
+//========================================================================================================
+// Display backup (to avoid redraws after running child window)
+// to be used in temporary windows and pop-ups
+// Uses a stack organized in the unused SDRAM as a temporary storage
+//========================================================================================================
+#define LCD_BUF_STACK_DEPTH 4
+static uint8_t __attribute__((section (".user_sdram"))) scrBufferStack[LCD_BUF_STACK_DEPTH][480 * 272 * 4];
+static uint32_t lcd_scr_stack_num = 0;
+
+uint8_t* LCD_Push(void)
+{
+    if (lcd_scr_stack_num >= LCD_BUF_STACK_DEPTH)
+        return 0;
+    BSP_LCD_CopyActiveLayerTo(&scrBufferStack[lcd_scr_stack_num][0]);
+    return &scrBufferStack[lcd_scr_stack_num++][0];
+}
+
+void LCD_Pop(void)
+{
+    if (lcd_scr_stack_num == 0)
+        return;
+    BSP_LCD_CopyToActiveLayer(&scrBufferStack[--lcd_scr_stack_num][0]);
+}

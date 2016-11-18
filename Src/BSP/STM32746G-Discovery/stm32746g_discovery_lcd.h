@@ -230,6 +230,9 @@ void     BSP_LCD_SetFont(sFONT *fonts);
 sFONT    *BSP_LCD_GetFont(void);
 
 void BSP_LCD_ReadLine(uint16_t Ypos, uint32_t *buf);
+void BSP_LCD_CopyActiveLayerTo(uint8_t* destination);
+void BSP_LCD_CopyToActiveLayer(uint8_t* source);
+
 uint32_t BSP_LCD_ReadPixel(uint16_t Xpos, uint16_t Ypos);
 void     BSP_LCD_DrawPixel(uint16_t Xpos, uint16_t Ypos, uint32_t pixel);
 void     BSP_LCD_Clear(uint32_t Color);

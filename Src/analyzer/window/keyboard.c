@@ -5,7 +5,8 @@
  *   This code can be used on terms of WTFPL Version 2 (http://www.wtfpl.net/).
  */
 
-//Keyboard window implementation
+//Alphanumeric keyboard window implementation
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,7 @@ static uint32_t kbdRqExit = 0;
 static char txtbuf[33];
 static char *presult;
 static uint32_t maxlen;
+static uint32_t isChanged;
 
 #define KEYW 40
 #define KEYH 40
@@ -56,6 +58,7 @@ static void KeybHitOKCb(void)
 {
     strcpy(presult, txtbuf);
     kbdRqExit = 1;
+    isChanged = 1;
 }
 
 static void KeybHitCancelCb(void)
@@ -155,11 +158,13 @@ static const TEXTBOX_t tb_keybal[] = {
 };
 #define KBDNUMKEYS (sizeof(tb_keybal) / sizeof(TEXTBOX_t))
 
-void KeyboardWindow(char* buffer, uint32_t max_len, const char* header_text)
+uint32_t KeyboardWindow(char* buffer, uint32_t max_len, const char* header_text)
 {
+    LCD_Push(); //Store current LCD bitmap
     LCD_FillAll(LCD_BLACK);
 
     kbdRqExit = 0;
+    isChanged = 0;
     if (max_len > (sizeof(txtbuf) - 1))
         max_len = sizeof(txtbuf) - 1;
     maxlen = max_len;
@@ -187,6 +192,8 @@ void KeyboardWindow(char* buffer, uint32_t max_len, const char* header_text)
         Sleep(10);
     }
 
-    while(TOUCH_IsPressed());
+    while(TOUCH_IsPressed())
         Sleep(0);
+    LCD_Pop(); //Restore last saved LCD bitmap
+    return isChanged;
 }
