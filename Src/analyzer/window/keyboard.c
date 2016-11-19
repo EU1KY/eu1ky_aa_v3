@@ -56,9 +56,12 @@ static void KeybHitBackspaceCb(void)
 
 static void KeybHitOKCb(void)
 {
-    strcpy(presult, txtbuf);
-    kbdRqExit = 1;
-    isChanged = 1;
+    if (strlen(txtbuf) != 0)
+    {
+        strcpy(presult, txtbuf);
+        kbdRqExit = 1;
+        isChanged = 1;
+    }
 }
 
 static void KeybHitCancelCb(void)
