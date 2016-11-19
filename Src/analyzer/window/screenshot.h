@@ -8,6 +8,9 @@
 #ifndef SCREENSHOT_H_
 #define SCREENSHOT_H_
 
-void SCREENSHOT_Window(const char* fname);
+void SCREENSHOT_Show(const char* fname);
+char* SCREENSHOT_SelectFileName(void);
+void SCREENSHOT_DeleteOldest(void);
+void SCREENSHOT_Save(const char *fname);
 
 #endif

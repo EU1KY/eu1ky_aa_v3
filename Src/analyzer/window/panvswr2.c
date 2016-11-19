@@ -24,6 +24,7 @@
 #include "gen.h"
 #include "oslfile.h"
 #include "stm32746g_discovery_lcd.h"
+#include "screenshot.h"
 
 #define X0 40
 #define Y0 20
@@ -973,72 +974,21 @@ static void save_snapshot(void)
     static const TCHAR *sndir = "/aa/snapshot";
     char path[64];
     char wbuf[256];
+    char* fname = 0;
+    uint32_t i = 0;
+    FRESULT fr = FR_OK;
 
     if (!isMeasured || isSaved)
         return;
 
     DrawSavingText();
 
-    SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
-    Sleep(10);
-    f_mkdir(sndir);
-
-    //Scan dir for snapshot files
-    uint32_t fmax = 0;
-    uint32_t fmin = 0xFFFFFFFFul;
-    DIR dir = { 0 };
-    FILINFO fno = { 0 };
-    FRESULT fr = f_opendir(&dir, sndir);
-    uint32_t numfiles = 0;
-    int i;
-    if (fr == FR_OK)
-    {
-        for (;;)
-        {
-            fr = f_readdir(&dir, &fno); //Iterate through the directory
-            if (fr != FR_OK || !fno.fname[0])
-                break; //Nothing to do
-            if (_FS_RPATH && fno.fname[0] == '.')
-                continue; //bypass hidden files
-            if (fno.fattrib & AM_DIR)
-                continue; //bypass subdirs
-            int len = strlen(fno.fname);
-            if (len != 12) //Bypass filenames with unexpected name length
-                continue;
-            if (0 != strcasecmp(&fno.fname[8], ".s1p"))
-                continue; //Bypass files that are not s1p
-            for (i = 0; i < 8; i++)
-                if (!isdigit(fno.fname[i]))
-                    break;
-            if (i != 8)
-                continue; //Bypass file names that are not 8-digit hex numbers
-            numfiles++;
-            //Now convert file name to number
-            uint32_t hexn = 0;
-            char* endptr;
-            hexn = strtoul(fno.fname, &endptr, 10);
-            if (hexn < fmin)
-                fmin = hexn;
-            if (hexn > fmax)
-                fmax = hexn;
-        }
-        f_closedir(&dir);
-    }
-    else
-    {
-        CRASHF("Failed to open directory %s", sndir);
-    }
-    //Erase one oldest file if needed
-    if (numfiles >= 100)
-    {
-        sprintf(path, "%s/%08d.s1p", sndir, fmin);
-        f_unlink(path);
-        sprintf(path, "%s/%08d.bmp", sndir, fmin);
-        f_unlink(path);
-    }
+    fname = SCREENSHOT_SelectFileName();
+    SCREENSHOT_DeleteOldest();
+    SCREENSHOT_Save(fname);
 
     //Now write measured data to file fmax+1 in s1p format
-    sprintf(path, "%s/%08d.s1p", sndir, fmax+1);
+    sprintf(path, "%s/%s.s1p", sndir, fname);
     FIL fo = { 0 };
     UINT bw;
     fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
@@ -1063,27 +1013,6 @@ static void save_snapshot(void)
         sprintf(wbuf, "%.4f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
         fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
         if (FR_OK != fr) goto CRASH_WR;
-    }
-    f_close(&fo);
-
-    //Now write screenshot as bitmap
-    sprintf(path, "%s/%08d.bmp", sndir, fmax+1);
-    fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
-    if (FR_OK != fr)
-        CRASHF("Failed to open file %s", path);
-    fr = f_write(&fo, bmp_hdr, sizeof(bmp_hdr), &bw);
-    if (FR_OK != fr) goto CRASH_WR;
-    int x = 0;
-    int y = 0;
-    for (y = 271; y >= 0; y--)
-    {
-        uint32_t line[480];
-        BSP_LCD_ReadLine(y, line);
-        for (x = 0; x < 480; x++)
-        {
-            fr = f_write(&fo, &line[x], 3, &bw);
-            if (FR_OK != fr) goto CRASH_WR;
-        }
     }
     f_close(&fo);
 
