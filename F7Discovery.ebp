@@ -318,6 +318,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\window\oslcal.h" />
+		<Unit filename="Src\analyzer\window\panfreq.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\window\panfreq.h" />
 		<Unit filename="Src\analyzer\window\panvswr2.c">
 			<Option compilerVar="CC" />
 		</Unit>
