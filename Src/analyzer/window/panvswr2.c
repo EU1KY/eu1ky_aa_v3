@@ -25,6 +25,7 @@
 #include "oslfile.h"
 #include "stm32746g_discovery_lcd.h"
 #include "screenshot.h"
+#include "panvswr2.h"
 
 #define X0 40
 #define Y0 20
@@ -51,11 +52,6 @@
 #define SM_INTENSITY 64
 
 void Sleep(uint32_t nms);
-
-typedef enum
-{
-    BS200, BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M
-} BANDSPAN;
 
 typedef enum
 {
@@ -90,10 +86,10 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
 
-static const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
-static const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
+const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
+const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
+const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
 
-static const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
 static uint32_t f1 = 14000; //Scan range start frequency, in kHz
 static BANDSPAN span = BS800;
 static char buf[64];
