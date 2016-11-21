@@ -9,7 +9,8 @@
 #define PANFREQ_H_
 
 #include <stdint.h>
+#include "panvswr2.h"
 
-void PanFreqWindow(void);
+void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs);
 
 #endif
