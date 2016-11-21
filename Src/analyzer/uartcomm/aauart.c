@@ -54,7 +54,24 @@ void AAUART_Init(void)
 void AAUART_IRQHandler(void)
 {
     uint32_t isrflags   = READ_REG(UartHandle.Instance->ISR);
-    uint8_t byte;
+    volatile uint8_t byte;
+    UartHandle.Instance->ICR  = 0x3ffff; //Clear all flags
+    if ((isrflags & USART_ISR_TXE) != RESET)
+    {
+        UartHandle.Instance->ICR  = USART_ISR_TXE;
+        if (FIFO_OK != FIFO_Get(&txfifo, (uint8_t*)&byte))
+        {
+            //All bytes have been transmitted
+            //Disable TXE interrupt
+            CLEAR_BIT(UartHandle.Instance->CR1, (USART_CR1_TXEIE | USART_CR1_TCIE));
+            byte = UartHandle.Instance->CR1;
+            AAUART_busy = 0;
+        }
+        else
+        {
+            UartHandle.Instance->TDR = byte;  //Writing TDR clears interrupt flag
+        }
+    }
 
     if ((isrflags & USART_ISR_RXNE) != RESET)
     {
@@ -65,21 +82,7 @@ void AAUART_IRQHandler(void)
             rx_overflow_ctr++;
         }
     }
-
-    if ((isrflags & USART_ISR_TXE) != RESET)
-    {
-        if (FIFO_OK != FIFO_Get(&txfifo, &byte))
-        {
-            //All bytes have been transmitted
-            //Disable TXE interrupt
-            MODIFY_REG(UartHandle.Instance->CR1, USART_CR1_TXEIE, 0);
-            AAUART_busy = 0;
-        }
-        else
-        {
-            UartHandle.Instance->TDR = byte;  //Writing TDR clears interrupt flag
-        }
-    }
+    __DSB();
 }
 
 //======================================================
