@@ -17,6 +17,7 @@
 #include "textbox.h"
 #include "config.h"
 #include "panfreq.h"
+#include "panvswr2.h"
 
 extern void Sleep(uint32_t);
 static void DigitHitCb(const TEXTBOX_t* tb);
@@ -30,6 +31,8 @@ static void M01HitCb(void);
 static void P10HitCb(void);
 static void P1HitCb(void);
 static void P01HitCb(void);
+static void BSPrevHitCb(void);
+static void BSNextHitCb(void);
 
 static uint32_t rqExit = 0;
 
@@ -121,9 +124,21 @@ static const TEXTBOX_t tb_pan[] = {
     (TEXTBOX_t){ .x0 = 300, .y0 = 20, .text = "+1", .font = FONT_FRANBIG, .width = 50, .height = 36, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .nowait = 100, .cb = (void(*)(void))P1HitCb, .next = (void*)&tb_pan[33] },
     (TEXTBOX_t){ .x0 = 350, .y0 = 20, .text = "+10", .font = FONT_FRANBIG, .width = 50, .height = 36, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .nowait = 100, .cb = (void(*)(void))P10HitCb},
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .nowait = 100, .cb = (void(*)(void))P10HitCb, .next = (void*)&tb_pan[34]},
 
+    (TEXTBOX_t){ .x0 = 160, .y0 = 80, .text = "<<", .font = FONT_FRANBIG, .width = 50, .height = 36, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .cb = (void(*)(void))BSPrevHitCb, .next = (void*)&tb_pan[35] },
+    (TEXTBOX_t){ .x0 = 300, .y0 = 80, .text = ">>", .font = FONT_FRANBIG, .width = 50, .height = 36, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .cb = (void(*)(void))BSNextHitCb },
 };
+
+static void BSPrevHitCb(void)
+{
+}
+
+static void BSNextHitCb(void)
+{
+}
 
 static void M10HitCb(void)
 {
