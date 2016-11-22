@@ -226,7 +226,7 @@ void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasureme
     else
     {
         if (freqHz < BAND_FMIN ||
-            (CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED) ? freqHz > BAND_FMAX * 3 : freqHz > BAND_FMAX) )
+            ((1 == CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED)) ? freqHz > BAND_FMAX * 3 : freqHz > BAND_FMAX) )
         { // Set defaults for out of band measurements
             magmv_v = 500.f;
             magmv_i = 500.f;
@@ -267,14 +267,6 @@ REMEASURE:
         else if (pdif > M_PI)
             pdif -= 2 * M_PI;
 
-        if (CFG_GetParam(CFG_PARAM_F_LO_DIV_BY_TWO))
-        {
-            //Correct quadrature phase shift
-            if (freqHz > (BAND_FMAX / 2)) //Working on 3rd harmonic of LO
-                pdif -= M_PI_2;
-            else
-                pdif += M_PI_2;
-        }
         phdif_buf[i] = pdif;
     }
 
@@ -289,7 +281,7 @@ REMEASURE:
     }
 
     magdif = mag_v / mag_i;
-    if (applyErrCorr && freqHz <= BAND_FMAX && 0 == CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED))
+    if (applyErrCorr && freqHz <= BAND_FMAX && (1 != CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED)))
         OSL_CorrectErr(freqHz, &magdif, &phdif);
 
 /*
@@ -308,7 +300,7 @@ REMEASURE:
     mZ = DSP_CalcR() + DSP_CalcX() * I;
 
     //Apply OSL correction if needed
-    if (applyOSL && freqHz <= BAND_FMAX && 0 == CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED))
+    if (applyOSL && freqHz <= BAND_FMAX && (1 != CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED)))
     {
         mZ = OSL_CorrectZ(freqHz, mZ);
     }

@@ -159,16 +159,16 @@ static void Show_F(void)
     uint32_t color = IsValidRange() ? LCD_GREEN : LCD_RED;
     uint32_t dp = (_f1 % 1000) / 100;
     uint32_t mhz = _f1 / 1000;
-    LCD_FillRect(LCD_MakePoint(170, 8), LCD_MakePoint(319, FONT_GetHeight(FONT_FRANBIG) + 8), LCD_BLACK);
+    LCD_FillRect(LCD_MakePoint(160, 8), LCD_MakePoint(319, FONT_GetHeight(FONT_FRANBIG) + 8), LCD_BLACK);
     LCD_FillRect(LCD_MakePoint(240, 63), LCD_MakePoint(399, FONT_GetHeight(FONT_FRANBIG) + 63), LCD_BLACK);
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
-        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 170, 8, "Fc: %u.%u MHz", mhz, dp);
+        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 160, 8, "%u.%u MHz", mhz, dp);
         FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 240, 63, " +/- %s", BSSTR_HALF[_bs]);
     }
     else
     {
-        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 170, 8, "F0: %u.%u MHz", mhz, dp);
+        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 160, 8, "%u.%u MHz", mhz, dp);
         FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 240, 63, " +%s", BSSTR[_bs]);
     }
 }
@@ -285,6 +285,7 @@ static void DigitHitCb(const TEXTBOX_t* tb)
         uint32_t digit = tb->text[0] - '0';
         _f1 = _f1 * 10 + digit * 100;
     }
+    Show_F();
 }
 
 static void BandHitCb(const TEXTBOX_t* tb)
@@ -292,67 +293,67 @@ static void BandHitCb(const TEXTBOX_t* tb)
     if (0 == strcmp(tb->text, "160"))
     {
         _f1 = 1800;
-        _bs = BSVALUES[BS200];
+        _bs = BS200;
     }
     else if (0 == strcmp(tb->text, "80"))
     {
-        _f1 = 3500;
-        _bs = BSVALUES[BS400];
+        _f1 = 3300;
+        _bs = BS800;
     }
     else if (0 == strcmp(tb->text, "60"))
     {
         _f1 = 5200;
-        _bs = BSVALUES[BS200];
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "40"))
     {
-        _f1 = 7000;
-        _bs = BSVALUES[BS200];
+        _f1 = 6900;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "30"))
     {
-        _f1 = 10000;
-        _bs = BSVALUES[BS200];
+        _f1 = 9900;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "20"))
     {
-        _f1 = 14000;
-        _bs = BSVALUES[BS400];
+        _f1 = 13800;
+        _bs = BS800;
     }
     else if (0 == strcmp(tb->text, "17"))
     {
-        _f1 = 18000;
-        _bs = BSVALUES[BS200];
+        _f1 = 17900;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "15"))
     {
         _f1 = 20800;
-        _bs = BSVALUES[BS800];
+        _bs = BS800;
     }
     else if (0 == strcmp(tb->text, "12"))
     {
-        _f1 = 24800;
-        _bs = BSVALUES[BS200];
+        _f1 = 24700;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "10"))
     {
         _f1 = 27900;
-        _bs = BSVALUES[BS2M];
+        _bs = BS2M;
     }
     else if (0 == strcmp(tb->text, "6"))
     {
-        _f1 = 50000;
-        _bs = BSVALUES[BS2M];
+        _f1 = 49500;
+        _bs = BS4M;
     }
     else if (0 == strcmp(tb->text, "4"))
     {
         _f1 = 69000;
-        _bs = BSVALUES[BS2M];
+        _bs = BS2M;
     }
     else if (0 == strcmp(tb->text, "2"))
     {
         _f1 = 143000;
-        _bs = BSVALUES[BS4M];
+        _bs = BS4M;
     }
     Show_F();
 }

@@ -315,7 +315,7 @@ static void MEASUREMENT_SetFreq(void)
 {
     while(TOUCH_IsPressed());
     uint32_t val = NumKeypad(CFG_GetParam(CFG_PARAM_MEAS_F)/1000, BAND_FMIN/1000,
-                             CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED) ? (BAND_FMAX*3)/1000 : BAND_FMAX/1000,
+                             (1 == CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED)) ? (BAND_FMAX*3)/1000 : BAND_FMAX/1000,
                              "Set measurement frequency, kHz");
     CFG_SetParam(CFG_PARAM_MEAS_F, val * 1000);
     CFG_Flush();
@@ -356,7 +356,7 @@ void MEASUREMENT_Proc(void)
     //to MeasurementFreq
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
     if (!(fbkup >= BAND_FMIN &&
-          CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED) ? fbkup <= BAND_FMAX * 3 : fbkup <= BAND_FMAX &&
+          (1 == CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED)) ? fbkup <= BAND_FMAX * 3 : fbkup <= BAND_FMAX &&
           (fbkup % 1000) == 0))
     {
         CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
