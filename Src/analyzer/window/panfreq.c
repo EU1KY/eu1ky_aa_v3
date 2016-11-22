@@ -140,17 +140,18 @@ static const TEXTBOX_t tb_pan[] = {
 
 static bool IsValidRange(void)
 {
+    uint32_t fstart, fend;
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
-        if (((_f1 - BSVALUES[_bs]/2) < BAND_FMIN/1000) || ((_f1 - BSVALUES[_bs]/2) > 0x80000000ul)|| (_f1 + BSVALUES[_bs]/2 > BAND_FMAX/1000))
-            return false;
+        fstart = _f1 - BSVALUES[_bs]/2;
+        fend = _f1 + BSVALUES[_bs]/2;
     }
     else
     {
-        if ((_f1 < BAND_FMIN/1000) || (_f1 + BSVALUES[_bs] > BAND_FMAX/1000))
-            return false;
+        fstart = _f1;
+        fend = _f1 + BSVALUES[_bs];
     }
-    return true;
+    return (fstart < fend) && (fstart >= BAND_FMIN/1000) && (fend <= BAND_FMAX/1000);
 }
 
 static void Show_F(void)
