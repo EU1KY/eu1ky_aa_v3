@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "LCD.h"
 #include "touch.h"
 #include "font.h"
@@ -35,6 +38,9 @@ static void BSPrevHitCb(void);
 static void BSNextHitCb(void);
 
 static uint32_t rqExit = 0;
+static uint32_t _f0;
+static BANDSPAN _bs;
+static bool update_allowed = false;
 
 #define NUMKEYH 36
 #define NUMKEYW 40
@@ -71,7 +77,7 @@ static const TEXTBOX_t tb_pan[] = {
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))DigitHitCb, .cbparam = 1, .next = (void*)&tb_pan[9] },
     (TEXTBOX_t){ .x0 = NUMKEYX(1), .y0 = NUMKEYY(3), .text = "0", .font = FONT_FRANBIG, .width = NUMKEYW, .height = NUMKEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))DigitHitCb, .cbparam = 1, .next = (void*)&tb_pan[10] },
-    (TEXTBOX_t){ .x0 = NUMKEYX(2), .y0 = NUMKEYY(3), .text = "C", .font = FONT_FRANBIG, .width = NUMKEYW, .height = NUMKEYH, .center = 1,
+    (TEXTBOX_t){ .x0 = NUMKEYX(2), .y0 = NUMKEYY(3), .text = "<", .font = FONT_FRANBIG, .width = NUMKEYW, .height = NUMKEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(200,0,0), .cb = ClearHitCb, .cbparam = 0, .next = (void*)&tb_pan[11] },
 
     (TEXTBOX_t){ .x0 = BANDKEYX(0), .y0 = BANDKEYY(0), .text = "160", .font = FONT_FRANBIG, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
@@ -132,41 +138,130 @@ static const TEXTBOX_t tb_pan[] = {
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .cb = (void(*)(void))BSNextHitCb },
 };
 
+static bool IsValidRange(void)
+{
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+    {
+        if (((_f0 - BSVALUES[_bs]/2) < BAND_FMIN/1000) || ((_f0 - BSVALUES[_bs]/2) > 0x80000000ul)|| (_f0 + BSVALUES[_bs]/2 > BAND_FMAX/1000))
+            return false;
+    }
+    else
+    {
+        if ((_f0 < BAND_FMIN/1000) || (_f0 + BSVALUES[_bs] > BAND_FMAX/1000))
+            return false;
+    }
+    return true;
+}
+
+static void Show_F(void)
+{
+    uint32_t color = IsValidRange() ? LCD_GREEN : LCD_RED;
+    uint32_t dp = (_f0 % 1000) / 100;
+    uint32_t mhz = _f0 / 1000;
+    LCD_FillRect(LCD_MakePoint(170, 8), LCD_MakePoint(319, FONT_GetHeight(FONT_FRANBIG) + 8), LCD_BLACK);
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+    {
+        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 170, 8, "Fc: %u.%u MHz", mhz, dp);
+        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 240, 63, " +/- %s", BSSTR_HALF[_bs]);
+    }
+    else
+    {
+        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 170, 8, "F0: %u.%u MHz", mhz, dp);
+        FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 240, 63, " +%s", BSSTR[_bs]);
+    }
+}
+
 static void BSPrevHitCb(void)
 {
+    if (_bs == BS200)
+    {
+        _bs = BS40M;
+        if (!IsValidRange())
+            _bs = BS200;
+    }
+    else
+        _bs -= 1;
+    Show_F();
 }
 
 static void BSNextHitCb(void)
 {
+    if (_bs == BS40M)
+        _bs = BS200;
+    else
+    {
+        _bs += 1;
+        if (!IsValidRange())
+            _bs -= 1;
+    }
+    Show_F();
+}
+
+static void F0_Decr(uint32_t khz)
+{
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+    {
+        if (_f0 >= (BAND_FMIN / 1000 + khz + BSVALUES[_bs]/2))
+            _f0 -= khz;
+    }
+    else
+    {
+        if (_f0 >= (BAND_FMIN / 1000 + khz))
+            _f0 -= khz;
+    }
+    Show_F();
+}
+
+static void F0_Incr(uint32_t khz)
+{
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+    {
+        if (_f0 <= (BAND_FMAX / 1000 - khz - BSVALUES[_bs]/2))
+            _f0 += khz;
+    }
+    else
+    {
+        if (_f0 <= (BAND_FMAX / 1000 - khz))
+            _f0 += khz;
+    }
+    Show_F();
 }
 
 static void M10HitCb(void)
 {
+    F0_Decr(10000);
 }
 
 static void M1HitCb(void)
 {
+    F0_Decr(1000);
 }
 
 static void M01HitCb(void)
 {
+    F0_Decr(100);
 }
 
 static void P10HitCb(void)
 {
+    F0_Incr(10000);
 }
 
 static void P1HitCb(void)
 {
+    F0_Incr(1000);
 }
 
 static void P01HitCb(void)
 {
+    F0_Incr(100);
 }
 
 static void OKHitCb(void)
 {
     rqExit = 1;
+    if (IsValidRange())
+        update_allowed = true;
 }
 
 static void CancelHitCb(void)
@@ -176,14 +271,87 @@ static void CancelHitCb(void)
 
 static void ClearHitCb(void)
 {
+    _f0 /= 10;
+    Show_F();
 }
 
 static void DigitHitCb(const TEXTBOX_t* tb)
 {
+    if (_f0 < BAND_FMAX / 1000)
+    {
+        uint32_t digit = tb->text[0] - '0';
+        _f0 = _f0 * 10 + digit;
+    }
 }
 
 static void BandHitCb(const TEXTBOX_t* tb)
 {
+    if (0 == strcmp(tb->text, "160"))
+    {
+        _f0 = 1800;
+        _bs = BSVALUES[BS200];
+    }
+    else if (0 == strcmp(tb->text, "80"))
+    {
+        _f0 = 3500;
+        _bs = BSVALUES[BS400];
+    }
+    else if (0 == strcmp(tb->text, "60"))
+    {
+        _f0 = 5200;
+        _bs = BSVALUES[BS200];
+    }
+    else if (0 == strcmp(tb->text, "40"))
+    {
+        _f0 = 7000;
+        _bs = BSVALUES[BS200];
+    }
+    else if (0 == strcmp(tb->text, "30"))
+    {
+        _f0 = 10000;
+        _bs = BSVALUES[BS200];
+    }
+    else if (0 == strcmp(tb->text, "20"))
+    {
+        _f0 = 14000;
+        _bs = BSVALUES[BS400];
+    }
+    else if (0 == strcmp(tb->text, "17"))
+    {
+        _f0 = 18000;
+        _bs = BSVALUES[BS200];
+    }
+    else if (0 == strcmp(tb->text, "15"))
+    {
+        _f0 = 20800;
+        _bs = BSVALUES[BS800];
+    }
+    else if (0 == strcmp(tb->text, "12"))
+    {
+        _f0 = 24800;
+        _bs = BSVALUES[BS200];
+    }
+    else if (0 == strcmp(tb->text, "10"))
+    {
+        _f0 = 27900;
+        _bs = BSVALUES[BS2M];
+    }
+    else if (0 == strcmp(tb->text, "6"))
+    {
+        _f0 = 50000;
+        _bs = BSVALUES[BS2M];
+    }
+    else if (0 == strcmp(tb->text, "4"))
+    {
+        _f0 = 69000;
+        _bs = BSVALUES[BS2M];
+    }
+    else if (0 == strcmp(tb->text, "2"))
+    {
+        _f0 = 143000;
+        _bs = BSVALUES[BS4M];
+    }
+    Show_F();
 }
 
 void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
@@ -191,6 +359,9 @@ void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
     LCD_Push(); //Store current LCD bitmap
     LCD_FillAll(LCD_BLACK);
     rqExit = 0;
+    _f0 = *pFkhz;
+    _bs = *pBs;
+    update_allowed = false;
 
     TEXTBOX_CTX_t fctx;
     TEXTBOX_InitContext(&fctx);
@@ -199,6 +370,8 @@ void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
                                                       //It is enough since all the .next fields are filled at compile time.
     TEXTBOX_DrawContext(&fctx);
 
+    Show_F();
+
     for(;;)
     {
         if (TEXTBOX_HitTest(&fctx))
@@ -206,7 +379,14 @@ void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
             Sleep(50);
         }
         if (rqExit)
+        {
+            if (update_allowed)
+            {
+                *pFkhz = _f0;
+                *pBs = _bs;
+            }
             break;
+        }
         Sleep(10);
     }
 
