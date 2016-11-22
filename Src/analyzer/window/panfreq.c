@@ -274,6 +274,7 @@ static void CancelHitCb(void)
 static void ClearHitCb(void)
 {
     _f1 /= 10;
+    _f1 = (_f1 / 100) * 100; //Round to 100 kHz
     Show_F();
 }
 
@@ -282,7 +283,7 @@ static void DigitHitCb(const TEXTBOX_t* tb)
     if (_f1 < BAND_FMAX / 1000)
     {
         uint32_t digit = tb->text[0] - '0';
-        _f1 = _f1 * 10 + digit;
+        _f1 = _f1 * 10 + digit * 100;
     }
 }
 
