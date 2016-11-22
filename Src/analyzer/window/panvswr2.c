@@ -26,6 +26,7 @@
 #include "stm32746g_discovery_lcd.h"
 #include "screenshot.h"
 #include "panvswr2.h"
+#include "panfreq.h"
 
 #define X0 40
 #define Y0 20
@@ -377,6 +378,11 @@ static void prevspan(BANDSPAN *sp)
     {
         *sp = (BANDSPAN)((int)*sp - 1);
     }
+}
+
+static void _SELFREQ_Proc(void)
+{
+    PanFreqWindow(&f1, &span);
 }
 
 static void SELFREQ_Proc(void)

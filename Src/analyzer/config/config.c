@@ -104,9 +104,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
         .idstring = "SI5351_BUS_BASE_ADDR",
-        .nvalues = 3,
-        .values = CFG_IARR(   0xC0, 0xC4, 0xCE),
-        .strvalues = CFG_SARR("C0h", "C4h", "CEh"),
+        .nvalues = 4,
+        .values = CFG_IARR( 0x00,  0xC0, 0xC4, 0xCE),
+        .strvalues = CFG_SARR("Autodetect", "C0h", "C4h", "CEh"),
         .type = CFG_PARAM_T_U8,
         .dstring = "Si5351 i2c bus base address (default C0h)",
         .isvalid = isSi5351,
@@ -256,7 +256,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
     CFG_SetParam(CFG_PARAM_SYNTH_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SI5351_XTAL_FREQ, 27000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0xC0);
+    CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0x00);
     CFG_SetParam(CFG_PARAM_SI5351_CORR, 0);
     CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0ul);
     CFG_SetParam(CFG_PARAM_R0, 50);
