@@ -38,7 +38,7 @@ static void BSPrevHitCb(void);
 static void BSNextHitCb(void);
 
 static uint32_t rqExit = 0;
-static uint32_t _f0;
+static uint32_t _f1;
 static BANDSPAN _bs;
 static bool update_allowed = false;
 
@@ -142,12 +142,12 @@ static bool IsValidRange(void)
 {
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
-        if (((_f0 - BSVALUES[_bs]/2) < BAND_FMIN/1000) || ((_f0 - BSVALUES[_bs]/2) > 0x80000000ul)|| (_f0 + BSVALUES[_bs]/2 > BAND_FMAX/1000))
+        if (((_f1 - BSVALUES[_bs]/2) < BAND_FMIN/1000) || ((_f1 - BSVALUES[_bs]/2) > 0x80000000ul)|| (_f1 + BSVALUES[_bs]/2 > BAND_FMAX/1000))
             return false;
     }
     else
     {
-        if ((_f0 < BAND_FMIN/1000) || (_f0 + BSVALUES[_bs] > BAND_FMAX/1000))
+        if ((_f1 < BAND_FMIN/1000) || (_f1 + BSVALUES[_bs] > BAND_FMAX/1000))
             return false;
     }
     return true;
@@ -156,9 +156,10 @@ static bool IsValidRange(void)
 static void Show_F(void)
 {
     uint32_t color = IsValidRange() ? LCD_GREEN : LCD_RED;
-    uint32_t dp = (_f0 % 1000) / 100;
-    uint32_t mhz = _f0 / 1000;
+    uint32_t dp = (_f1 % 1000) / 100;
+    uint32_t mhz = _f1 / 1000;
     LCD_FillRect(LCD_MakePoint(170, 8), LCD_MakePoint(319, FONT_GetHeight(FONT_FRANBIG) + 8), LCD_BLACK);
+    LCD_FillRect(LCD_MakePoint(240, 63), LCD_MakePoint(399, FONT_GetHeight(FONT_FRANBIG) + 63), LCD_BLACK);
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
         FONT_Print(FONT_FRANBIG, color, LCD_BLACK, 170, 8, "Fc: %u.%u MHz", mhz, dp);
@@ -201,13 +202,13 @@ static void F0_Decr(uint32_t khz)
 {
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
-        if (_f0 >= (BAND_FMIN / 1000 + khz + BSVALUES[_bs]/2))
-            _f0 -= khz;
+        if (_f1 >= (BAND_FMIN / 1000 + khz + BSVALUES[_bs]/2))
+            _f1 -= khz;
     }
     else
     {
-        if (_f0 >= (BAND_FMIN / 1000 + khz))
-            _f0 -= khz;
+        if (_f1 >= (BAND_FMIN / 1000 + khz))
+            _f1 -= khz;
     }
     Show_F();
 }
@@ -216,13 +217,13 @@ static void F0_Incr(uint32_t khz)
 {
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
-        if (_f0 <= (BAND_FMAX / 1000 - khz - BSVALUES[_bs]/2))
-            _f0 += khz;
+        if (_f1 <= (BAND_FMAX / 1000 - khz - BSVALUES[_bs]/2))
+            _f1 += khz;
     }
     else
     {
-        if (_f0 <= (BAND_FMAX / 1000 - khz))
-            _f0 += khz;
+        if (_f1 <= (BAND_FMAX / 1000 - khz))
+            _f1 += khz;
     }
     Show_F();
 }
@@ -271,16 +272,16 @@ static void CancelHitCb(void)
 
 static void ClearHitCb(void)
 {
-    _f0 /= 10;
+    _f1 /= 10;
     Show_F();
 }
 
 static void DigitHitCb(const TEXTBOX_t* tb)
 {
-    if (_f0 < BAND_FMAX / 1000)
+    if (_f1 < BAND_FMAX / 1000)
     {
         uint32_t digit = tb->text[0] - '0';
-        _f0 = _f0 * 10 + digit;
+        _f1 = _f1 * 10 + digit;
     }
 }
 
@@ -288,80 +289,81 @@ static void BandHitCb(const TEXTBOX_t* tb)
 {
     if (0 == strcmp(tb->text, "160"))
     {
-        _f0 = 1800;
+        _f1 = 1800;
         _bs = BSVALUES[BS200];
     }
     else if (0 == strcmp(tb->text, "80"))
     {
-        _f0 = 3500;
+        _f1 = 3500;
         _bs = BSVALUES[BS400];
     }
     else if (0 == strcmp(tb->text, "60"))
     {
-        _f0 = 5200;
+        _f1 = 5200;
         _bs = BSVALUES[BS200];
     }
     else if (0 == strcmp(tb->text, "40"))
     {
-        _f0 = 7000;
+        _f1 = 7000;
         _bs = BSVALUES[BS200];
     }
     else if (0 == strcmp(tb->text, "30"))
     {
-        _f0 = 10000;
+        _f1 = 10000;
         _bs = BSVALUES[BS200];
     }
     else if (0 == strcmp(tb->text, "20"))
     {
-        _f0 = 14000;
+        _f1 = 14000;
         _bs = BSVALUES[BS400];
     }
     else if (0 == strcmp(tb->text, "17"))
     {
-        _f0 = 18000;
+        _f1 = 18000;
         _bs = BSVALUES[BS200];
     }
     else if (0 == strcmp(tb->text, "15"))
     {
-        _f0 = 20800;
+        _f1 = 20800;
         _bs = BSVALUES[BS800];
     }
     else if (0 == strcmp(tb->text, "12"))
     {
-        _f0 = 24800;
+        _f1 = 24800;
         _bs = BSVALUES[BS200];
     }
     else if (0 == strcmp(tb->text, "10"))
     {
-        _f0 = 27900;
+        _f1 = 27900;
         _bs = BSVALUES[BS2M];
     }
     else if (0 == strcmp(tb->text, "6"))
     {
-        _f0 = 50000;
+        _f1 = 50000;
         _bs = BSVALUES[BS2M];
     }
     else if (0 == strcmp(tb->text, "4"))
     {
-        _f0 = 69000;
+        _f1 = 69000;
         _bs = BSVALUES[BS2M];
     }
     else if (0 == strcmp(tb->text, "2"))
     {
-        _f0 = 143000;
+        _f1 = 143000;
         _bs = BSVALUES[BS4M];
     }
     Show_F();
 }
 
-void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
+bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
 {
     LCD_Push(); //Store current LCD bitmap
     LCD_FillAll(LCD_BLACK);
     rqExit = 0;
-    _f0 = *pFkhz;
+    _f1 = *pFkhz;
     _bs = *pBs;
     update_allowed = false;
+    bool isUpdated = false;
 
     TEXTBOX_CTX_t fctx;
     TEXTBOX_InitContext(&fctx);
@@ -380,10 +382,14 @@ void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
         }
         if (rqExit)
         {
-            if (update_allowed)
+            if (update_allowed && (_f1 != *pFkhz || _bs != *pBs))
             {
-                *pFkhz = _f0;
+                *pFkhz = _f1;
                 *pBs = _bs;
+                CFG_SetParam(CFG_PARAM_PAN_F1, _f1);
+                CFG_SetParam(CFG_PARAM_PAN_SPAN, _bs);
+                CFG_Flush();
+                isUpdated = true;
             }
             break;
         }
@@ -393,4 +399,5 @@ void PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
     while(TOUCH_IsPressed())
         Sleep(0);
     LCD_Pop(); //Restore last saved LCD bitmap
+    return isUpdated;
 }

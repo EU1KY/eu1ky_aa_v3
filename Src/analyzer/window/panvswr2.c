@@ -380,117 +380,6 @@ static void prevspan(BANDSPAN *sp)
     }
 }
 
-static void _SELFREQ_Proc(void)
-{
-    PanFreqWindow(&f1, &span);
-}
-
-static void SELFREQ_Proc(void)
-{
-    BANDSPAN spantmp;
-    uint32_t f1tmp;
-    uint32_t speedcnt;
-    uint32_t speedstep;
-
-    spantmp = span;
-    f1tmp = f1;
-    speedcnt = 0;
-    speedstep = 100;
-
-    LCD_FillAll(LCD_BLACK);
-    while(TOUCH_IsPressed());
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 30, 5, "Select Freq and Bandspan");
-
-    print_span(span);
-    print_f1(f1);
-
-    FONT_Write(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 40, 200, "OK");
-    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 200, "Cancel");
-
-    for(;;)
-    {
-        if (TOUCH_Poll(&pt))
-        {
-            if (pt.y < 90)
-            { //Span
-                speedcnt = 0;
-                speedstep = 100;
-                if (pt.x < 140)
-                { //minus
-                    prevspan(&spantmp);
-                    print_span(spantmp);
-                }
-                else if (pt.x > 180)
-                {//plus
-                    nextspan(&spantmp);
-                    print_span(spantmp);
-                }
-                Sleep(100); //slow down span cycling
-            }
-            else if (pt.y < 140)
-            { //f1
-                ++speedcnt;
-                if (pt.x < 140)
-                {
-                    if (f1tmp > BAND_FMIN/1000)
-                    {
-                        f1tmp -= speedstep;
-                        if (f1tmp < BAND_FMIN/1000 || f1tmp > BAND_FMAX/1000)
-                            f1tmp = BAND_FMIN/1000;
-                        print_f1(f1tmp);
-                    }
-                }
-                else if (pt.x > 180)
-                {
-                    f1tmp += speedstep;
-                    if (f1tmp > BAND_FMAX/1000)
-                        f1tmp = BAND_FMAX/1000;
-                    print_f1(f1tmp);
-                }
-            }
-            else if (pt.y > 200)
-            {
-                speedcnt = 0;
-                speedstep = 100;
-                if (pt.x < 140)
-                {//OK
-                    f1 = f1tmp;
-                    span = spantmp;
-                    CFG_SetParam(CFG_PARAM_PAN_F1, f1);
-                    CFG_SetParam(CFG_PARAM_PAN_SPAN, span);
-                    CFG_Flush();
-                    while(TOUCH_IsPressed());
-                    Sleep(100);
-                    isMeasured = 0;
-                    return;
-                }
-                else if (pt.x > 180)
-                {//Cancel
-                    while(TOUCH_IsPressed());
-                    Sleep(100);
-                    return;
-                }
-            }
-        }
-        else
-        {
-            speedcnt = 0;
-            speedstep = 100;
-        }
-        if (speedcnt > 200)
-            speedstep = 500;
-        else if (speedcnt > 100)
-            speedstep = 200;
-        else
-            speedstep = 100;
-        if (speedcnt < 10)
-            Sleep(150);
-        else if (speedcnt < 20)
-            Sleep(50);
-    }
-}
-
-
 static void ScanRX()
 {
     uint64_t i;
@@ -1062,8 +951,11 @@ void PANVSWR2_Proc(void)
         {
             if (pt.y < 80)
             {// Top
-                SELFREQ_Proc();
-                RedrawWindow();
+                if (PanFreqWindow(&f1, &span))
+                {//Span or frequency has been changed
+                    isMeasured = 0;
+                    RedrawWindow();
+                }
             }
             else if (pt.y > 90 && pt.y <= 170)
             {
