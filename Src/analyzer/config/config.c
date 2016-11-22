@@ -279,6 +279,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_COM_PORT, COM1);
     CFG_SetParam(CFG_PARAM_COM_SPEED, 38400);
     CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
+    CFG_SetParam(CFG_PARAM_3RD_HARMONIC_ENABLED, 0);
 
     //Load parameters from file on SD card
     FRESULT res;

@@ -70,25 +70,12 @@ void GEN_SetMeasurementFreq(uint32_t fhz)
         return;
     }
 
-    if (CFG_GetParam(CFG_PARAM_F_LO_DIV_BY_TWO))
-    { //Quadrature mixer is used
-        if (fhz > (BAND_FMAX/2)) //Measurement is performed on 3rd harmonics of LO (-10 dB signals)
-        {
-            gen.SetF0(fhz);
-            gen.SetLO(((fhz + IF) * 2) / 3);
-            if (CFG_GetParam(CFG_PARAM_LIN_ATTENUATION) > 9)
-            {
-                BSP_AUDIO_IN_SetVolume(109 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION)); //Add +10 dB gain against normal
-            }
-        }
-        else
-        {
-            gen.SetF0(fhz);
-            gen.SetLO(((fhz + IF) * 2));
-            BSP_AUDIO_IN_SetVolume(100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION)); //Set nominal gain
-        }
+    if (fhz > BAND_FMAX && CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED))
+    {
+        gen.SetF0(fhz / 3);
+        gen.SetLO((fhz + IF) / 3);
     }
-    else //No need to use 3rd harmonic in this case
+    else
     {
         gen.SetF0(fhz);
         gen.SetLO(fhz + IF);
