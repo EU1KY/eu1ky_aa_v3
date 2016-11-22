@@ -29,6 +29,7 @@
 #include "si5351.h"
 #include "config.h"
 #include "rational.h"
+#include "font.h"
 
 struct Si5351Status dev_status;
 struct Si5351IntStatus dev_int_status;
@@ -45,6 +46,7 @@ static uint8_t si5351_write(uint8_t, uint8_t);
 static uint8_t si5351_read(uint8_t, uint8_t *);
 static void si5351_set_clk_control(enum si5351_clock, enum si5351_pll, int isIntegerMode, enum si5351_drive drive);
 static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum si5351_clock clk);
+static uint8_t si5351_detect_address(void);
 
 //Ext I2C port used for camera is wired to Arduino UNO connector when SB4 and SB1 jumpers are set instead of SB5 and SB3.
 extern void     CAMERA_IO_Init(void);
@@ -52,6 +54,7 @@ extern void     CAMERA_IO_Write(uint8_t addr, uint8_t reg, uint8_t value);
 extern uint8_t  CAMERA_IO_Read(uint8_t addr, uint8_t reg);
 extern void     CAMERA_Delay(uint32_t delay);
 extern void     CAMERA_IO_WriteBulk(uint8_t addr, uint8_t reg, uint8_t* values, uint16_t nvalues);
+extern void Sleep(uint32_t);
 
 /******************************/
 /* Suggested public functions */
@@ -66,6 +69,23 @@ extern void     CAMERA_IO_WriteBulk(uint8_t addr, uint8_t reg, uint8_t* values, 
 void si5351_Init(void)
 {
     CAMERA_IO_Init();
+
+    if (0 == CFG_GetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR))
+    {
+        uint8_t addr = si5351_detect_address();
+        if (0 == addr)
+        {
+            FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 5, 10, "Si5351a address autodetection failed. The address will be set to default C0h.");
+            addr = 0xC0;
+        }
+        else
+        {
+            FONT_Print(FONT_FRAN, LCD_GREEN, LCD_BLACK, 5, 10, "Si5351a address autodetection Succeeded. Detected at %02Xh.", addr);
+        }
+        Sleep(3000);
+        CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, addr);
+        CFG_Flush();
+    }
 
     si5351_write(SI5351_OUTPUT_ENABLE_CTRL, 0xFF); //Disable all outputs
 
@@ -441,4 +461,20 @@ static uint8_t si5351_read_device_reg(uint8_t reg)
     uint8_t data = 0;
     si5351_read(reg, &data);
     return data;
+}
+
+//Return 0 if si5351 is not found, or its address on the i2c bus
+static uint8_t si5351_detect_address(void)
+{
+    uint8_t addr = 2;
+    while (1)
+    {
+        uint8_t data = CAMERA_IO_Read(addr, 0);
+        if (data != 0 && data != 0xFF)
+            break;
+        addr += 2;
+        if (addr == 0)
+            break;
+    }
+    return addr;
 }
