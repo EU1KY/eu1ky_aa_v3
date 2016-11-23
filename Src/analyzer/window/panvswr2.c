@@ -56,7 +56,7 @@ void Sleep(uint32_t nms);
 
 typedef enum
 {
-    GRAPH_VSWR, GRAPH_RX, GRAPH_SMITH
+    GRAPH_VSWR, GRAPH_RX, GRAPH_SMITH, GRAPH_S11
 } GRAPHTYPE;
 
 typedef struct
@@ -113,6 +113,12 @@ static int swroffset(float swr)
         offs = WHEIGHT - 1;
     else if (offs < 0)
         offs = 0;
+    return offs;
+}
+
+static float S11Calc(float swr)
+{
+    float offs = 20 * log10f((swr-1)/(swr+1));
     return offs;
 }
 
@@ -188,6 +194,29 @@ static void DrawCursorText()
     );
 }
 
+static void DrawCursorTextWithS11()
+{
+    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+    float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
+
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - BSVALUES[span] / 2;
+
+    float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
+    if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
+        fcur = 0.f;
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   S11: %.2f dB          ",
+        fcur,
+        crealf(rx),
+        cimagf(rx),
+        DSP_CalcVSWR(rx),
+		S11Calc(DSP_CalcVSWR(rx))
+    );
+}
+
 static void DrawSaveText(void)
 {
     static const char* txt = "  Save snapshot  ";
@@ -226,6 +255,9 @@ static void DecrCursor()
     DrawCursor();
     cursorPos--;
     DrawCursor();
+	if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+		DrawCursorTextWithS11();
+	else
     DrawCursorText();
     //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
@@ -241,13 +273,16 @@ static void AdvCursor()
     DrawCursor();
     cursorPos++;
     DrawCursor();
+    if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+		DrawCursorTextWithS11();
+	else
     DrawCursorText();
     //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
 
-static void DrawGrid(int drawSwr)
+static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
 {
     int i;
     LCD_FillAll(LCD_BLACK);
@@ -256,7 +291,7 @@ static void DrawGrid(int drawSwr)
 
     uint32_t fstart;
     uint32_t pos = modstrw + 10;
-    if (!drawSwr)
+    if (drawSwr == 0)
     { //  Print colored R/X
         FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "R");
         pos += FONT_GetStrPixelWidth(FONT_FRAN, "R") + 1;
@@ -265,10 +300,18 @@ static void DrawGrid(int drawSwr)
         FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, pos, 0, "X");
         pos += FONT_GetStrPixelWidth(FONT_FRAN, "X") + 1;
     }
+	
+	if (drawSwr == 2)
+	{
+		//  Print colored S11
+        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "S11");
+        pos += FONT_GetStrPixelWidth(FONT_FRAN, "S11") + 1;
+    }
+
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
     {
         fstart = f1;
-        if (drawSwr)
+        if (drawSwr == 1)
             sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
         else
             sprintf(buf, " graph: %d kHz + %s", (int)fstart, BSSTR[span]);
@@ -276,7 +319,7 @@ static void DrawGrid(int drawSwr)
     else
     {
         fstart = f1 - BSVALUES[span] / 2;
-        if (drawSwr)
+        if (drawSwr == 1)
             sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %d)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
         else
             sprintf(buf, " graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
@@ -317,7 +360,7 @@ static void DrawGrid(int drawSwr)
         }
     }
 
-    if (drawSwr)
+    if (drawSwr == 1)
     {
         //Draw SWR grid and labels
         static const float swrs[]  = { 1., 1.1, 1.2, 1.3, 1.4, 1.5, 2., 2.5, 3., 4., 5., 6., 7., 8., 9., 10., 13., 16., 20.};
@@ -557,6 +600,77 @@ static float nicenum(float x, int round)
             nf = 10.;
     }
     return nf * powf(10., expv);
+}
+
+static void DrawS11()
+{
+    int i;
+    int j;
+    if (!isMeasured)
+        return;
+    //Find min value among scanned S11 to set up scale
+    float minS11 = 0.f;
+    for (i = 0; i < WWIDTH; i++)
+    {
+        if (S11Calc(DSP_CalcVSWR(values[i])) < minS11)
+            minS11 = S11Calc(DSP_CalcVSWR(values[i]));
+    }
+
+    if (minS11 < -60.f)
+        minS11 = -60.f;
+
+	int nticks = 14; //Max number of intermediate ticks of labels
+    float range = nicenum(-minS11, 0);
+	float d = nicenum(range / (nticks - 1), 1);
+    float graphmin = floorf(minS11 / d) * d;
+    float graphmax = 0.f;
+    float grange = graphmax - graphmin;
+    float nfrac = MAX(-floorf(log10f(d)), 0);  // # of fractional digits to show
+    char str[20];
+    if (nfrac > 4) nfrac = 4;
+    sprintf(str, "%%.%df", (int)nfrac);             // simplest axis labels
+
+    //Draw horizontal lines and labels
+    int yofs = 0;
+    int yofs_sm = 0;
+    float labelValue;
+
+    #define S11OFFS(s11) ((int)roundf(((s11 - graphmin) * WHEIGHT) / grange) + 1)
+
+    for (labelValue = graphmin; labelValue < graphmax + (.5 * d); labelValue += d)
+    {
+        sprintf(buf, str, labelValue); //Get label string in buf
+        yofs = S11OFFS(labelValue);
+        FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 25, WY(yofs) - 2, buf);
+        if (roundf(labelValue) == 0)
+            LCD_Line(LCD_MakePoint(X0, WY(S11OFFS(0.f))), LCD_MakePoint(X0 + WWIDTH, WY(S11OFFS(0.f))), WGRIDCOLORBR);
+        else
+            LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
+    }
+
+	int lastoffset = 0;
+    int lastoffset_sm = 0;
+
+    for(j = 0; j < WWIDTH; j++)
+    {
+        int offset = roundf((WHEIGHT / (-graphmin)) * S11Calc(DSP_CalcVSWR(values[j])));
+        int offset_sm = roundf((WHEIGHT / (-graphmin)) * S11Calc(DSP_CalcVSWR(SmoothRX(j,  f1 > (BAND_FMAX / 1000) ? 1 : 0))));
+        int x = X0 + j;
+        if(j == 0)
+        {
+            LCD_SetPixel(LCD_MakePoint(x, WY(offset + WHEIGHT)), LCD_RGB(0, SM_INTENSITY, 0));
+            LCD_SetPixel(LCD_MakePoint(x, WY(offset_sm + WHEIGHT)), LCD_GREEN);
+        }
+        else
+        {
+            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset + WHEIGHT)), LCD_MakePoint(x, WY(offset + WHEIGHT)), LCD_RGB(0, SM_INTENSITY, 0));
+            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm + WHEIGHT)), LCD_MakePoint(x, WY(offset_sm + WHEIGHT)), LCD_GREEN);
+        }
+        lastoffset = offset;
+        lastoffset_sm = offset_sm;
+    }
+
+
 }
 
 static void DrawRX()
@@ -825,12 +939,22 @@ static void RedrawWindow()
         DrawGrid(0);
         DrawRX();
     }
+	else if (grType == GRAPH_S11)
+    {
+        DrawGrid(2);
+        DrawS11();
+    }
     else
         DrawSmith();
     DrawCursor();
-    if (isMeasured)
+    if ((isMeasured) && (grType != GRAPH_S11))
     {
         DrawCursorText();
+        DrawSaveText();
+    }
+		else if ((isMeasured) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1) && (grType == GRAPH_S11))
+	{
+        DrawCursorTextWithS11();
         DrawSaveText();
     }
     else
@@ -968,7 +1092,11 @@ void PANVSWR2_Proc(void)
                 {
                     if (grType == GRAPH_VSWR)
                         grType = GRAPH_RX;
-                    else if (grType == GRAPH_RX)
+					else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+                        grType = GRAPH_S11;
+					else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 0))
+                        grType = GRAPH_SMITH;
+					else if (grType == GRAPH_S11)
                         grType = GRAPH_SMITH;
                     else
                         grType = GRAPH_VSWR;
