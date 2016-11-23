@@ -100,6 +100,8 @@ static uint32_t rx_ctr = 0;
 static char* rxstr_p;
 static uint32_t _fCenter = 10000000ul;
 static uint32_t _fSweep = 100000ul;
+static const char *ERR = "ERROR\r";
+static const char *OK = "OK\r";
 
 static char* _trim(char *str)
 {
@@ -158,7 +160,7 @@ static void PROTOCOL_Handler(void)
 
     if (rxstr_p[0] == '\0') //empty command
     {
-        AAUART_PutString("ERROR\r");
+        AAUART_PutString(ERR);
         return;
     }
 
@@ -171,32 +173,32 @@ static void PROTOCOL_Handler(void)
     if (0 == strcmp("on", rxstr_p))
     {
         GEN_SetMeasurementFreq(GEN_GetLastFreq());
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
 
     if (0 == strcmp("off", rxstr_p))
     {
         GEN_SetMeasurementFreq(0);
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
 
     if (rxstr_p == strstr(rxstr_p, "am"))
     {//Amplitude setting
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
 
     if (rxstr_p == strstr(rxstr_p, "ph"))
     {//Phase setting
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
 
     if (rxstr_p == strstr(rxstr_p, "de"))
     {//Set delay
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
 
@@ -209,17 +211,17 @@ static void PROTOCOL_Handler(void)
         }
         else
         {
-            AAUART_PutString("ERROR\r");
+            AAUART_PutString(ERR);
             return;
         }
         if (FHz < BAND_FMIN)
         {
-            AAUART_PutString("ERROR\r");
+            AAUART_PutString(ERR);
         }
         else
         {
             _fCenter = FHz;
-            AAUART_PutString("OK\r");
+            AAUART_PutString(OK);
         }
         return;
     }
@@ -233,11 +235,11 @@ static void PROTOCOL_Handler(void)
         }
         else
         {
-            AAUART_PutString("ERROR\r");
+            AAUART_PutString(ERR);
             return;
         }
         _fSweep = sw;
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
 
@@ -253,12 +255,12 @@ static void PROTOCOL_Handler(void)
         }
         else
         {
-            AAUART_PutString("ERROR\r");
+            AAUART_PutString(ERR);
             return;
         }
         if (steps == 0)
         {
-            AAUART_PutString("ERROR\r");
+            AAUART_PutString(ERR);
             return;
         }
         if (_fSweep / 2 > _fCenter)
@@ -277,10 +279,10 @@ static void PROTOCOL_Handler(void)
             AAUART_PutString(txstr);
             fint += fstep;
         }
-        AAUART_PutString("OK\r");
+        AAUART_PutString(OK);
         return;
     }
-    AAUART_PutString("ERROR\r");
+    AAUART_PutString(ERR);
 }
 
 // ================================================================================================

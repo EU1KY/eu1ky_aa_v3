@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#define FIFO_SIZE 256 //HC-06 minimum to avoid overflows
+#define FIFO_SIZE 128
 
 typedef struct
 {
