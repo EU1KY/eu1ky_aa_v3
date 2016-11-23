@@ -269,12 +269,15 @@ static void PROTOCOL_Handler(void)
             fint = _fCenter - _fSweep / 2;
         fstep = _fSweep / steps;
         steps += 1;
+        char txstr[64];
         while (steps--)
         {
             DSP_RX rx;
-            char txstr[128];
+
             DSP_Measure(fint, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
             rx = DSP_MeasuredZ();
+            while(AAUART_IsBusy())
+                Sleep(0); //prevent overwriting the data being transmitted
             sprintf(txstr, "%.6f,%.2f,%.2f\r", ((float)fint) / 1000000., crealf(rx), cimagf(rx));
             AAUART_PutString(txstr);
             fint += fstep;

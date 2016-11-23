@@ -58,9 +58,9 @@ void AAUART_IRQHandler(void)
     uint32_t isrflags   = READ_REG(UartHandle.Instance->ISR);
     volatile uint8_t byte;
     UartHandle.Instance->ICR  = 0x3ffff; //Clear all flags
-    if ((isrflags & USART_ISR_TXE) != RESET)
+    if ((isrflags & USART_ISR_TC) != RESET)
     {
-        UartHandle.Instance->ICR  = USART_ISR_TXE;
+        UartHandle.Instance->ICR  = USART_ISR_TC;
         if (txctr)
         {
             UartHandle.Instance->TDR = *txptr++;  //Writing TDR clears interrupt flag
@@ -70,7 +70,7 @@ void AAUART_IRQHandler(void)
         {
             //All bytes have been transmitted
             //Disable TXE interrupt
-            CLEAR_BIT(UartHandle.Instance->CR1, (USART_CR1_TXEIE | USART_CR1_TCIE));
+            MODIFY_REG(UartHandle.Instance->CR1, 0, USART_CR1_TCIE);
             AAUART_busy = 0;
         }
     }
@@ -87,7 +87,10 @@ void AAUART_IRQHandler(void)
     __DSB();
 }
 
-
+uint32_t AAUART_IsBusy(void)
+{
+    return AAUART_busy;
+}
 //======================================================
 int AAUART_Getchar(void)
 {
@@ -116,6 +119,7 @@ void AAUART_PutBytes(const uint8_t* bytes, uint32_t len)
     txptr = &bytes[1];
     AAUART_busy = 1;
     UartHandle.Instance->TDR = bytes[0];
+    SET_BIT(UartHandle.Instance->CR1, USART_CR1_TCIE);
 }
 
 //======================================================
