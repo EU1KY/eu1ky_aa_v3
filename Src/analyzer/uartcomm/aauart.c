@@ -20,6 +20,7 @@ static volatile int32_t AAUART_busy = 0;
 static volatile uint32_t rx_overflow_ctr = 0;
 static volatile uint32_t tx_overflow_ctr = 0;
 static UART_HandleTypeDef UartHandle = {0};
+static int IRQn;
 
 void AAUART_Init(void)
 {
@@ -28,7 +29,6 @@ void AAUART_Init(void)
     FIFO_Init(&rxfifo);
     FIFO_Init(&txfifo);
 
-    int IRQn;
     if (COM1 == comport)
         IRQn = DISCOVERY_COM1_IRQn;
     else if (COM2 == comport)
@@ -90,7 +90,7 @@ int AAUART_Putchar (int ch)
 {
     FIFO_STATUS res;
 
-    __disable_irq();
+    __disable_irq(); //Useless - it works in privileged mode only
     res = FIFO_Put(&txfifo, (uint8_t)ch);
     __enable_irq();
     if (FIFO_OK != res)
@@ -137,7 +137,9 @@ int AAUART_Getchar(void)
 //======================================================
 int AAUART_PutString(const char* str)
 {
-    return AAUART_PutBytes((const unsigned char*)str, strlen(str));
+    int res = AAUART_PutBytes((const unsigned char*)str, strlen(str));
+    while(AAUART_busy);//|| !FIFO_IsEmpty(&txfifo)); //Temporary solution. TODO: fix
+    return res;
 }
 
 //======================================================
