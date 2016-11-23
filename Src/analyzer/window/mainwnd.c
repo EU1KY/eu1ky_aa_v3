@@ -340,7 +340,7 @@ void MainWnd(void)
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
     TEXTBOX_Append(&main_ctx, &hbUSBD);
 
-    hbTimestamp = (TEXTBOX_t) {.x0 = 80, .y0 = 256, .text = "EU1KY AA v." AAVERSION " Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
+    hbTimestamp = (TEXTBOX_t) {.x0 = 40, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
     //Draw context
