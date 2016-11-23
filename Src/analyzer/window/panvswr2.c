@@ -186,12 +186,12 @@ static void DrawCursorText()
     if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
         fcur = 0.f;
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
-        fcur,
-        crealf(rx),
-        cimagf(rx),
-        DSP_CalcVSWR(rx),
-        (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f // Matched cable loss
-    );
+               fcur,
+               crealf(rx),
+               cimagf(rx),
+               DSP_CalcVSWR(rx),
+               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f // Matched cable loss
+              );
 }
 
 static void DrawCursorTextWithS11()
@@ -209,12 +209,12 @@ static void DrawCursorTextWithS11()
     if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
         fcur = 0.f;
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   S11: %.2f dB          ",
-        fcur,
-        crealf(rx),
-        cimagf(rx),
-        DSP_CalcVSWR(rx),
-		S11Calc(DSP_CalcVSWR(rx))
-    );
+               fcur,
+               crealf(rx),
+               cimagf(rx),
+               DSP_CalcVSWR(rx),
+               S11Calc(DSP_CalcVSWR(rx))
+              );
 }
 
 static void DrawSaveText(void)
@@ -255,10 +255,10 @@ static void DecrCursor()
     DrawCursor();
     cursorPos--;
     DrawCursor();
-	if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
-		DrawCursorTextWithS11();
-	else
-    DrawCursorText();
+    if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+        DrawCursorTextWithS11();
+    else
+        DrawCursorText();
     //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
@@ -274,9 +274,9 @@ static void AdvCursor()
     cursorPos++;
     DrawCursor();
     if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
-		DrawCursorTextWithS11();
-	else
-    DrawCursorText();
+        DrawCursorTextWithS11();
+    else
+        DrawCursorText();
     //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
@@ -292,7 +292,8 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
     uint32_t fstart;
     uint32_t pos = modstrw + 10;
     if (drawSwr == 0)
-    { //  Print colored R/X
+    {
+        //  Print colored R/X
         FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "R");
         pos += FONT_GetStrPixelWidth(FONT_FRAN, "R") + 1;
         FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, "/");
@@ -300,10 +301,10 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
         FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, pos, 0, "X");
         pos += FONT_GetStrPixelWidth(FONT_FRAN, "X") + 1;
     }
-	
-	if (drawSwr == 2)
-	{
-		//  Print colored S11
+
+    if (drawSwr == 2)
+    {
+        //  Print colored S11
         FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, pos, 0, "S11");
         pos += FONT_GetStrPixelWidth(FONT_FRAN, "S11") + 1;
     }
@@ -619,9 +620,9 @@ static void DrawS11()
     if (minS11 < -60.f)
         minS11 = -60.f;
 
-	int nticks = 14; //Max number of intermediate ticks of labels
+    int nticks = 14; //Max number of intermediate ticks of labels
     float range = nicenum(-minS11, 0);
-	float d = nicenum(range / (nticks - 1), 1);
+    float d = nicenum(range / (nticks - 1), 1);
     float graphmin = floorf(minS11 / d) * d;
     float graphmax = 0.f;
     float grange = graphmax - graphmin;
@@ -635,7 +636,7 @@ static void DrawS11()
     int yofs_sm = 0;
     float labelValue;
 
-    #define S11OFFS(s11) ((int)roundf(((s11 - graphmin) * WHEIGHT) / grange) + 1)
+#define S11OFFS(s11) ((int)roundf(((s11 - graphmin) * WHEIGHT) / grange) + 1)
 
     for (labelValue = graphmin; labelValue < graphmax + (.5 * d); labelValue += d)
     {
@@ -648,7 +649,7 @@ static void DrawS11()
             LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
     }
 
-	int lastoffset = 0;
+    int lastoffset = 0;
     int lastoffset_sm = 0;
 
     for(j = 0; j < WWIDTH; j++)
@@ -714,7 +715,7 @@ static void DrawRX()
     int yofs_sm = 0;
     float labelValue;
 
-    #define RXOFFS(rx) ((int)roundf(((rx - graphmin) * WHEIGHT) / grange) + 1)
+#define RXOFFS(rx) ((int)roundf(((rx - graphmin) * WHEIGHT) / grange) + 1)
 
     for (labelValue = graphmin; labelValue < graphmax + (.5 * d); labelValue += d)
     {
@@ -939,7 +940,7 @@ static void RedrawWindow()
         DrawGrid(0);
         DrawRX();
     }
-	else if (grType == GRAPH_S11)
+    else if (grType == GRAPH_S11)
     {
         DrawGrid(2);
         DrawS11();
@@ -952,8 +953,8 @@ static void RedrawWindow()
         DrawCursorText();
         DrawSaveText();
     }
-		else if ((isMeasured) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1) && (grType == GRAPH_S11))
-	{
+    else if ((isMeasured) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1) && (grType == GRAPH_S11))
+    {
         DrawCursorTextWithS11();
         DrawSaveText();
     }
@@ -1010,8 +1011,8 @@ static void save_snapshot(void)
     if (FR_OK != fr)
         CRASHF("Failed to open file %s", path);
     sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
-                  "# MHz S RI R 50\r\n"
-                  "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
+            "# MHz S RI R 50\r\n"
+            "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
     fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
     if (FR_OK != fr) goto CRASH_WR;
 
@@ -1074,9 +1075,11 @@ void PANVSWR2_Proc(void)
         if (TOUCH_Poll(&pt))
         {
             if (pt.y < 80)
-            {// Top
+            {
+                // Top
                 if (PanFreqWindow(&f1, &span))
-                {//Span or frequency has been changed
+                {
+                    //Span or frequency has been changed
                     isMeasured = 0;
                     RedrawWindow();
                 }
@@ -1092,11 +1095,11 @@ void PANVSWR2_Proc(void)
                 {
                     if (grType == GRAPH_VSWR)
                         grType = GRAPH_RX;
-					else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+                    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
                         grType = GRAPH_S11;
-					else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 0))
+                    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 0))
                         grType = GRAPH_SMITH;
-					else if (grType == GRAPH_S11)
+                    else if (grType == GRAPH_S11)
                         grType = GRAPH_SMITH;
                     else
                         grType = GRAPH_VSWR;
@@ -1111,13 +1114,15 @@ void PANVSWR2_Proc(void)
             else if (pt.y > 200)
             {
                 if (pt.x < 140)
-                {// Lower left corner
+                {
+                    // Lower left corner
                     while(TOUCH_IsPressed());
                     Sleep(100);
                     return;
                 }
                 if (pt.x > 340)
-                {//Lower right corner: perform scan
+                {
+                    //Lower right corner: perform scan
                     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
                     ScanRX();
                     RedrawWindow();
