@@ -253,6 +253,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Allow measurements on 3rd harmonic (above maximum frequency)"
     },
     */
+	{
+        .id = CFG_PARAM_S11_SHOW,
+        .idstring = "S11_GRAPH_SHOW",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .values = CFG_IARR(    0,     1),
+        .strvalues = CFG_SARR("No", "Yes"),
+        .dstring = "Set to Yes to show S11 graph in a measurement window",
+    }
 };
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
@@ -291,7 +300,8 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_COM_SPEED, 38400);
     CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
     CFG_SetParam(CFG_PARAM_3RD_HARMONIC_ENABLED, 0);
-
+	CFG_SetParam(CFG_PARAM_S11_SHOW, 1);
+	
     //Load parameters from file on SD card
     FRESULT res;
     FIL fo = { 0 };
