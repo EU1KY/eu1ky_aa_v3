@@ -253,7 +253,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Allow measurements on 3rd harmonic (above maximum frequency)"
     },
     */
-	{
+    {
         .id = CFG_PARAM_S11_SHOW,
         .idstring = "S11_GRAPH_SHOW",
         .type = CFG_PARAM_T_U32,
@@ -300,8 +300,8 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_COM_SPEED, 38400);
     CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
     CFG_SetParam(CFG_PARAM_3RD_HARMONIC_ENABLED, 0);
-	CFG_SetParam(CFG_PARAM_S11_SHOW, 1);
-	
+    CFG_SetParam(CFG_PARAM_S11_SHOW, 1);
+
     //Load parameters from file on SD card
     FRESULT res;
     FIL fo = { 0 };
@@ -391,7 +391,8 @@ static uint32_t CFG_GetNextValue(uint32_t param_idx, uint32_t param_value)
 
     const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
     if (0 == pd->nvalues)
-    {//If no default values specified:
+    {
+        //If no default values specified:
         return param_value + 1;
     }
 
@@ -399,7 +400,8 @@ static uint32_t CFG_GetNextValue(uint32_t param_idx, uint32_t param_value)
     for (i = 0; i < pd->nvalues; i++)
     {
         if (param_value == pd->values[i])
-        {//Value is among the defaults
+        {
+            //Value is among the defaults
             if (i == pd->nvalues - 1)
                 return pd->values[0]; //Wrap around the last one
             return pd->values[i + 1];
@@ -417,7 +419,8 @@ static uint32_t CFG_GetPrevValue(uint32_t param_idx, uint32_t param_value)
 
     const CFG_CHANGEABLE_PARAM_DESCR_t *pd = &cfg_ch_descr_table[param_idx];
     if (0 == pd->nvalues)
-    {//If no default values specified:
+    {
+        //If no default values specified:
         return param_value - 1;
     }
 
@@ -425,7 +428,8 @@ static uint32_t CFG_GetPrevValue(uint32_t param_idx, uint32_t param_value)
     for (i = 0; i < pd->nvalues; i++)
     {
         if (param_value == pd->values[i])
-        {//Value is among the defaults
+        {
+            //Value is among the defaults
             if (i == 0)
                 return pd->values[pd->nvalues - 1]; //Wrap around 0
             return pd->values[i - 1];
@@ -461,33 +465,33 @@ const char * CFG_GetStringValue(uint32_t param_idx)
 
     switch (pd->type)
     {
-        case CFG_PARAM_T_U8:
-            sprintf(tstr, "%u (%02Xh)", (unsigned int)((uint8_t)uval), (unsigned int)((uint8_t)uval));
-            break;
-        case CFG_PARAM_T_U16:
-            sprintf(tstr, "%u", (unsigned int)((uint16_t)uval));
-            break;
-        case CFG_PARAM_T_U32:
-            sprintf(tstr, "%u", (unsigned int)((uint32_t)uval));
-            break;
-        case CFG_PARAM_T_S8:
-            sprintf(tstr, "%d", (int)((int8_t)uval));
-            break;
-        case CFG_PARAM_T_S16:
-            sprintf(tstr, "%d", (int)((int16_t)uval));
-            break;
-        case CFG_PARAM_T_S32:
-            sprintf(tstr, "%d", (int)((int32_t)uval));
-            break;
-        case CFG_PARAM_T_F32:
-            sprintf(tstr, "%f", *(float*)&uval);
-            break;
-        case CFG_PARAM_T_CH:
-            memcpy(tstr, &uval, 4);
-            tstr[5] = '\0';
-            break;
-        default:
-            return "";
+    case CFG_PARAM_T_U8:
+        sprintf(tstr, "%u (%02Xh)", (unsigned int)((uint8_t)uval), (unsigned int)((uint8_t)uval));
+        break;
+    case CFG_PARAM_T_U16:
+        sprintf(tstr, "%u", (unsigned int)((uint16_t)uval));
+        break;
+    case CFG_PARAM_T_U32:
+        sprintf(tstr, "%u", (unsigned int)((uint32_t)uval));
+        break;
+    case CFG_PARAM_T_S8:
+        sprintf(tstr, "%d", (int)((int8_t)uval));
+        break;
+    case CFG_PARAM_T_S16:
+        sprintf(tstr, "%d", (int)((int16_t)uval));
+        break;
+    case CFG_PARAM_T_S32:
+        sprintf(tstr, "%d", (int)((int32_t)uval));
+        break;
+    case CFG_PARAM_T_F32:
+        sprintf(tstr, "%f", *(float*)&uval);
+        break;
+    case CFG_PARAM_T_CH:
+        memcpy(tstr, &uval, 4);
+        tstr[5] = '\0';
+        break;
+    default:
+        return "";
     }
     return tstr;
 }
@@ -610,24 +614,33 @@ void CFG_ParamWnd(void)
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 100, 0, "Configuration editor");
 
     TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 34, .text = " < Prev param ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev };
+                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev
+                            };
     TEXTBOX_t hbNextParam = {.x0 = 300, .y0 = 34, .text = " Next param > ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next };
+                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next
+                            };
     TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
+                      .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex
+                     };
     TEXTBOX_t hbSave = {.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_GREEN, .cb = _hit_save };
+                        .fgcolor = LCD_BLUE, .bgcolor = LCD_GREEN, .cb = _hit_save
+                       };
 
     TEXTBOX_t hbParamName = {.x0 = 10, .y0 = 70, .text = "    ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_GREEN, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
+                             .fgcolor = LCD_GREEN, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
+                            };
     TEXTBOX_t hbParamDescr = {.x0 = 10, .y0 = 110, .text = "    ", .font = FONT_FRAN,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
+                              .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
+                             };
     TEXTBOX_t hbValue = {.x0 = 80, .y0 = 130, .text = "    ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1 };
+                         .fgcolor = LCD_BLUE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
+                        };
     TEXTBOX_t hbPrevValue = {.x0 = 10, .y0 = 130, .text = "  <  ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev_value };
+                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev_value
+                            };
     TEXTBOX_t hbNextValue = {.x0 = 400, .y0 = 130, .text = "  >  ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next_value };
+                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next_value
+                            };
 
     TEXTBOX_CTX_t ctx = {0};
     pctx = &ctx;
