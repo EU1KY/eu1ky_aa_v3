@@ -649,29 +649,24 @@ static void DrawS11()
             LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
     }
 
-    int lastoffset = 0;
-    int lastoffset_sm = 0;
-
+    uint16_t lasty = 0;
     for(j = 0; j < WWIDTH; j++)
     {
         int offset = roundf((WHEIGHT / (-graphmin)) * S11Calc(DSP_CalcVSWR(values[j])));
-        int offset_sm = roundf((WHEIGHT / (-graphmin)) * S11Calc(DSP_CalcVSWR(SmoothRX(j,  f1 > (BAND_FMAX / 1000) ? 1 : 0))));
+        uint16_t y = WY(offset + WHEIGHT);
+        if (y > (WHEIGHT + Y0))
+            y = WHEIGHT + Y0;
         int x = X0 + j;
         if(j == 0)
         {
-            LCD_SetPixel(LCD_MakePoint(x, WY(offset + WHEIGHT)), LCD_RGB(0, SM_INTENSITY, 0));
-            LCD_SetPixel(LCD_MakePoint(x, WY(offset_sm + WHEIGHT)), LCD_GREEN);
+            LCD_SetPixel(LCD_MakePoint(x, y), LCD_GREEN);
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset + WHEIGHT)), LCD_MakePoint(x, WY(offset + WHEIGHT)), LCD_RGB(0, SM_INTENSITY, 0));
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm + WHEIGHT)), LCD_MakePoint(x, WY(offset_sm + WHEIGHT)), LCD_GREEN);
+            LCD_Line(LCD_MakePoint(x - 1, lasty), LCD_MakePoint(x, y), LCD_GREEN);
         }
-        lastoffset = offset;
-        lastoffset_sm = offset_sm;
+        lasty = y;
     }
-
-
 }
 
 static void DrawRX()
