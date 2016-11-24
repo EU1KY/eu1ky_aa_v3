@@ -1003,7 +1003,7 @@ static void save_snapshot(void)
     SCREENSHOT_DeleteOldest();
     SCREENSHOT_Save(fname);
 
-    //Now write measured data to file fmax+1 in s1p format
+    //Now write measured data to S1P file
     sprintf(path, "%s/%s.s1p", sndir, fname);
     FIL fo = { 0 };
     UINT bw;

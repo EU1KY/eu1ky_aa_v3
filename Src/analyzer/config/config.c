@@ -260,7 +260,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 2,
         .values = CFG_IARR(    0,     1),
         .strvalues = CFG_SARR("No", "Yes"),
-        .dstring = "Set to Yes to show S11 graph in a measurement window",
+        .dstring = "Set to Yes to show S11 graph in the panoramic window",
     }
 };
 
