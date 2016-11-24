@@ -54,11 +54,11 @@ void LCD_Init(void)
     /* LCD clock configuration */
     /* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
     /* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
-    /* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz */
-    /* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz */
+    /* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz */ //Modified to 192/6 = 32 MHz th prevent flickering (EU1KY)
+    /* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz */ //Now 32/4 = 8MHz (EU1KY)
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
     PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-    PeriphClkInitStruct.PLLSAI.PLLSAIR = 5; // Must be 2..7.
+    PeriphClkInitStruct.PLLSAI.PLLSAIR = 6; //Initially 5, but slowed it down to prevent LCD flickering due to AHB bus overload // Must be 2..7.
     PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
     HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 
