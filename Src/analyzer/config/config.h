@@ -22,6 +22,12 @@ typedef enum
 
 typedef enum
 {
+    CFG_S1P_TYPE_S_MA = 0,
+    CFG_S1P_TYPE_S_RI  = 1
+} CFG_S1P_TYPE_t;
+
+typedef enum
+{
     CFG_PARAM_VERSION,               //4 characters of version string
     CFG_PARAM_PAN_F1,                //Initial frequency for panoramic window
     CFG_PARAM_PAN_SPAN,              //Span for panoramic window
@@ -50,6 +56,7 @@ typedef enum
     CFG_PARAM_LOWPWR_TIME,           //Time in milliseconds after which to lower power consumption mode (0 - disabled)
     CFG_PARAM_3RD_HARMONIC_ENABLED,  //Enable setting frequency on 3rd harmonic (1) above BAND_FMAX, or disabe (0)
     CFG_PARAM_S11_SHOW,              //Show S11 graph in the panoramic window
+    CFG_PARAM_S1P_TYPE,              //Type of Touchstone S1P file saved with panoramic screenshot
 
     //---------------------
     CFG_NUM_PARAMS

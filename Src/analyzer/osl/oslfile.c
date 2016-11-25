@@ -512,3 +512,14 @@ float complex OSL_CorrectZ(uint32_t fhz, float complex zMeasured)
     g = OSL_ZFromG(g, OSL_BASE_R0);
     return g;
 }
+
+//Convert G to magnitude (-1 .. 1) and angle in degrees (-180 .. 180)
+//returning complex just for convenience, with magnitude in its real part, and angle in imaginary
+float complex OSL_GtoMA(float complex G)
+{
+    float mag = cabsf(G);
+    if (0.f == fabs(mag)) //Handle special case where atan2 is undefined
+        return 0.f + 0.fi;
+    float phaseDegrees = cargf(G) * 180. / M_PI;
+    return mag + phaseDegrees * I;
+}
