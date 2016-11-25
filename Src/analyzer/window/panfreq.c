@@ -355,6 +355,8 @@ static void BandHitCb(const TEXTBOX_t* tb)
         _f1 = 143000;
         _bs = BS4M;
     }
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
+        _f1 += BSVALUES[_bs] / 2;
     Show_F();
 }
 
