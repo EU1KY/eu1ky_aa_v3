@@ -1002,12 +1002,21 @@ static void save_snapshot(void)
     sprintf(path, "%s/%s.s1p", sndir, fname);
     FIL fo = { 0 };
     UINT bw;
-    fr = f_open(&fo, path, FA_CREATE_ALWAYS |FA_WRITE);
+    fr = f_open(&fo, path, FA_CREATE_ALWAYS | FA_WRITE);
     if (FR_OK != fr)
         CRASHF("Failed to open file %s", path);
-    sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
-            "# MHz S RI R 50\r\n"
-            "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
+    if (CFG_S1P_TYPE_S_RI == CFG_GetParam(CFG_PARAM_S1P_TYPE))
+    {
+        sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
+                "# MHz S RI R 50\r\n"
+                "! Format: Frequency S-real S-imaginary (normalized to 50 Ohm)\r\n");
+    }
+    else // CFG_S1P_TYPE_S_MA
+    {
+        sprintf(wbuf, "! Touchstone file by EU1KY antenna analyzer\r\n"
+                "# MHz S MA R 50\r\n"
+                "! Format: Frequency S-magnitude S-angle (normalized to 50 Ohm, angle in degrees)\r\n");
+    }
     fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
     if (FR_OK != fr) goto CRASH_WR;
 
@@ -1021,7 +1030,15 @@ static void save_snapshot(void)
     {
         float complex g = OSL_GFromZ(values[i], 50.f);
         float fmhz = ((float)fstart + (float)i * BSVALUES[span] / WWIDTH) / 1000.0f;
-        sprintf(wbuf, "%.4f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
+        if (CFG_S1P_TYPE_S_RI == CFG_GetParam(CFG_PARAM_S1P_TYPE))
+        {
+            sprintf(wbuf, "%.6f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
+        }
+        else // CFG_S1P_TYPE_S_MA
+        {
+            g = OSL_GtoMA(g); //Convert G to magnitude and angle in degrees
+            sprintf(wbuf, "%.6f %.6f %.6f\r\n", fmhz, crealf(g), cimagf(g));
+        }
         fr = f_write(&fo, wbuf, strlen(wbuf), &bw);
         if (FR_OK != fr) goto CRASH_WR;
     }

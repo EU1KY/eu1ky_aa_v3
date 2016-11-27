@@ -242,7 +242,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Enter low power mode (display off) after this period of inactivity. Tap to wake up."
     },
-    /*
+/*
     {
         .id = CFG_PARAM_3RD_HARMONIC_ENABLED,
         .idstring = "Allow operation on 3rd harmonic",
@@ -252,7 +252,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Allow measurements on 3rd harmonic (above maximum frequency)"
     },
-    */
+*/
     {
         .id = CFG_PARAM_S11_SHOW,
         .idstring = "S11_GRAPH_SHOW",
@@ -261,6 +261,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(    0,     1),
         .strvalues = CFG_SARR("No", "Yes"),
         .dstring = "Set to Yes to show S11 graph in the panoramic window",
+    },
+    {
+        .id = CFG_PARAM_S1P_TYPE,
+        .idstring = "S1P FILE TYPE",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .values = CFG_IARR(CFG_S1P_TYPE_S_MA, CFG_S1P_TYPE_S_RI),
+        .strvalues = CFG_SARR("S MA R 50", "S RI R 50"),
+        .dstring = "Touchstone S1P file type saved with screenshot. Default is S MA R 50.",
     }
 };
 
@@ -301,6 +310,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_LOWPWR_TIME, 0);
     CFG_SetParam(CFG_PARAM_3RD_HARMONIC_ENABLED, 0);
     CFG_SetParam(CFG_PARAM_S11_SHOW, 1);
+    CFG_SetParam(CFG_PARAM_S1P_TYPE, 0);
 
     //Load parameters from file on SD card
     FRESULT res;
