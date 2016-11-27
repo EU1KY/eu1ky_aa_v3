@@ -278,6 +278,7 @@ void FFTWND_Proc(void)
                         idxmax = i;
                     }
                 }
+                //idxmax = 107;
 
                 //Calculate magnitude value considering +/-2 bins from maximum
                 float P = 0.f;

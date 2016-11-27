@@ -70,7 +70,8 @@ void GEN_SetMeasurementFreq(uint32_t fhz)
         return;
     }
 
-    if (fhz > BAND_FMAX && (1 == CFG_GetParam(CFG_PARAM_3RD_HARMONIC_ENABLED)))
+    if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE) &&
+        fhz > 150000000ul)
     {
         gen.SetF0(fhz / 3);
         gen.SetLO((fhz + IF) / 3);

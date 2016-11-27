@@ -242,7 +242,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Enter low power mode (display off) after this period of inactivity. Tap to wake up."
     },
-    /*
+/*
     {
         .id = CFG_PARAM_3RD_HARMONIC_ENABLED,
         .idstring = "Allow operation on 3rd harmonic",
@@ -252,7 +252,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Allow measurements on 3rd harmonic (above maximum frequency)"
     },
-    */
+*/
     {
         .id = CFG_PARAM_S11_SHOW,
         .idstring = "S11_GRAPH_SHOW",
