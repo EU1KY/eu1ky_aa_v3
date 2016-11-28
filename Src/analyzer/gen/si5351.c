@@ -470,8 +470,8 @@ static uint8_t si5351_detect_address(void)
     while (1)
     {
         uint8_t data = CAMERA_IO_Read(addr, 0);
-        if (data != 0xFF)
-            break;
+        if (data != 0xFF && data != 0)
+            break; //Should be 0x10 - LOS bit is set
         addr += 2;
         if (addr == 0)
             break;
