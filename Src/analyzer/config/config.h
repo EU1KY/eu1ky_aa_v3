@@ -57,6 +57,7 @@ typedef enum
     CFG_PARAM_3RD_HARMONIC_ENABLED,  //Enable setting frequency on 3rd harmonic (1) above BAND_FMAX, or disabe (0)
     CFG_PARAM_S11_SHOW,              //Show S11 graph in the panoramic window
     CFG_PARAM_S1P_TYPE,              //Type of Touchstone S1P file saved with panoramic screenshot
+    CFG_PARAM_SHOW_HIDDEN,           //Show hidden options in configuration menu
 
     //---------------------
     CFG_NUM_PARAMS
