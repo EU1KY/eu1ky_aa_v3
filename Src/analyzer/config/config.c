@@ -10,6 +10,7 @@ const char *g_aa_dir = "/aa";
 static const char *g_cfg_dir = "/aa/config";
 static const char *g_cfg_fpath = "/aa/config/config.bin";
 const char *g_cfg_osldir = "/aa/osl";
+static uint32_t resetRequired = 0;
 
 typedef enum
 {
@@ -34,6 +35,7 @@ typedef struct
     const char *dstring;               //Detailed description of the parameter
     uint32_t repeatdelay;              //Nonzero if continuous tap of value should be detected. Number of ms to sleep between callbacks
     uint32_t (*isvalid)(void);         //Optional callback that can be defined. This function should return zero if parameter should not be displayed.
+    uint32_t resetRequired;            //Nonzero if reset is required to apply parameter
 } CFG_CHANGEABLE_PARAM_DESCR_t;
 
 //Integer array macro
@@ -61,6 +63,11 @@ static uint32_t isADF4351(void)
     return (uint32_t)(CFG_SYNTH_ADF4351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
 }
 
+static uint32_t isShowHidden(void)
+{
+    return 1 == CFG_GetParam(CFG_PARAM_SHOW_HIDDEN);
+}
+
 //Array of user changeable parameters descriptors
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 {
@@ -73,7 +80,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_S32,
         .dstring = "Selected OSL file"
     },
-    /*
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
@@ -81,9 +87,10 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351),
         .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351"),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Frequency synthesizer type used."
+        .dstring = "Frequency synthesizer type used. Requires reset.",
+        .isvalid = isShowHidden,
+        .resetRequired = 1,
     },
-    */
     {
         .id = CFG_PARAM_R0,
         .idstring = "Z0",
@@ -119,17 +126,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .isvalid = isSi5351,
         .repeatdelay = 20,
     },
-    /*
-    {
-        .id = CFG_PARAM_F_LO_DIV_BY_TWO,
-        .idstring = "F_LO_DIV_BY_TWO",
-        .type = CFG_PARAM_T_U32,
-        .nvalues = 2,
-        .values = CFG_IARR(    0,     1),
-        .strvalues = CFG_SARR("No", "Yes"),
-        .dstring = "Set to Yes if LO frequency is divided by 2 (quadrature mixer is used)",
-    },
-    */
     {
         .id = CFG_PARAM_OSL_RLOAD,
         .idstring = "OSL_RLOAD",
@@ -179,24 +175,24 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Number of scans to average in panoramic window"
     },
-    /*
     {
         .id = CFG_PARAM_LIN_ATTENUATION,
         .idstring = "LIN_ATTENUATION",
         .nvalues = 11,
         .values = CFG_IARR(0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30),
         .type = CFG_PARAM_T_U8,
-        .dstring = "Linear audio inputs attenuation, dB. Requires reset."
+        .dstring = "Linear audio inputs attenuation, dB. Requires reset.",
+        .isvalid = isShowHidden,
+        .resetRequired = 1
     },
-    */
-    /*
     {
         .id = CFG_PARAM_BRIDGE_RM,
         .idstring = "BRIDGE_RM",
         .nvalues = 3,
         .values = (int32_t*)CFG_FARR(1.f, 5.1f, 10.f),
         .type = CFG_PARAM_T_F32,
-        .dstring = "Bridge Rm value, Ohm"
+        .dstring = "Bridge Rm value, Ohm",
+        .isvalid = isShowHidden
     },
     {
         .id = CFG_PARAM_BRIDGE_RADD,
@@ -204,9 +200,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 7,
         .values = (int32_t*)CFG_FARR(33.f, 51.f, 75.f, 100.f, 120.f, 150.f, 200.f),
         .type = CFG_PARAM_T_F32,
-        .dstring = "Bridge Radd value, Ohm"
+        .dstring = "Bridge Radd value, Ohm",
+        .isvalid = isShowHidden
     },
-    */
     {
         .id = CFG_PARAM_PAN_CENTER_F,
         .idstring = "PAN_CENTER_F",
@@ -223,7 +219,8 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(COM1, COM2),
         .strvalues = CFG_SARR("COM1 (ST-Link)", "COM2 (on the shield)"),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Select serial port to be used for remote control. Requires reset."
+        .dstring = "Select serial port to be used for remote control. Requires reset.",
+        .resetRequired = 1
     },
     {
         .id = CFG_PARAM_COM_SPEED,
@@ -231,7 +228,8 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 5,
         .values = CFG_IARR(9600, 19200, 38400, 57600, 115200),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Serial port baudrate. Requires reset."
+        .dstring = "Serial port baudrate. Requires reset.",
+        .resetRequired = 1
     },
     {
         .id = CFG_PARAM_LOWPWR_TIME,
@@ -242,7 +240,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Enter low power mode (display off) after this period of inactivity. Tap to wake up."
     },
-/*
+/* unused yet
     {
         .id = CFG_PARAM_3RD_HARMONIC_ENABLED,
         .idstring = "Allow operation on 3rd harmonic",
@@ -270,6 +268,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(CFG_S1P_TYPE_S_MA, CFG_S1P_TYPE_S_RI),
         .strvalues = CFG_SARR("S MA R 50", "S RI R 50"),
         .dstring = "Touchstone S1P file type saved with screenshot. Default is S MA R 50.",
+    },
+    {
+        .id = CFG_PARAM_SHOW_HIDDEN,
+        .idstring = "SHOW_HIDDEN",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .values = CFG_IARR(0, 1),
+        .strvalues = CFG_SARR("No", "Yes"),
+        .dstring = "Show hidden menu parameters. Requires reset.",
     }
 };
 
@@ -311,6 +318,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_3RD_HARMONIC_ENABLED, 0);
     CFG_SetParam(CFG_PARAM_S11_SHOW, 1);
     CFG_SetParam(CFG_PARAM_S1P_TYPE, 0);
+    CFG_SetParam(CFG_PARAM_SHOW_HIDDEN, 0);
 
     //Load parameters from file on SD card
     FRESULT res;
@@ -587,6 +595,11 @@ static void _hit_save(void)
 {
     CFG_Flush();
     GEN_Init(); //In case if synthesizer type has changed
+    if (0 != resetRequired)
+    {
+        Sleep(200);
+        NVIC_SystemReset();
+    }
     rqExit = 1;
 }
 
@@ -601,6 +614,7 @@ static void _hit_prev_value(void)
     uint32_t prevValue = CFG_GetPrevValue(selected_param, currentValue);
     CFG_SetParam(cfg_ch_descr_table[selected_param].id, prevValue);
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
+    resetRequired += cfg_ch_descr_table[selected_param].resetRequired;
 }
 
 static void _hit_next_value(void)
@@ -609,6 +623,7 @@ static void _hit_next_value(void)
     uint32_t nextValue = CFG_GetNextValue(selected_param, currentValue);
     CFG_SetParam(cfg_ch_descr_table[selected_param].id, nextValue);
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
+    resetRequired += cfg_ch_descr_table[selected_param].resetRequired;
 }
 
 // Changeable parameters editor window
@@ -616,6 +631,7 @@ static void _hit_next_value(void)
 void CFG_ParamWnd(void)
 {
     rqExit = 0;
+    resetRequired = 0;
     selected_param = 0;
 
     LCD_FillAll(LCD_BLACK);
