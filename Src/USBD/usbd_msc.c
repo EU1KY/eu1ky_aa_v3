@@ -288,7 +288,7 @@ __ALIGN_BEGIN  uint8_t USBD_MSC_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] 
   * @{
   */
 
-static __attribute__((aligned(32))) USBD_MSC_BOT_HandleTypeDef USBD_BOT_h;
+static __attribute__((aligned(32))) USBD_MSC_BOT_HandleTypeDef __attribute__((section (".user_sdram"))) USBD_BOT_h;
 
 /**
   * @brief  USBD_MSC_Init

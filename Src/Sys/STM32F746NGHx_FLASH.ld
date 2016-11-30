@@ -42,7 +42,7 @@ _Min_Stack_Size = 0x8000;; /* required amount of stack */
 MEMORY
 {
 FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 1024K
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K     /* DTCM is at the first 64K only, the rest is accessed via AHB */
 SDRAM (rw)     : ORIGIN = 0xC00FF000, LENGTH = 0x701000 /* SDRAM part available to user, behind LCD framebuffers */
 }
 
@@ -148,14 +148,14 @@ SECTIONS
   {
      PROVIDE ( end = . );
     . = ALIGN(8);
-    __heap_start__ = .;
-    . = . + _Min_Heap_Size;
-    __heap_end__ = .;
-    . = ALIGN(8);
     __stack_start__ = .;
     . = . + _Min_Stack_Size;
     __stack_end__ = .;
     _estack = .;
+    . = ALIGN(8);
+    __heap_start__ = .;
+    . = . + _Min_Heap_Size;
+    __heap_end__ = .;
     . = ALIGN(8);
     PROVIDE ( _end = . );
   } >RAM
@@ -164,6 +164,7 @@ SECTIONS
   .user_sdram (NOLOAD):
   {
     KEEP(*(.user_sdram))
+    __user_sdram_end__ = .;
   } >SDRAM
 
   /* Remove information from the standard libraries */

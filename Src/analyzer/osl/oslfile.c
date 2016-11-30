@@ -56,8 +56,8 @@ typedef enum
 
 
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
-static S_OSLDATA osl_data[OSL_NUM_FILE_ENTRIES];
-static OSL_ERRCORR osl_errCorr[OSL_NUM_FILE_ENTRIES];
+static S_OSLDATA __attribute__((section (".user_sdram"))) osl_data[OSL_NUM_FILE_ENTRIES];
+static OSL_ERRCORR __attribute__((section (".user_sdram"))) osl_errCorr[OSL_NUM_FILE_ENTRIES];
 static int32_t osl_file_loaded = -1;
 static int32_t osl_err_loaded = 0;
 

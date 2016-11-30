@@ -24,13 +24,13 @@
 
 extern void Sleep(uint32_t nms);
 
-static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2] = {0};
-static float rfft_input[NSAMPLES];
-static float rfft_output[NSAMPLES];
-static float rfft_mags[NSAMPLES/2];
+static int16_t __attribute__((section (".user_sdram"))) audioBuf[(NSAMPLES + NDUMMY) * 2] = {0};
+static float __attribute__((section (".user_sdram"))) rfft_input[NSAMPLES];
+static float __attribute__((section (".user_sdram"))) rfft_output[NSAMPLES];
+static float __attribute__((section (".user_sdram"))) rfft_mags[NSAMPLES/2];
 static const float complex *prfft   = (float complex*)rfft_output;
 static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
-static float wnd[NSAMPLES];
+static float __attribute__((section (".user_sdram"))) wnd[NSAMPLES];
 static enum {W_NONE, W_SINUS, W_HANN, W_HAMMING, W_BLACKMAN, W_FLATTOP} wndtype = W_BLACKMAN;
 static const char* wndstr[] = {"None", "Sinus", "Hann", "Hamming", "Blackman", "Flattop"};
 static uint32_t oscilloscope = 0;
