@@ -28,12 +28,6 @@
 #define Rtotal (RmeasAdd + Rmeas + Rload)
 #define DSP_Z0 50.0f
 
-//DSP sampling parameters
-#define NSAMPLES 512
-#define NDUMMY 32
-#define FSAMPLE I2S_AUDIOFREQ_48K
-#define BIN 107 //for 10031 Hz center frequency
-
 //Maximum number of measurements to average
 #define MAXNMEAS 20
 
@@ -49,11 +43,12 @@ static float Rload = 51.0f;
 static float mag_v_buf[MAXNMEAS];
 static float mag_i_buf[MAXNMEAS];
 static float phdif_buf[MAXNMEAS];
-static float windowfunc[NSAMPLES];
-static float rfft_input[NSAMPLES];
-static float rfft_output[NSAMPLES];
-static const float complex *prfft   = (float complex*)rfft_output;
-static int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
+
+float windowfunc[NSAMPLES];
+float rfft_input[NSAMPLES];
+float rfft_output[NSAMPLES];
+const float complex *prfft   = (float complex*)rfft_output;
+int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
 
 //Measurement results
 static float complex magphase_v = 0.1f+0.fi; //Measured magnitude and phase for V channel
@@ -87,7 +82,7 @@ static float complex DSP_FFT(int channel)
 
     //Calculate magnitude value considering +/-2 bins from maximum
     float power = 0.f;
-    for (i = BIN - 2; i <= BIN + 2; i++)
+    for (i = FFTBIN - 2; i <= FFTBIN + 2; i++)
     {
         float complex binf = prfft[i];
         float bin_magnitude = cabsf(binf) / (NSAMPLES/2);
@@ -96,8 +91,8 @@ static float complex DSP_FFT(int channel)
     magnitude = sqrtf(power);
 
     //Calculate results
-    float re = crealf(prfft[BIN]);
-    float im = cimagf(prfft[BIN]);
+    float re = crealf(prfft[FFTBIN]);
+    float im = cimagf(prfft[FFTBIN]);
     phase = atan2f(im, re);
     return magnitude + phase * I;
 }
@@ -203,6 +198,16 @@ static float DSP_FilterArray(float* arr, int nm, int doRetries)
     return result;
 }
 
+void DSP_Sample(void)
+{
+    extern SAI_HandleTypeDef haudio_in_sai;
+    HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
+    if (HAL_OK != res)
+    {
+        CRASHF("HAL_SAI_Receive failed, err %d", res);
+    }
+}
+
 //Set frequency, run measurement sampling and calculate phase, magnitude ratio
 //and Z from sampled data, applying hardware error correction and OSL correction
 //if requested. Note that clock source remains turned on after the measurement!
@@ -240,12 +245,7 @@ void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasureme
 REMEASURE:
     for (i = 0; i < nMeasurements; i++)
     {
-        extern SAI_HandleTypeDef haudio_in_sai;
-        HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
-        if (HAL_OK != res)
-        {
-            CRASHF("HAL_SAI_Receive failed, err %d", res);
-        }
+        DSP_Sample();
 
         //NB:
         //  If DMA is in use, HAL_SAI_Receive_DMA is to be called instead of HAL_SAI_Receive.
@@ -377,5 +377,6 @@ float DSP_CalcVSWR(DSP_RX Z)
 
 uint32_t DSP_GetIF(void)
 {
-    return (uint32_t)10031; //TODO: Calculate from BIN number and sampling frequency
+    static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
+    return (uint32_t)(binwidth * FFTBIN);
 }

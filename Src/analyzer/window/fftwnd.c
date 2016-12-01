@@ -16,36 +16,21 @@
 #include "hit.h"
 #include "crash.h"
 #include "gen.h"
+#include "dsp.h"
 
-#define NSAMPLES 512
-#define NDUMMY 64
-#define FSAMPLE I2S_AUDIOFREQ_48K
 #define step 1
 
 extern void Sleep(uint32_t nms);
 
-static int16_t __attribute__((section (".user_sdram"))) audioBuf[(NSAMPLES + NDUMMY) * 2] = {0};
-static float __attribute__((section (".user_sdram"))) rfft_input[NSAMPLES];
-static float __attribute__((section (".user_sdram"))) rfft_output[NSAMPLES];
-static float __attribute__((section (".user_sdram"))) rfft_mags[NSAMPLES/2];
-static const float complex *prfft   = (float complex*)rfft_output;
-static const float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
-static float __attribute__((section (".user_sdram"))) wnd[NSAMPLES];
-static enum {W_NONE, W_SINUS, W_HANN, W_HAMMING, W_BLACKMAN, W_FLATTOP} wndtype = W_BLACKMAN;
-static const char* wndstr[] = {"None", "Sinus", "Hann", "Hamming", "Blackman", "Flattop"};
 static uint32_t oscilloscope = 0;
 static uint32_t rqExit = 0;
+static float rfft_mags[NSAMPLES/2];
 
-static void prepare_windowing(void);
-
-static void FFTWND_SwitchWindowing(void)
-{
-    wndtype++;
-    prepare_windowing();
-    FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
-    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 32);
-    FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
-}
+extern int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
+extern float rfft_input[NSAMPLES];
+extern float rfft_output[NSAMPLES];
+extern const float complex *prfft;
+extern float windowfunc[NSAMPLES];
 
 static void FFTWND_ExitWnd(void)
 {
@@ -61,47 +46,10 @@ static const struct HitRect hitArr[] =
 {
     //        x0,   y0, width,  height, callback
     HITRECT(   0,  200,   100,      80, FFTWND_ExitWnd),
-    HITRECT(   0,    0,   480,     140, FFTWND_SwitchWindowing),
     HITRECT(   0,  140,   480,     140, FFTWND_SwitchDispMode),
     HITEND
 };
 
-
-static void prepare_windowing(void)
-{
-    int32_t i;
-    int ns = NSAMPLES - 1;
-    for(i = 0; i < NSAMPLES; i++)
-    {
-        switch (wndtype)
-        {
-        default:
-            wndtype = W_NONE;
-            //Fall through
-        case W_NONE:
-            wnd[i] = 1.0f;
-            break;
-        case W_SINUS:
-            wnd[i] = sinf((M_PI * i)/ns);
-            break;
-        case W_HANN:
-            wnd[i] = 0.5 - 0.5 * cosf((2 * M_PI * i)/ns);
-            break;
-        case W_HAMMING:
-            wnd[i] = 0.54 - 0.46 * cosf((2 * M_PI * i)/ns);
-            break;
-        case W_BLACKMAN:
-            //Blackman window, >66 dB OOB rejection
-            wnd[i] = 0.426591f - .496561f * cosf( (2 * M_PI * i) / ns) + .076848f * cosf((4 * M_PI * i) / ns);
-            break;
-        case W_FLATTOP:
-            //Flattop window
-            wnd[i] = (1.0 - 1.93*cosf((2 * M_PI * i) / ns) + 1.29 * cosf((4 * M_PI * i) / ns)
-                      -0.388*cosf((6 * M_PI * i) / ns) +0.0322*cosf((8 * M_PI * i) / ns)) / 3.f;
-            break;
-        }
-    }
-}
 
 static void do_fft_audiobuf(int ch)
 {
@@ -112,7 +60,7 @@ static void do_fft_audiobuf(int ch)
     int16_t* pBuf = &audioBuf[NDUMMY + (ch != 0)];
     for(i = 0; i < NSAMPLES; i++)
     {
-        rfft_input[i] = (float)*pBuf * wnd[i];
+        rfft_input[i] = (float)*pBuf * windowfunc[i];
         pBuf += 2;
     }
 
@@ -126,20 +74,6 @@ static void do_fft_audiobuf(int ch)
     }
 }
 
-static void measure(void)
-{
-    extern SAI_HandleTypeDef haudio_in_sai;
-    HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (NSAMPLES + NDUMMY) * 2, HAL_MAX_DELAY);
-    if (HAL_OK != res)
-    {
-        CRASHF("HAL_SAI_Receive failed, err %d", res);
-    }
-    //NB:
-    //  If DMA is in use, HAL_SAI_Receive_DMA is to be called instead of HAL_SAI_Receive.
-    //  In this case, to provide cache coherence, a call SCB_InvalidateDCache() should be added
-    //  to the custom HAL_SAI_RxCpltCallback() implementation !!! (EU1KY)
-}
-
 void FFTWND_Proc(void)
 {
     uint32_t ctr = 0;
@@ -147,12 +81,9 @@ void FFTWND_Proc(void)
 
     rqExit = 0;
     oscilloscope = 0;
-    prepare_windowing();
     LCD_FillAll(LCD_BLACK);
 
     FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
-    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 32);
-    FONT_Printf(0, 32, "Windowing: %s", wndstr[wndtype]);
 
     GEN_SetMeasurementFreq(3500000);
 
@@ -180,7 +111,7 @@ void FFTWND_Proc(void)
         }
 
         uint32_t tmstart = HAL_GetTick();
-        measure();
+        DSP_Sample();
         tmstart = HAL_GetTick() - tmstart;
 
         if (oscilloscope)
@@ -215,13 +146,13 @@ void FFTWND_Proc(void)
             {
                 if (i == 0)
                 {
-                    lasty_left = 210 - (int)(*pData++ * wnd[i*step]) / 500;
+                    lasty_left = 210 - (int)(*pData++ * windowfunc[i*step]) / 500;
                     if (lasty_left > LCD_GetHeight()-1)
                         lasty_left = LCD_GetHeight()-1;
                     if (lasty_left < 0)
                         lasty_left = 0;
                     LCD_SetPixel(LCD_MakePoint(i, lasty_left), LCD_COLOR_GREEN);
-                    lasty_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
+                    lasty_right = 210 - (int)(*pData++ * windowfunc[i*step]) / 500;
                     if (lasty_right > LCD_GetHeight()-1)
                         lasty_right = LCD_GetHeight()-1;
                     if (lasty_right < 140)
@@ -230,8 +161,8 @@ void FFTWND_Proc(void)
                 }
                 else
                 {
-                    uint16_t y_left = 210 - (int)(*pData++ * wnd[i*step]) / 500;
-                    uint16_t y_right = 210 - (int)(*pData++ * wnd[i*step]) / 500;
+                    uint16_t y_left = 210 - (int)(*pData++ * windowfunc[i*step]) / 500;
+                    uint16_t y_right = 210 - (int)(*pData++ * windowfunc[i*step]) / 500;
                     if (y_left > LCD_GetHeight()-1)
                         y_left = LCD_GetHeight()-1;
                     if (y_left < 140)
@@ -278,7 +209,6 @@ void FFTWND_Proc(void)
                         idxmax = i;
                     }
                 }
-                //idxmax = 107;
 
                 //Calculate magnitude value considering +/-2 bins from maximum
                 float P = 0.f;
@@ -289,6 +219,8 @@ void FFTWND_Proc(void)
                 //Draw spectrum
                 for (int x = 0; x < 240; x++)
                 {
+                    if (x >= NSAMPLES/2)
+                        break;
                     int y = (int)(LCD_GetHeight()- 1 - 20 * log10f(rfft_mags[x]));
                     if (y <= LCD_GetHeight()-1)
                     {
@@ -299,6 +231,7 @@ void FFTWND_Proc(void)
                         break;
                 }
 
+                float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
                 LCD_WaitForRedraw();
                 if (0 == ch)
                 {
