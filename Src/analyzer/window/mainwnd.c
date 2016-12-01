@@ -50,7 +50,7 @@ static TEXTBOX_t hbTimestamp;
 #define COL1 10  //Column 1 x coordinate
 #define COL2 250 //Column 2 x coordinate
 
-static USBD_HandleTypeDef  __attribute__((section (".user_sdram"))) USBD_Device;
+static USBD_HandleTypeDef USBD_Device;
 extern char SDPath[4];
 extern FATFS SDFatFs;
 
