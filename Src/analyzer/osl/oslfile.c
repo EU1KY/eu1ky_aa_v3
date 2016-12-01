@@ -190,13 +190,13 @@ static void CramersRule(const COMPLEX a11, const COMPLEX a12, const COMPLEX a13,
 // where a and b are:
 //    a = ((y3-y2)/(x3-x2)-(y2-y1)/(x2-x1))/(x3-x1)
 //    b = ((y3-y2)/(x3-x2)*(x2-x1)+(y2-y1)/(x2-x1)*(x3-x2))/(x3-x1)
-static COMPLEX ParabolicInterpolation(COMPLEX y1, COMPLEX y2, COMPLEX y3, //values for frequencies x1, x2, x3
+float complex OSL_ParabolicInterpolation(float complex y1, float complex y2, float complex y3, //values for frequencies x1, x2, x3
                                float x1, float x2, float x3,       //frequencies of respective y values
                                float x) //Frequency between x2 and x3 where we want to interpolate result
 {
-    COMPLEX a = ((y3-y2)/(x3-x2)-(y2-y1)/(x2-x1))/(x3-x1);
-    COMPLEX b = ((y3-y2)/(x3-x2)*(x2-x1)+(y2-y1)/(x2-x1)*(x3-x2))/(x3-x1);
-    COMPLEX res = a * powf(x - x2, 2.) + b * (x - x2) + y2;
+    float complex a = ((y3-y2)/(x3-x2)-(y2-y1)/(x2-x1))/(x3-x1);
+    float complex b = ((y3-y2)/(x3-x2)*(x2-x1)+(y2-y1)/(x2-x1)*(x3-x2))/(x3-x1);
+    float complex res = a * powf(x - x2, 2.) + b * (x - x2) + y2;
     return res;
 }
 
@@ -484,11 +484,11 @@ static float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
         f2 = i * (float)OSL_SCAN_STEP + (float)(BAND_FMIN);
         f3 = (i + 1) * (float)OSL_SCAN_STEP + (float)(BAND_FMIN);
 
-        oslData.e00 = ParabolicInterpolation(osl_data[i-1].e00, osl_data[i].e00, osl_data[i+1].e00,
+        oslData.e00 = OSL_ParabolicInterpolation(osl_data[i-1].e00, osl_data[i].e00, osl_data[i+1].e00,
                                              f1, f2, f3, (float)(fhz));
-        oslData.e11 = ParabolicInterpolation(osl_data[i-1].e11, osl_data[i].e11, osl_data[i+1].e11,
+        oslData.e11 = OSL_ParabolicInterpolation(osl_data[i-1].e11, osl_data[i].e11, osl_data[i+1].e11,
                                              f1, f2, f3, (float)(fhz));
-        oslData.de = ParabolicInterpolation(osl_data[i-1].de, osl_data[i].de, osl_data[i+1].de,
+        oslData.de = OSL_ParabolicInterpolation(osl_data[i-1].de, osl_data[i].de, osl_data[i+1].de,
                                              f1, f2, f3, (float)(fhz));
 
     }

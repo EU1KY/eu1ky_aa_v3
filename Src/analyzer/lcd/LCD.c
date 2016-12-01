@@ -58,7 +58,7 @@ void LCD_Init(void)
     /* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz */ //Now 32/4 = 8MHz (EU1KY)
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
     PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-    PeriphClkInitStruct.PLLSAI.PLLSAIR = 6; //Initially 5, but slowed it down to prevent LCD flickering due to AHB bus overload // Must be 2..7.
+    PeriphClkInitStruct.PLLSAI.PLLSAIR = 5; //Initially 5, but slowed it down to prevent LCD flickering due to AHB bus overload // Must be 2..7.
     PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
     HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 

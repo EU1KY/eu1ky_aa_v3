@@ -95,12 +95,13 @@ static uint32_t f1 = 14000; //Scan range start frequency, in kHz
 static BANDSPAN span = BS800;
 static char buf[64];
 static LCDPoint pt;
-static float complex values[WWIDTH];
+static float complex values[WWIDTH+1];
 static int isMeasured = 0;
 static uint32_t cursorPos = WWIDTH / 2;
 static GRAPHTYPE grType = GRAPH_VSWR;
 static uint32_t isSaved = 0;
 static uint32_t cursorChangeCount = 0;
+static uint32_t autofast = 0;
 
 static void DrawRX();
 static void DrawSmith();
@@ -217,11 +218,20 @@ static void DrawCursorTextWithS11()
               );
 }
 
+static void DrawAutoText(void)
+{
+    static const char* atxt = "  Auto (fast, 1/8 pts)  ";
+    if (0 == autofast)
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 255), LCD_MakeRGB(64, 64, 64), 250, Y0 + WHEIGHT + 16 + 16,  atxt);
+    else
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 255), LCD_MakeRGB(0, 128, 0), 250, Y0 + WHEIGHT + 16 + 16,  atxt);
+}
+
 static void DrawSaveText(void)
 {
     static const char* txt = "  Save snapshot  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_YELLOW, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_YELLOW, 120,
                Y0 + WHEIGHT + 16 + 16, txt);
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
@@ -231,7 +241,7 @@ static void DrawSavingText(void)
 {
     static const char* txt = "  Saving snapshot...  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLUE, 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLUE, 120,
                Y0 + WHEIGHT + 16 + 16, txt);
     Sleep(20);
 }
@@ -240,10 +250,11 @@ static void DrawSavedText(void)
 {
     static const char* txt = "  Snapshot saved  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 480 / 2 - FONT_GetStrPixelWidth(FONT_FRAN, txt) / 2,
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 120,
                Y0 + WHEIGHT + 16 + 16, txt);
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    DrawAutoText();
 }
 
 static void DecrCursor()
@@ -268,7 +279,7 @@ static void AdvCursor()
 {
     if (!isMeasured)
         return;
-    if (cursorPos == WWIDTH-1)
+    if (cursorPos == WWIDTH)
         return;
     DrawCursor();
     cursorPos++;
@@ -277,7 +288,6 @@ static void AdvCursor()
         DrawCursorTextWithS11();
     else
         DrawCursorText();
-    //SCB_CleanDCache();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
@@ -329,7 +339,7 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, pos, 0, buf);
 
     //Mark ham bands with colored background
-    for (i = 0; i < WWIDTH; i++)
+    for (i = 0; i <= WWIDTH; i++)
     {
         uint32_t f = fstart + (i * BSVALUES[span]) / WWIDTH;
         if (IsFinHamBands(f))
@@ -424,7 +434,7 @@ static void prevspan(BANDSPAN *sp)
     }
 }
 
-static void ScanRX()
+static void ScanRXFast(void)
 {
     uint64_t i;
     uint32_t fstart;
@@ -436,7 +446,7 @@ static void ScanRX()
 
     DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
 
-    for(i = 0; i < WWIDTH; i++)
+    for(i = 0; i <= WWIDTH; i+=8)
     {
         uint32_t freq;
         freq = fstart + (i * BSVALUES[span] * 1000) / WWIDTH;
@@ -448,14 +458,65 @@ static void ScanRX()
             rx = 0.0f + cimagf(rx) * I;
         if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
             rx = crealf(rx) + 0.0fi;
-        /*
-        if (crealf(rx) > 1999.)
-            rx = 1999.f + cimagf(rx) * I;
-        if (cimagf(rx) > 1999.)
-            rx = crealf(rx) + 1999.fi;
-        else if (cimagf(rx) < -1999.)
-            rx = crealf(rx) - 1999.fi;
-        */
+        values[i] = rx;
+        LCDPoint pt;
+        if ((0 == (i % 32)) && TOUCH_Poll(&pt))
+            break;
+    }
+    GEN_SetMeasurementFreq(0);
+    isMeasured = 1;
+
+    //Interpolate intermediate values
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        uint32_t fr = i % 8;
+        if (0 == fr)
+            continue;
+        int f0, f1, f2;
+        if (i < 8)
+        {
+            f0 = i - fr;
+            f1 = i + 8 - fr;
+            f2 = i + 16 - fr;
+        }
+        else
+        {
+            f0 = i - 8 - fr;
+            f1 = i - fr;
+            f2 = i + (8 - fr);
+        }
+        float complex G0 = OSL_GFromZ(values[f0], 50.f);
+        float complex G1 = OSL_GFromZ(values[f1], 50.f);
+        float complex G2 = OSL_GFromZ(values[f2], 50.f);
+        float complex Gi = OSL_ParabolicInterpolation(G0, G1, G2, (float)f0, (float)f1, (float)f2, (float)i);
+        values[i] = OSL_ZFromG(Gi, 50.f);
+    }
+}
+
+static void ScanRX(void)
+{
+    uint64_t i;
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - BSVALUES[span] / 2;
+    fstart *= 1000; //Convert to Hz
+
+    DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
+
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        uint32_t freq;
+        freq = fstart + (i * BSVALUES[span] * 1000) / WWIDTH;
+        if (freq == 0) //To overcome special case in DSP_Measure, where 0 is valid value
+            freq = 1;
+        DSP_Measure(freq, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
+        float complex rx = DSP_MeasuredZ();
+        if (isnan(crealf(rx)) || isinf(crealf(rx)))
+            rx = 0.0f + cimagf(rx) * I;
+        if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
+            rx = crealf(rx) + 0.0fi;
         values[i] = rx;
         LCD_SetPixel(LCD_MakePoint(X0 + i, 135), LCD_BLUE);
         LCD_SetPixel(LCD_MakePoint(X0 + i, 136), LCD_BLUE);
@@ -501,14 +562,14 @@ static float complex SmoothRX(int idx, int useHighSmooth)
     return resr + resx * I;
 }
 
-static void DrawVSWR()
+static void DrawVSWR(void)
 {
     if (!isMeasured)
         return;
     int lastoffset = 0;
     int lastoffset_sm = 0;
     int i;
-    for(i = 0; i < WWIDTH; i++)
+    for(i = 0; i <= WWIDTH; i++)
     {
         int offset = swroffset(DSP_CalcVSWR(values[i]));
         int offset_sm = swroffset(DSP_CalcVSWR(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0)));
@@ -560,7 +621,7 @@ static void LoadBkups()
 static void DrawHelp(void)
 {
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 15, "(Tap here to set F and Span)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 180, 110, "(Tap to here change graph type)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 150, 110, "(Tap here change graph type)");
 }
 
 /*
@@ -611,7 +672,7 @@ static void DrawS11()
         return;
     //Find min value among scanned S11 to set up scale
     float minS11 = 0.f;
-    for (i = 0; i < WWIDTH; i++)
+    for (i = 0; i <= WWIDTH; i++)
     {
         if (S11Calc(DSP_CalcVSWR(values[i])) < minS11)
             minS11 = S11Calc(DSP_CalcVSWR(values[i]));
@@ -650,7 +711,7 @@ static void DrawS11()
     }
 
     uint16_t lasty = 0;
-    for(j = 0; j < WWIDTH; j++)
+    for(j = 0; j <= WWIDTH; j++)
     {
         int offset = roundf((WHEIGHT / (-graphmin)) * S11Calc(DSP_CalcVSWR(values[j])));
         uint16_t y = WY(offset + WHEIGHT);
@@ -677,7 +738,7 @@ static void DrawRX()
     //Find min and max values among scanned R and X to set up scale
     float minRX = 1000000.f;
     float maxRX = -1000000.f;
-    for (i = 0; i < WWIDTH; i++)
+    for (i = 0; i <= WWIDTH; i++)
     {
         if (crealf(values[i]) < minRX)
             minRX = crealf(values[i]);
@@ -726,7 +787,7 @@ static void DrawRX()
     //Now draw R graph
     int lastoffset = 0;
     int lastoffset_sm = 0;
-    for(i = 0; i < WWIDTH; i++)
+    for(i = 0; i <= WWIDTH; i++)
     {
         float r = crealf(values[i]);
         if (r < -1999.f)
@@ -758,7 +819,7 @@ static void DrawRX()
     //Now draw X graph
     lastoffset = 0;
     lastoffset_sm = 0;
-    for(i = 0; i < WWIDTH; i++)
+    for(i = 0; i <= WWIDTH; i++)
     {
         float ix = cimagf(values[i]);
         if (ix < -1999.f)
@@ -884,7 +945,7 @@ static void DrawSmith()
     {
         uint32_t lastx = 0;
         uint32_t lasty = 0;
-        for(i = 0; i < WWIDTH; i++)
+        for(i = 0; i <= WWIDTH; i++)
         {
             float complex g = OSL_GFromZ(values[i], (float)CFG_GetParam(CFG_PARAM_R0));
             uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
@@ -896,23 +957,6 @@ static void DrawSmith()
             lastx = x;
             lasty = y;
         }
-        /*
-        //Draw smoothed
-        lastx = lasty = 0;
-        for(i = 0; i < WWIDTH; i++)
-        {
-            float complex g = OSL_GFromZ(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0), (float)CFG_GetParam(CFG_PARAM_R0));
-            uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
-            uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
-            if (i != 0)
-            {
-                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), SMITH_LINE_FG);
-            }
-            lastx = x;
-            lasty = y;
-        }
-        */
-
         //Mark the end of sweep range with red cross
         LCD_SetPixel(LCD_MakePoint(lastx, lasty), LCD_RED);
         LCD_SetPixel(LCD_MakePoint(lastx-1, lasty), LCD_RED);
@@ -947,16 +991,19 @@ static void RedrawWindow()
     {
         DrawCursorText();
         DrawSaveText();
+        DrawAutoText();
     }
     else if ((isMeasured) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1) && (grType == GRAPH_S11))
     {
         DrawCursorTextWithS11();
         DrawSaveText();
+        DrawAutoText();
     }
     else
     {
         FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
         FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+        DrawAutoText();
     }
 }
 
@@ -1073,17 +1120,22 @@ void PANVSWR2_Proc(void)
     {
         DrawGrid(1);
         DrawHelp();
-        //SCB_CleanDCache(); //Flush D-Cache contents to the RAM to avoid cache coherency
     }
     else
         RedrawWindow();
 
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
     FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    DrawAutoText();
 
     for(;;)
     {
         Sleep(50);
+        if (autofast)
+        {
+            ScanRXFast();
+            RedrawWindow();
+        }
         if (TOUCH_Poll(&pt))
         {
             if (pt.y < 80)
@@ -1125,23 +1177,34 @@ void PANVSWR2_Proc(void)
             }
             else if (pt.y > 200)
             {
-                if (pt.x < 140)
+                if (pt.x < 100)
                 {
                     // Lower left corner
                     while(TOUCH_IsPressed());
                     Sleep(100);
                     return;
                 }
-                if (pt.x > 340)
-                {
-                    //Lower right corner: perform scan
-                    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
-                    ScanRX();
+                if (pt.x > 380)
+                { //Lower right corner: perform scan or turn off auto
+                    if (0 == autofast)
+                    {
+                        FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
+                        ScanRX();
+                    }
+                    else
+                    {
+                        autofast = 0;
+                    }
                     RedrawWindow();
                 }
-                else if (pt.x > 160 && pt.x < 320 && isMeasured && !isSaved)
+                else if (pt.x > 120 && pt.x < 240 && isMeasured && !isSaved)
                 {
                     save_snapshot();
+                }
+                else if (pt.x >= 250 && pt.x <= 370)
+                {
+                    autofast = !autofast;
+                    DrawAutoText();
                 }
             }
             while(TOUCH_IsPressed())
