@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <complex.h>
+#include "stm32746g_discovery_audio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +37,16 @@ float complex DSP_MeasuredMagPhaseI(void);
 
 float DSP_CalcVSWR(DSP_RX Z);
 uint32_t DSP_GetIF(void);
+void DSP_Sample(void);
+
+#define NSAMPLES 512                //Must be order of 2
+#define NDUMMY 32                   //Dummy samples are needed to minimize influence of filter settling after invoking the SAI
+#define FSAMPLE I2S_AUDIOFREQ_48K   //Sampling frequency
+#define FFTBIN 107                  //Bin 107 determines 10031 Hz intermediate frequency at 512 samples at 48 kHz.
+
+#if (FFTBIN >= ((NSAMPLES) / 2))
+#error FFT bin is selected incorrectly
+#endif
 
 #ifdef __cplusplus
 }
