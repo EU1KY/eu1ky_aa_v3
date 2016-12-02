@@ -31,6 +31,8 @@
 #include "build_timestamp.h"
 
 extern void Sleep(uint32_t);
+extern uint8_t EnterFileName(char *);
+
 
 static TEXTBOX_CTX_t main_ctx;
 static TEXTBOX_t hbHwCal;
@@ -44,7 +46,7 @@ static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
 
-#define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
+#define M_BGCOLOR LCD_RGB(0,0,0)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
 
 #define COL1 10  //Column 1 x coordinate
@@ -60,7 +62,7 @@ static void USBD_Proc()
 
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 10, 0, "USB storage access via USB HS port");
-    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 80, 200, "Exit (Reset device)");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 80, 200, "Reset device to exit");
 
     FATFS_UnLinkDriver(SDPath);
     BSP_SD_DeInit();
@@ -75,19 +77,32 @@ static void USBD_Proc()
     for(;;)
     {
         Sleep(50); //To enter low power if necessary
-        LCDPoint coord;
-        if (TOUCH_Poll(&coord))
+        TOUCH_IsPressed(); //To wake up from low power mode if necessary
+    }
+
+    /*
+    LCDPoint coord;
+    while (!TOUCH_Poll(&coord))
+    {
+        if (coord.x < 150 && coord.y > 200)
         {
+            USBD_Stop(&USBD_Device);
+            USBD_DeInit(&USBD_Device);
+            BSP_SD_DeInit();
+
+            Sleep(100);
+
+            //Mount SD card
+            if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
+                CRASH("FATFS_LinkDriver failed");
+            if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
+                CRASH("f_mount failed");
+
             while(TOUCH_IsPressed());
-            if (coord.x > 80 && coord.x < 320 && coord.y > 200 && coord.y < 240)
-            {
-                USBD_Stop(&USBD_Device);
-                USBD_DeInit(&USBD_Device);
-                BSP_SD_DeInit();
-                NVIC_SystemReset(); //Never returns
-            }
+            return;
         }
     }
+    */
 }
 
 //==========================================================================================
@@ -292,6 +307,8 @@ static void PROTOCOL_Handler(void)
 // Main window procedure (never returns)
 void MainWnd(void)
 {
+    PANVSWR2_Proc();
+
     LCD_FillAll(LCD_BLACK);
     while (TOUCH_IsPressed());
 
