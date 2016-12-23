@@ -325,7 +325,10 @@ static void MEASUREMENT_Screenshot(void)
     char* fname = 0;
     fname = SCREENSHOT_SelectFileName();
     SCREENSHOT_DeleteOldest();
-    SCREENSHOT_Save(fname);
+    if (CFG_GetParam(CFG_PARAM_SCREENSHOT_FORMAT))
+        SCREENSHOT_SavePNG(fname);
+    else
+        SCREENSHOT_Save(fname);
 }
 
 static const struct HitRect hitArr[] =
