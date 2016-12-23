@@ -220,6 +220,20 @@ void lodepng_free(void* ptr)
   free(ptr);
 }
 
+//Exhange R and B colors for proper PNG encoding
+static void _Change_B_R(uint32_t* image)
+{
+    uint32_t i;
+    uint32_t endi = (uint32_t)LCD_GetWidth() * (uint32_t)LCD_GetHeight();
+    for (i = 0; i < endi; i++)
+    {
+        uint32_t c = image[i];
+        uint32_t r = (c >> 16) & 0xFF;
+        uint32_t b = c & 0xFF;
+        image[i] = (c & 0xFF00FF00) | r | (b << 16);
+    }
+}
+
 void SCREENSHOT_SavePNG(const char *fname)
 {
     char path[64];
@@ -228,13 +242,17 @@ void SCREENSHOT_SavePNG(const char *fname)
     FIL fo = { 0 };
 
     uint8_t* image = LCD_Push();
+    if (0 == image)
+        CRASH("LCD_Push failed");
+
+    _Change_B_R((uint32_t*)image);
 
     uint8_t* png = 0;
     size_t pngsize = 0;
 
     uint32_t error = lodepng_encode32(&png, &pngsize, image, LCD_GetWidth(), LCD_GetHeight());
     if (error)
-        CRASHF("lodepng_encode32 failed: %u ", error);
+        CRASHF("lodepng_encode failed: %u ", error);
 
     f_mkdir(SNDIR);
     sprintf(path, "%s/%s.png", SNDIR, fname);
@@ -248,5 +266,6 @@ void SCREENSHOT_SavePNG(const char *fname)
     f_close(&fo);
 
     lodepng_free(png);
+    _Change_B_R((uint32_t*)image);
     LCD_Pop();
 }

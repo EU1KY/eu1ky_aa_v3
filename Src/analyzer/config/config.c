@@ -276,6 +276,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 2,
         .values = CFG_IARR(0, 1),
         .strvalues = CFG_SARR("BMP", "PNG"),
+        .isvalid = isShowHidden,
         .dstring = "Screenshot file format",
     },
     {
