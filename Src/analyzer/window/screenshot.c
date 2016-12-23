@@ -175,6 +175,7 @@ void SCREENSHOT_Save(const char *fname)
     SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
     Sleep(10);
 
+    BSP_LCD_DisplayOff();
     f_mkdir(SNDIR);
 
     //Now write screenshot as bitmap
@@ -198,8 +199,10 @@ void SCREENSHOT_Save(const char *fname)
         }
     }
     f_close(&fo);
+    BSP_LCD_DisplayOn();
     return;
 CRASH_WR:
+    BSP_LCD_DisplayOn();
     CRASHF("Failed to write to file %s", path);
 }
 
@@ -250,6 +253,7 @@ void SCREENSHOT_SavePNG(const char *fname)
     uint8_t* png = 0;
     size_t pngsize = 0;
 
+    BSP_LCD_DisplayOff();
     uint32_t error = lodepng_encode32(&png, &pngsize, image, LCD_GetWidth(), LCD_GetHeight());
     if (error)
         CRASHF("lodepng_encode failed: %u ", error);
@@ -264,6 +268,7 @@ void SCREENSHOT_SavePNG(const char *fname)
     if (FR_OK != fr)
         CRASHF("Failed to write to file %s", path);
     f_close(&fo);
+    BSP_LCD_DisplayOn();
 
     lodepng_free(png);
     _Change_B_R((uint32_t*)image);

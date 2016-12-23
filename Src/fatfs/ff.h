@@ -112,7 +112,7 @@ extern "C" {
         DWORD    database;        /* Data start sector */
         DWORD    winsect;        /* Current sector appearing in the win[] */
 
-    } FATFS;
+    } FATFS __attribute__((aligned(32)));
 
 
 
@@ -147,7 +147,7 @@ extern "C" {
         UINT    lockid;            /* File lock ID origin from 1 (index of file semaphore table Files[]) */
 #endif
 
-    } FIL;
+    } FIL __attribute__((aligned(32)));
 
 
 
@@ -180,7 +180,7 @@ extern "C" {
 #if _USE_FIND
         const TCHAR*    pat;    /* Pointer to the name matching pattern */
 #endif
-    } DIR;
+    } DIR __attribute__((aligned(32)));
 
 
 
