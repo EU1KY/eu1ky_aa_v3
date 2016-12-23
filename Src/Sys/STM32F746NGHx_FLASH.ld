@@ -35,8 +35,8 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 /* _estack = 0x2004FFFF; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x8000;      /* required amount of heap  */
-_Min_Stack_Size = 0x8000;; /* required amount of stack */
+_Min_Heap_Size = 0x100000; /* required amount of heap (1 MiB in SDRAM) - needed for LodePNG */
+_Min_Stack_Size = 0x8000;  /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
@@ -153,23 +153,21 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
-  /* User_heap section, used to check that there is enough RAM left */
-  ._user_heap :
-  {
-     PROVIDE ( end = . );
-    . = ALIGN(8);
-    __heap_start__ = .;
-    . = . + _Min_Heap_Size;
-    __heap_end__ = .;
-    . = ALIGN(8);
-    PROVIDE ( _end = . );
-  } >RAM
-
   /* User SDRAM section, right after the LCD framebuffer */
   .user_sdram (NOLOAD):
   {
     KEEP(*(.user_sdram))
     __user_sdram_end__ = .;
+  } >SDRAM
+
+  /* User_heap section, used to check that there is enough RAM left */
+  ._user_heap (NOLOAD):
+  {
+    . = ALIGN(256);
+    __heap_start__ = .;
+    . = . + _Min_Heap_Size;
+    __heap_end__ = .;
+    . = ALIGN(8);
   } >SDRAM
 
   /* Remove information from the standard libraries */
