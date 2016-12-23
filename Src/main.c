@@ -100,9 +100,6 @@ int main(void)
 
     Sleep(1000);
 
-    while(TOUCH_IsPressed())
-        Sleep(10);
-
     //Run main window function
     MainWnd(); //Never returns
 
