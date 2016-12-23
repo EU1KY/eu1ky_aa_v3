@@ -1043,7 +1043,10 @@ static void save_snapshot(void)
 
     fname = SCREENSHOT_SelectFileName();
     SCREENSHOT_DeleteOldest();
-    SCREENSHOT_Save(fname);
+    if (CFG_GetParam(CFG_PARAM_SCREENSHOT_FORMAT))
+        SCREENSHOT_SavePNG(fname);
+    else
+        SCREENSHOT_Save(fname);
 
     //Now write measured data to S1P file
     sprintf(path, "%s/%s.s1p", sndir, fname);

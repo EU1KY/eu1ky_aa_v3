@@ -58,6 +58,7 @@ typedef enum
     CFG_PARAM_S11_SHOW,              //Show S11 graph in the panoramic window
     CFG_PARAM_S1P_TYPE,              //Type of Touchstone S1P file saved with panoramic screenshot
     CFG_PARAM_SHOW_HIDDEN,           //Show hidden options in configuration menu
+    CFG_PARAM_SCREENSHOT_FORMAT,     //If 0, use BMP format for screenshots, otherwise use PNG
 
     //---------------------
     CFG_NUM_PARAMS

@@ -270,6 +270,15 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Touchstone S1P file type saved with screenshot. Default is S MA R 50.",
     },
     {
+        .id = CFG_PARAM_SCREENSHOT_FORMAT,
+        .idstring = "SCREENSHOT_FORMAT",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .values = CFG_IARR(0, 1),
+        .strvalues = CFG_SARR("BMP", "PNG"),
+        .dstring = "Screenshot file format",
+    },
+    {
         .id = CFG_PARAM_SHOW_HIDDEN,
         .idstring = "SHOW_HIDDEN",
         .type = CFG_PARAM_T_U32,
@@ -277,7 +286,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(0, 1),
         .strvalues = CFG_SARR("No", "Yes"),
         .dstring = "Show hidden menu parameters. Requires reset.",
-    }
+    },
 };
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
@@ -319,6 +328,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_S11_SHOW, 1);
     CFG_SetParam(CFG_PARAM_S1P_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SHOW_HIDDEN, 0);
+    CFG_SetParam(CFG_PARAM_SCREENSHOT_FORMAT, 0);
 
     //Load parameters from file on SD card
     FRESULT res;

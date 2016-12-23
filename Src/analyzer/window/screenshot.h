@@ -12,5 +12,6 @@ void SCREENSHOT_Show(const char* fname);
 char* SCREENSHOT_SelectFileName(void);
 void SCREENSHOT_DeleteOldest(void);
 void SCREENSHOT_Save(const char *fname);
+void SCREENSHOT_SavePNG(const char *fname);
 
 #endif
