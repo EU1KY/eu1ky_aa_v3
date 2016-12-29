@@ -206,21 +206,21 @@ CRASH_WR:
     CRASHF("Failed to write to file %s", path);
 }
 
-//Custom allocators for LodePNG (TODO!)
-#include <stdlib.h>
+//Custom allocators for LodePNG using SDRAM heap
+#include "sdram_heap.h"
 void* lodepng_malloc(size_t size)
 {
-  return malloc(size);
+    return SDRH_malloc(size);
 }
 
 void* lodepng_realloc(void* ptr, size_t new_size)
 {
-  return realloc(ptr, new_size);
+    return SDRH_realloc(ptr, new_size);
 }
 
 void lodepng_free(void* ptr)
 {
-  free(ptr);
+    SDRH_free(ptr);
 }
 
 //Exhange R and B colors for proper PNG encoding
