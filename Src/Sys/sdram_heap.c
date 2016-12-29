@@ -33,8 +33,17 @@ extern uint8_t __sdram_heap_end__;
 static void* const SDRH_START = &__sdram_heap_start__;
 static void* const SDRH_END = &__sdram_heap_end__;
 
-static uint16_t __attribute__((section (".user_sdram"))) SDRH_descr[SDRH_NBLOCKS] = {0}; //Heap descriptor
+static uint16_t __attribute__((section (".user_sdram"))) SDRH_descr[SDRH_NBLOCKS]; //Heap descriptor
 
+static void SDRH_Init(void)
+{
+    static bool isSDRHInitialized = false;
+    if (!isSDRHInitialized)
+    {
+        memset(SDRH_descr, 0, sizeof(SDRH_descr));
+        isSDRHInitialized = true;
+    }
+}
 //It is expected that ptr belongs to SDRAM HEAP designated area, and is aligned at the block start
 static bool _isValidPtr(void* ptr)
 {
@@ -88,6 +97,8 @@ void* SDRH_malloc(size_t nbytes)
     if (0 == nbytes)
         return 0;
 
+    SDRH_Init();
+
     uint32_t nblocks;
     if (0 != nbytes % SDRH_BLKSIZE)
         nblocks = (nbytes / SDRH_BLKSIZE) + 1;
@@ -110,6 +121,7 @@ void SDRH_free(void* ptr)
 {
     if (!_isValidPtr(ptr))
         return;
+    SDRH_Init();
     uint32_t block = (ptr - SDRH_START) / SDRH_BLKSIZE;
     uint32_t nblocks = SDRH_descr[block];
     if (block + nblocks > SDRH_NBLOCKS) //Should not happen, but let's take care of this
@@ -130,6 +142,7 @@ void* SDRH_realloc(void* ptr, size_t nbytes)
     }
     if (0 == ptr) //In case that ptr is a null pointer, the function behaves like malloc
         return SDRH_malloc(nbytes);
+    SDRH_Init();
 
     uint32_t nblocks;
     if (0 != nbytes % SDRH_BLKSIZE)
