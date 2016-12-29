@@ -89,7 +89,7 @@ void* SDRH_malloc(size_t nbytes)
         return 0;
 
     uint32_t nblocks;
-    if (0 == nbytes % SDRH_BLKSIZE)
+    if (0 != nbytes % SDRH_BLKSIZE)
         nblocks = (nbytes / SDRH_BLKSIZE) + 1;
     else
         nblocks = (nbytes / SDRH_BLKSIZE);
@@ -132,7 +132,7 @@ void* SDRH_realloc(void* ptr, size_t nbytes)
         return SDRH_malloc(nbytes);
 
     uint32_t nblocks;
-    if (0 == nbytes % SDRH_BLKSIZE)
+    if (0 != nbytes % SDRH_BLKSIZE)
         nblocks = (nbytes / SDRH_BLKSIZE) + 1;
     else
         nblocks = (nbytes / SDRH_BLKSIZE);
