@@ -265,6 +265,8 @@ static void CPU_CACHE_Enable(void)
 
 void CRASH(const char *text)
 {
+    if (LCD_IsOff())
+        BSP_LCD_DisplayOn();
     FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, 0, text);
     FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, 14, "SYSTEM HALTED ");
     for(;;);

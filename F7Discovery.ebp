@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <EmBitz_project_file>
-	<EmBitzVersion release="1.00" revision="0" />
+	<EmBitzVersion release="1.10" revision="0" />
 	<FileVersion major="1" minor="0" />
 	<Project>
 		<Option title="F7Discovery" />
@@ -41,6 +41,11 @@
 					<Add symbol="ARM_MATH_CM7" />
 					<Add symbol="__FPU_PRESENT" />
 					<Add symbol="USE_USB_HS" />
+					<Add symbol="LODEPNG_NO_COMPILE_DISK" />
+					<Add symbol="LODEPNG_NO_COMPILE_ERROR_TEXT" />
+					<Add symbol="LODEPNG_NO_COMPILE_ALLOCATORS" />
+					<Add symbol="LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS" />
+					<Add symbol="LODEPNG_NO_COMPILE_DECODER" />
 					<Add directory="Src\BSP\Components\ampire480272" />
 					<Add directory="Src\BSP\Components\ampire640480" />
 					<Add directory="Src\BSP\Components\Common" />
@@ -132,6 +137,11 @@
 					<Add symbol="ARM_MATH_CM7" />
 					<Add symbol="__FPU_PRESENT" />
 					<Add symbol="USE_USB_HS" />
+					<Add symbol="LODEPNG_NO_COMPILE_DISK" />
+					<Add symbol="LODEPNG_NO_COMPILE_ERROR_TEXT" />
+					<Add symbol="LODEPNG_NO_COMPILE_ALLOCATORS" />
+					<Add symbol="LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS" />
+					<Add symbol="LODEPNG_NO_COMPILE_DECODER" />
 					<Add directory="Src\BSP\Components\ampire480272" />
 					<Add directory="Src\BSP\Components\ampire640480" />
 					<Add directory="Src\BSP\Components\Common" />
@@ -262,6 +272,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\lcd\libnsbmp.h" />
+		<Unit filename="Src\analyzer\lcd\lodepng.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\lodepng.h" />
 		<Unit filename="Src\analyzer\lcd\sdigits.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -457,6 +471,7 @@
 		</Unit>
 		<Unit filename="Src\Inc\crash.h" />
 		<Unit filename="Src\Inc\main.h" />
+		<Unit filename="Src\Inc\sdram_heap.h" />
 		<Unit filename="Src\Inc\stm32f7xx_hal_conf.h" />
 		<Unit filename="Src\Inc\stm32f7xx_it.h" />
 		<Unit filename="Src\main.c">
@@ -707,6 +722,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_ll_usb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\Sys\sdram_heap.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\Sys\startup_stm32f746xx.s">

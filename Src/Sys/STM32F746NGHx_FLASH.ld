@@ -33,10 +33,11 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = 0x2004FFFF;    /* end of RAM */
+/* _estack = 0x2004FFFF; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x8000;      /* required amount of heap  */
-_Min_Stack_Size = 0x8000;; /* required amount of stack */
+_Min_Heap_Size = 0x8000; /* required amount of heap */
+_SDRAM_HEAP_SIZE = 0x100000; /* required amount of SDRAM heap (1 MiB) */
+_Min_Stack_Size = 0x8000;  /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
@@ -111,6 +112,16 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
+  /* _user_stack section, the first in RAM to force placing in DTCM */
+  ._user_stack :
+  {
+    . = ALIGN(8);
+    __stack_start__ = .;
+    . = . + _Min_Stack_Size;
+    __stack_end__ = .;
+    PROVIDE (_estack = .);
+  } > RAM
+
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
@@ -141,23 +152,11 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM
-
-  /* User_heap_stack section, used to check that there is enough RAM left */
-  ._user_heap_stack :
-  {
-     PROVIDE ( end = . );
-    . = ALIGN(8);
-    __stack_start__ = .;
-    . = . + _Min_Stack_Size;
-    __stack_end__ = .;
-    _estack = .;
     . = ALIGN(8);
     __heap_start__ = .;
     . = . + _Min_Heap_Size;
     __heap_end__ = .;
     . = ALIGN(8);
-    PROVIDE ( _end = . );
   } >RAM
 
   /* User SDRAM section, right after the LCD framebuffer */
@@ -165,6 +164,15 @@ SECTIONS
   {
     KEEP(*(.user_sdram))
     __user_sdram_end__ = .;
+  } >SDRAM
+
+  ._sdram_heap (NOLOAD):
+  {
+    . = ALIGN(128);
+    __sdram_heap_start__ = .;
+    . = . + _SDRAM_HEAP_SIZE;
+    __sdram_heap_end__ = .;
+    . = ALIGN(8);
   } >SDRAM
 
   /* Remove information from the standard libraries */
