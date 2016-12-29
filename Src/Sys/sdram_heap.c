@@ -51,9 +51,12 @@ static uint32_t _find_area(uint32_t nblocks)
     while (i < SDRH_NBLOCKS)
     {
         if (0 == SDRH_descr[i]) //found free
-        {//count how many free blocks exist ahead
+        {
+            if (1 == nblocks)
+                return i;
+            //count how many free blocks exist ahead
             uint32_t j = i + 1;
-            uint32_t nfound = 0;
+            uint32_t nfound = 1;
             while (j < SDRH_NBLOCKS)
             {
                 if (0 == SDRH_descr[j])
@@ -68,7 +71,9 @@ static uint32_t _find_area(uint32_t nblocks)
                     break;
             }
             //not found
-            i = j; //Skip over too small area
+            if (j >= SDRH_NBLOCKS)
+                break; //Return not found
+            i = j + SDRH_descr[j]; //Skip over too small area and next occupied area
         }
         else
         {
@@ -83,7 +88,12 @@ void* SDRH_malloc(size_t nbytes)
     if (0 == nbytes)
         return 0;
 
-    uint32_t nblocks = (nbytes / SDRH_BLKSIZE) + 1;
+    uint32_t nblocks;
+    if (0 == nbytes % SDRH_BLKSIZE)
+        nblocks = (nbytes / SDRH_BLKSIZE) + 1;
+    else
+        nblocks = (nbytes / SDRH_BLKSIZE);
+
     uint32_t start_block = _find_area(nblocks);
 
     if (start_block >= SDRH_NBLOCKS)
@@ -91,7 +101,7 @@ void* SDRH_malloc(size_t nbytes)
     void* addr = SDRH_ADDR(start_block);
     while (nblocks)
     {
-        SDRH_descr[start_block] = nblocks--;
+        SDRH_descr[start_block++] = nblocks--;
     }
     return addr;
 }
@@ -106,7 +116,7 @@ void SDRH_free(void* ptr)
         nblocks = SDRH_NBLOCKS - block;
     while (nblocks--)
     {
-        SDRH_descr[block] = 0;
+        SDRH_descr[block++] = 0;
     }
 }
 
@@ -121,7 +131,11 @@ void* SDRH_realloc(void* ptr, size_t nbytes)
     if (0 == ptr) //In case that ptr is a null pointer, the function behaves like malloc
         return SDRH_malloc(nbytes);
 
-    uint32_t nblocks = (nbytes / SDRH_BLKSIZE) + 1;
+    uint32_t nblocks;
+    if (0 == nbytes % SDRH_BLKSIZE)
+        nblocks = (nbytes / SDRH_BLKSIZE) + 1;
+    else
+        nblocks = (nbytes / SDRH_BLKSIZE);
 
     //Check if ptr already has enough memory to fit nbytes
     uint32_t block = (ptr - SDRH_START) / SDRH_BLKSIZE;
