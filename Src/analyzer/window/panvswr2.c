@@ -78,6 +78,8 @@ static const HAM_BANDS hamBands[] =
     {28000ul, 29700ul},
     {50000ul, 52000ul},
     {144000ul, 146000ul},
+    {222000ul, 225000ul},
+    {430000ul, 440000ul},
 };
 
 static const uint32_t hamBandsNum = sizeof(hamBands) / sizeof(*hamBands);

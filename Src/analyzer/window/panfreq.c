@@ -108,10 +108,12 @@ static const TEXTBOX_t tb_pan[] = {
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0, 0, 128), .cb = (void(*)(void))BandHitCb, .cbparam = 1, .next = (void*)&tb_pan[23] },
     (TEXTBOX_t){ .x0 = BANDKEYX(2), .y0 = BANDKEYY(2), .text = "2", .font = FONT_FRANBIG, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0, 0, 128), .cb = (void(*)(void))BandHitCb, .cbparam = 1, .next = (void*)&tb_pan[24] },
-    (TEXTBOX_t){ .x0 = BANDKEYX(3), .y0 = BANDKEYY(2), .text = "1.3m", .font = FONT_FRAN, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_RGB(128, 128, 128), .bgcolor = LCD_RGB(0, 0, 128), .cb = 0, .cbparam = 1, .next = (void*)&tb_pan[25] }, //For future use
+    (TEXTBOX_t){ .x0 = BANDKEYX(3), .y0 = BANDKEYY(2), .text = "1.25m", .font = FONT_FRAN, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
+                 .border = 1, .fgcolor = BAND_FMAX >= 230000000 ? LCD_WHITE : LCD_RGB(128, 128, 128), .bgcolor = LCD_RGB(0, 0, 128),
+                 .cb = BAND_FMAX >= 230000000 ? (void(*)(void))BandHitCb : 0, .cbparam = 1, .next = (void*)&tb_pan[25] },
     (TEXTBOX_t){ .x0 = BANDKEYX(4), .y0 = BANDKEYY(2), .text = "70cm", .font = FONT_FRAN, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_RGB(128, 128, 128), .bgcolor = LCD_RGB(0, 0, 128), .cb = 0, .cbparam = 1, .next = (void*)&tb_pan[26] }, //For future use
+                 .border = 1, .fgcolor = BAND_FMAX >= 450000000 ? LCD_WHITE : LCD_RGB(128, 128, 128), .bgcolor = LCD_RGB(0, 0, 128),
+                 .cb = BAND_FMAX >= 450000000 ? (void(*)(void))BandHitCb : 0, .cbparam = 1, .next = (void*)&tb_pan[26] },
 
     (TEXTBOX_t){ .x0 = 20, .y0 =238, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
                  .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = OKHitCb, .next = (void*)&tb_pan[27] },
@@ -355,6 +357,20 @@ static void BandHitCb(const TEXTBOX_t* tb)
         _f1 = 143000;
         _bs = BS4M;
     }
+#if BAND_FMAX >= 230000000u
+    else if (0 == strcmp(tb->text, "1.25m"))
+    {// 222-225 MHz in USA
+        _f1 = 214000;
+        _bs = BS20M;
+    }
+#endif
+#if BAND_FMAX >= 450000000u
+    else if (0 == strcmp(tb->text, "70cm"))
+    {
+        _f1 = 425000;
+        _bs = BS20M;
+    }
+#endif
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
         _f1 += BSVALUES[_bs] / 2;
     Show_F();
