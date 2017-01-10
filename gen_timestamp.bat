@@ -1,6 +1,12 @@
 @echo off
 echo #ifndef BUILD_TIMESTAMP > Src/Inc/build_timestamp.h
 
+hg stat > NUL
+if ERRORLEVEL 1 goto HGERR
+echo | set /p TMPHG="#define HGREV " >> Src/Inc/build_timestamp.h
+hg identify -ni >> Src/Inc/build_timestamp.h
+
+:MAKE_TIMESTAMP
 for /F "skip=1 delims=" %%F in ('
     wmic PATH win32_utctime GET Day^,Month^,Hour^,Minute^,Year /FORMAT:TABLE
  ') do (
@@ -16,9 +22,14 @@ set CurrHour=%CurrHour:~-2%
 set CurrMinute=%CurrMinute:~-2%
 
 echo #define BUILD_TIMESTAMP "%CurrYear%-%CurrMonth%-%CurrDay% %CurrHour%:%CurrMinute% UT">> Src/Inc/build_timestamp.h
-echo | set /p TMPHG="#define HGREV " >> Src/Inc/build_timestamp.h
-hg identify -ni >> Src/Inc/build_timestamp.h
 echo #define HGREVSTR(s) stringify_(s) >> Src/Inc/build_timestamp.h
 echo #define stringify_(s) #s >> Src/Inc/build_timestamp.h
 echo #endif >> Src/Inc/build_timestamp.h
 echo Src/Inc/build_timestamp.h file created at %CurrYear%-%CurrMonth%-%CurrDay% %CurrHour%:%CurrMinute% UT
+:END
+exit 0
+
+:HGERR
+echo #warning Mercurial failed. Repository not found. Firmware revision will not be generated. >> Src/Inc/build_timestamp.h
+echo #define HGREV "N/A" >> Src/Inc/build_timestamp.h
+goto MAKE_TIMESTAMP
