@@ -36,7 +36,7 @@ ENTRY(Reset_Handler)
 /* _estack = 0x2004FFFF; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x8000; /* required amount of heap */
-_SDRAM_HEAP_SIZE = 0x100000; /* required amount of SDRAM heap (1 MiB) */
+_SDRAM_HEAP_SIZE = 0x200000; /* required amount of SDRAM heap (2 MiB) */
 _Min_Stack_Size = 0x8000;  /* required amount of stack */
 
 /* Specify the memory areas */
