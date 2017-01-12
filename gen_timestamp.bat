@@ -26,10 +26,11 @@ echo #define HGREVSTR(s) stringify_(s) >> Src/Inc/build_timestamp.h
 echo #define stringify_(s) #s >> Src/Inc/build_timestamp.h
 echo #endif >> Src/Inc/build_timestamp.h
 echo Src/Inc/build_timestamp.h file created at %CurrYear%-%CurrMonth%-%CurrDay% %CurrHour%:%CurrMinute% UT
-:END
-exit 0
+goto END
 
 :HGERR
 echo #warning Mercurial failed. Repository not found. Firmware revision will not be generated. >> Src/Inc/build_timestamp.h
 echo #define HGREV "N/A" >> Src/Inc/build_timestamp.h
 goto MAKE_TIMESTAMP
+
+:END
