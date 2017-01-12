@@ -188,12 +188,19 @@ static void DrawCursorText()
     float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
     if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
         fcur = 0.f;
-    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
+
+    float Q = 0.f;
+    if ((crealf(rx) > 0.1f) && (fabs(cimagf(rx)) > crealf(rx)))
+        Q = fabs(cimagf(rx) / crealf(rx));
+    if (Q > 2000.f)
+        Q = 2000.f;
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB   Q: %.1f       ",
                fcur,
                crealf(rx),
                cimagf(rx),
                DSP_CalcVSWR(rx),
-               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f // Matched cable loss
+               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f, // Matched cable loss
+               Q
               );
 }
 

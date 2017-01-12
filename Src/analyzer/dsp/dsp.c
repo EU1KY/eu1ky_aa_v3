@@ -64,6 +64,14 @@ static DSP_RX mZ = DSP_Z0 + 0.0fi;
 static float DSP_CalcR(void);
 static float DSP_CalcX(void);
 
+//Ensure f is nonzero (to be safely used as denominator)
+static float _nonz(float f)
+{
+    if (0.f == f || -0.f == f)
+        return 1e-30; //Small, but much larger than __FLT_MIN__ to avoid INF result
+    return f;
+}
+
 static float complex DSP_FFT(int channel)
 {
     float magnitude, phase;
@@ -279,7 +287,7 @@ REMEASURE:
         goto REMEASURE;
     }
 
-    magdif = mag_v / mag_i;
+    magdif = mag_v / _nonz(mag_i);
     if (applyErrCorr)
         OSL_CorrectErr(freqHz, &magdif, &phdif);
 
@@ -366,12 +374,12 @@ float DSP_CalcVSWR(DSP_RX Z)
     {
         R = 0.0;
     }
-    float ro = sqrtf((powf((R - CFG_GetParam(CFG_PARAM_R0)), 2) + X2) / (powf((R + CFG_GetParam(CFG_PARAM_R0)), 2) + X2));
-    if(ro > .999)
+    float ro = sqrtf((powf((R - CFG_GetParam(CFG_PARAM_R0)), 2) + X2) / _nonz(powf((R + CFG_GetParam(CFG_PARAM_R0)), 2) + X2));
+    if(ro > .999f)
     {
-        ro = 0.999;
+        ro = 0.999f;
     }
-    X2 = (1.0 + ro) / (1.0 - ro);
+    X2 = (1.0f + ro) / (1.0f - ro);
     return X2;
 }
 

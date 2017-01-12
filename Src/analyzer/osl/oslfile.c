@@ -1,4 +1,5 @@
 #include <math.h>
+#include <float.h>
 #include <string.h>
 #include "oslfile.h"
 #include "ff.h"
@@ -13,6 +14,9 @@
 #define OSL_BASE_R0 50.0f // Note: all OSL calibration coefficients are calculated using G based on 50 Ohms, not on CFG_PARAM_R0 !!!
 
 extern void Sleep(uint32_t);
+
+static float _nonz(float f) __attribute__((unused));
+static float complex _cnonz(float complex f) __attribute__((unused));
 
 typedef float complex COMPLEX;
 
@@ -176,9 +180,25 @@ static void CramersRule(const COMPLEX a11, const COMPLEX a12, const COMPLEX a13,
                         COMPLEX* pResult)
 {
     COMPLEX div = Determinant3(a11, a12, a13, a21, a22, a23, a31, a32, a33);
+    div = _cnonz(div);
     pResult[0] = Determinant3(b1, a12, a13, b2, a22, a23, b3, a32, a33) / div;
     pResult[1] = Determinant3(a11, b1, a13, a21, b2, a23, a31, b3, a33) / div;
     pResult[2] = Determinant3(a11, a12, b1, a21, a22, b2, a31, a32, b3) / div;
+}
+
+//Ensure f is nonzero (to be safely used as denominator)
+static float _nonz(float f)
+{
+    if (0.f == f || -0.f == f)
+        return 1e-30; //Small, but much larger than __FLT_MIN__ to avoid INF result
+    return f;
+}
+
+static float complex _cnonz(float complex f)
+{
+    if (0.f == cabsf(f))
+        return 1e-30 + 0.fi; //Small, but much larger than __FLT_MIN__ to avoid INF result
+    return f;
 }
 
 //Parabolic interpolation
@@ -440,7 +460,8 @@ float complex OSL_ZFromG(float complex G, float Rbase)
 {
     float gr2  = powf(crealf(G), 2);
     float gi2  = powf(cimagf(G), 2);
-    float dg = powf((1.0f - crealf(G)), 2) + gi2;
+    float dg = _nonz(powf((1.0f - crealf(G)), 2) + gi2);
+
     float r = Rbase * (1.0f - gr2 - gi2) / dg;
     if (r < 0.0f) //Sometimes it overshoots a little due to limited calculation accuracy
         r = 0.0f;
@@ -493,7 +514,9 @@ static float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
 
     }
     //At this point oslData contains correction structure for given frequency fhz
-    COMPLEX gResult = (gMeasured - oslData.e00) / (gMeasured * oslData.e11 - oslData.de);
+
+    COMPLEX gResult = gMeasured * oslData.e11 - oslData.de; //Denominator
+    gResult = (gMeasured - oslData.e00) / _cnonz(gResult);
     return gResult;
 }
 
