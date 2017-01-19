@@ -879,6 +879,7 @@ static void DrawSmith()
     LCD_Circle(LCD_MakePoint(cx0 + 80, cy0), 20, WGRIDCOLOR); //Constant R 200 circle
     LCD_Line(LCD_MakePoint(cx0 - 100, cy0),LCD_MakePoint(cx0 + 100, cy0), WGRIDCOLOR); //Middle line
 
+    float r0f = (float)CFG_GetParam(CFG_PARAM_R0);
     //Draw X arcs
     {
         static const float xx[] = {10., 25., 50., 100., 200.};
@@ -896,16 +897,16 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "0.2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "%.0f", 0.2f * r0f );
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y - 5, "0.5");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 18, y - 5, "%.0f", 0.5f * r0f);
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "%.0f", 2.f * r0f);
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "4");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", 4.f * r0f);
                         break;
                     default:
                         break;
@@ -919,19 +920,19 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "-0.2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 24, y, "%.0f", -0.2f * r0f);
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y + 5, "-0.5");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 21, y + 5, "%.0f", -0.5f * r0f);
                         break;
                     case 2:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "-1");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "%.0f", -1 * r0f);
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "-2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "%.0f", -2 * r0f);
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "-4");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", -4 * r0f);
                         break;
                     default:
                         break;
@@ -942,11 +943,11 @@ static void DrawSmith()
     }
 
     //Draw R cirle labels
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "0.2");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "0.5");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "1");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "2");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "4");
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "%.0f", 0.2f * r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "%.0f", 0.5f * r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "%.0f", r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "%.0f", 2 * r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "%.0f", 4 * r0f);
 
     LCD_Circle(LCD_MakePoint(cx0, cy0), 100, WGRIDCOLORBR); //Outer circle
 
