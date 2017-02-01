@@ -91,6 +91,9 @@ void si5351_Init(void)
 
     // Set crystal load capacitance
     si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_10PF | 0x12); //Bits 5:0 should be written as 0x12
+    
+    //Set input source
+    si5351_write(SI5351_PLL_INPUT_SOURCE, 0); // Input source is XTAL for both PLLs, CLK not divided
 
     //Disable spread spectrum (value after reset is unknown)
     si5351_write(SI5351_SSC_PARAM0, 0);
