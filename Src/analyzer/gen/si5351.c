@@ -38,15 +38,20 @@ struct Si5351IntStatus dev_int_status;
 /* Suggested private functions */
 /******************************/
 static void si5351_set_freq(uint32_t, enum si5351_clock);
+static void si5351_ss_set_freq(uint32_t freq, enum si5351_clock clk);
 static void si5351_clock_enable(enum si5351_clock clk, uint8_t enable);
 static uint8_t si5351_read_device_reg(uint8_t reg);
 static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk);
+static void set_multisynth_ss(uint32_t freq, enum si5351_clock clk);
 static uint8_t si5351_write_bulk(uint8_t, uint8_t, uint8_t *);
 static uint8_t si5351_write(uint8_t, uint8_t);
 static uint8_t si5351_read(uint8_t, uint8_t *);
 static void si5351_set_clk_control(enum si5351_clock, enum si5351_pll, int isIntegerMode, enum si5351_drive drive);
+static void si5351_set_pll(uint32_t a, uint32_t b, uint32_t c, enum si5351_pll pll);
 static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum si5351_clock clk);
 static uint8_t si5351_detect_address(void);
+
+static double si5351_ss_fpll = 0.;
 
 //Ext I2C port used for camera is wired to Arduino UNO connector when SB4 and SB1 jumpers are set instead of SB5 and SB3.
 extern void     CAMERA_IO_Init(void);
@@ -105,9 +110,35 @@ void si5351_Init(void)
     si5351_write(SI5351_FANOUT_ENABLE, 0);
 }
 
+void si5351_ss_Init(void)
+{
+    si5351_Init();
+
+    //Set PLLB to maximum frequency
+    uint32_t si5351_XTAL_FREQ = (uint32_t)((int)CFG_GetParam(CFG_PARAM_SI5351_XTAL_FREQ) + (int)CFG_GetParam(CFG_PARAM_SI5351_CORR));
+    double divpll = ((double)SI5351_PLL_VCO_MAX) / ((double)si5351_XTAL_FREQ);
+
+    //Calculate ap, bp, cp (pll feedback multisynth parameters)
+    uint32_t ap = (uint32_t)floor(divpll);
+    uint32_t bp = 0;
+    uint32_t cp = 1;
+    double k = divpll - ap;
+    uint64_t nom = (uint64_t)(k * 0x6FFFFFFFFFFFFFFFull);
+    uint64_t den = 0x6FFFFFFFFFFFFFFFull;
+    rational_best_approximation(nom, den, SI5351_PLL_B_MAX, SI5351_PLL_C_MAX, &bp, &cp);
+    si5351_ss_fpll = si5351_XTAL_FREQ * ((double)ap + (double)bp / (double)cp);
+    si5351_set_pll(ap, bp, cp, SI5351_PLLB);
+}
+
 void si5351_SetF0(uint32_t fhz)
 {
     si5351_set_freq(fhz, SI5351_CLK0);
+    si5351_clock_enable(SI5351_CLK0, 1);
+}
+
+void si5351_ss_SetF0(uint32_t fhz)
+{
+    si5351_ss_set_freq(fhz, SI5351_CLK0);
     si5351_clock_enable(SI5351_CLK0, 1);
 }
 
@@ -117,9 +148,21 @@ void si5351_SetLO(uint32_t fhz)
     si5351_clock_enable(SI5351_CLK1, 1);
 }
 
+void si5351_ss_SetLO(uint32_t fhz)
+{
+    si5351_ss_set_freq(fhz, SI5351_CLK1);
+    si5351_clock_enable(SI5351_CLK1, 1);
+}
+
 void si5351_SetF2(uint32_t fhz)
 {
     si5351_set_freq(fhz, SI5351_CLK2);
+    si5351_clock_enable(SI5351_CLK2, 1);
+}
+
+void si5351_ss_SetF2(uint32_t fhz)
+{
+    si5351_ss_set_freq(fhz, SI5351_CLK2);
     si5351_clock_enable(SI5351_CLK2, 1);
 }
 
@@ -130,6 +173,10 @@ void si5351_Off(void)
     si5351_clock_enable(SI5351_CLK2, 0);
 }
 
+void si5351_ss_Off(void)
+{
+    si5351_Off();
+}
 
 //-----------------------------------------------------------------------------------------
 
@@ -146,6 +193,11 @@ void si5351_Off(void)
 static void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
 {
     set_multisynth_alt(freq, clk);
+}
+
+static void si5351_ss_set_freq(uint32_t freq, enum si5351_clock clk)
+{
+    set_multisynth_ss(freq, clk);
 }
 
 /*
@@ -307,6 +359,71 @@ static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum
         si5351_write_bulk(SI5351_CLK2_PARAMETERS, 8, params);
     }
 }
+
+// Special workaround for failed lot of Si5351a ICs that appeared on Aliexpress in 2016.
+// The Spread Spectrum feature cannot be disabled programmatically in these failed chips.
+// PLLB, which is not affected by spread spectrum engine, is set once to maximum allowed frequency
+// (in si5351_ss_init()) and all multisynth outputs are clocked from it.
+// This limits the maximum possible frequency to 150 MHz because integer PLL multisynth
+// divider of 4.0 cannot be used. Also, this limits frequency setting error to +/-2 Hz,
+// but it seems this will not affect the device precision.
+static void set_multisynth_ss(uint32_t freq, enum si5351_clock clk)
+{
+    uint32_t a, b, c;
+    uint8_t rdiv = SI5351_OUTPUT_CLK_DIV_1;
+
+    if (freq < SI5351_MULTISYNTH_MIN_FREQ / 128)
+        freq = SI5351_MULTISYNTH_MIN_FREQ / 128;
+    else if (freq > SI5351_MULTISYNTH_MAX_FREQ)
+        freq = SI5351_MULTISYNTH_MAX_FREQ;
+
+    uint32_t freq_m = freq;
+
+    //Handle frequencies below 1 MHz
+    if (freq < (SI5351_MULTISYNTH_MIN_FREQ / 64))
+        rdiv = SI5351_OUTPUT_CLK_DIV_128;
+    else if (freq < (SI5351_MULTISYNTH_MIN_FREQ / 32))
+        rdiv = SI5351_OUTPUT_CLK_DIV_64;
+    else if (freq < (SI5351_MULTISYNTH_MIN_FREQ / 16))
+        rdiv = SI5351_OUTPUT_CLK_DIV_32;
+    else if (freq < (SI5351_MULTISYNTH_MIN_FREQ / 8))
+        rdiv = SI5351_OUTPUT_CLK_DIV_16;
+    else if (freq < (SI5351_MULTISYNTH_MIN_FREQ / 4))
+        rdiv = SI5351_OUTPUT_CLK_DIV_8;
+    else if (freq < (SI5351_MULTISYNTH_MIN_FREQ / 2))
+        rdiv = SI5351_OUTPUT_CLK_DIV_4;
+    else if (freq < (SI5351_MULTISYNTH_MIN_FREQ))
+        rdiv = SI5351_OUTPUT_CLK_DIV_2;
+    freq_m *= (1 << rdiv);
+
+    double divms = si5351_ss_fpll / (double)freq_m;
+
+    //Calculate a, b, c (output multisynth parameters) from divms calculated abvge
+    b = 0;
+    c = 1;
+    a = (uint32_t)floor(divms);
+    double k = divms - a;
+    uint64_t nom = (uint64_t)(k * 0x6FFFFFFFFFFFFFFFull);
+    uint64_t den = 0x6FFFFFFFFFFFFFFFull;
+    rational_best_approximation(nom, den, SI5351_PLL_B_MAX, SI5351_PLL_C_MAX, &b, &c);
+
+    //Write PLL parameters
+    if (clk == SI5351_CLK0)
+    {
+        si5351_set_clk_control(clk, SI5351_PLLB, 0, SI5351_DRIVE_8MA);
+        si5351_set_ms(a, b, c, rdiv, clk);
+    }
+    else if (clk == SI5351_CLK1)
+    {
+        si5351_set_clk_control(clk, SI5351_PLLB, 0, SI5351_DRIVE_8MA);
+        si5351_set_ms(a, b, c, rdiv, clk);
+    }
+    else if (clk == SI5351_CLK2)
+    {
+        si5351_set_clk_control(clk, SI5351_PLLB, 0, SI5351_DRIVE_8MA);
+        si5351_set_ms(a, b, c, rdiv, clk);
+    }
+} // set_multisynth_ss
 
 static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
 {
