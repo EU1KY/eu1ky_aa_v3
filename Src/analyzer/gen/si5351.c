@@ -94,6 +94,13 @@ void si5351_Init(void)
 
     si5351_write(SI5351_OUTPUT_ENABLE_CTRL, 0xFF); //Disable all outputs
 
+    //Powerdown all output drivers
+    uint8_t a;
+    for (a = SI5351_CLK0_CTRL; a <= SI5351_CLK0_CTRL; a++)
+    {
+        si5351_write(a, SI5351_CLK_POWERDOWN);
+    }
+
     // Set crystal load capacitance
     si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_10PF | 0x12); //Bits 5:0 should be written as 0x12
 
@@ -101,7 +108,7 @@ void si5351_Init(void)
     si5351_write(SI5351_PLL_INPUT_SOURCE, 0); // Input source is XTAL for both PLLs, CLK not divided
 
     //Disable spread spectrum (value after reset is unknown), including the entire range of SS registers
-    for (uint8_t a = SI5351_SSC_PARAM0; a <= SI5351_SSC_PARAM12; a++)
+    for (a = SI5351_SSC_PARAM0; a <= SI5351_SSC_PARAM12; a++)
     {
         si5351_write(a, 0);
     }
@@ -171,6 +178,9 @@ void si5351_Off(void)
     si5351_clock_enable(SI5351_CLK0, 0);
     si5351_clock_enable(SI5351_CLK1, 0);
     si5351_clock_enable(SI5351_CLK2, 0);
+    si5351_write(SI5351_CLK0_CTRL, SI5351_CLK_POWERDOWN);
+    si5351_write(SI5351_CLK1_CTRL, SI5351_CLK_POWERDOWN);
+    si5351_write(SI5351_CLK2_CTRL, SI5351_CLK_POWERDOWN);
 }
 
 void si5351_ss_Off(void)
