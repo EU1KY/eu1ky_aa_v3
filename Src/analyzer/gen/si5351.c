@@ -91,12 +91,15 @@ void si5351_Init(void)
 
     // Set crystal load capacitance
     si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_10PF | 0x12); //Bits 5:0 should be written as 0x12
-    
+
     //Set input source
     si5351_write(SI5351_PLL_INPUT_SOURCE, 0); // Input source is XTAL for both PLLs, CLK not divided
 
-    //Disable spread spectrum (value after reset is unknown)
-    si5351_write(SI5351_SSC_PARAM0, 0);
+    //Disable spread spectrum (value after reset is unknown), including the entire range of SS registers
+    for (uint8_t a = SI5351_SSC_PARAM0; a <= SI5351_SSC_PARAM12; a++)
+    {
+        si5351_write(a, 0);
+    }
 
     //Disable fanout (initial value is unknown)
     si5351_write(SI5351_FANOUT_ENABLE, 0);
