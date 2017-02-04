@@ -188,12 +188,19 @@ static void DrawCursorText()
     float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
     if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
         fcur = 0.f;
-    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB          ",
+
+    float Q = 0.f;
+    if ((crealf(rx) > 0.1f) && (fabs(cimagf(rx)) > crealf(rx)))
+        Q = fabs(cimagf(rx) / crealf(rx));
+    if (Q > 2000.f)
+        Q = 2000.f;
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB   Q: %.1f       ",
                fcur,
                crealf(rx),
                cimagf(rx),
                DSP_CalcVSWR(rx),
-               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f // Matched cable loss
+               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f, // Matched cable loss
+               Q
               );
 }
 
@@ -872,6 +879,7 @@ static void DrawSmith()
     LCD_Circle(LCD_MakePoint(cx0 + 80, cy0), 20, WGRIDCOLOR); //Constant R 200 circle
     LCD_Line(LCD_MakePoint(cx0 - 100, cy0),LCD_MakePoint(cx0 + 100, cy0), WGRIDCOLOR); //Middle line
 
+    float r0f = (float)CFG_GetParam(CFG_PARAM_R0);
     //Draw X arcs
     {
         static const float xx[] = {10., 25., 50., 100., 200.};
@@ -889,16 +897,16 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "0.2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "%.0f", 0.2f * r0f );
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y - 5, "0.5");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 18, y - 5, "%.0f", 0.5f * r0f);
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "%.0f", 2.f * r0f);
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "4");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", 4.f * r0f);
                         break;
                     default:
                         break;
@@ -912,19 +920,19 @@ static void DrawSmith()
                     switch (i)
                     {
                     case 0:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "-0.2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 24, y, "%.0f", -0.2f * r0f);
                         break;
                     case 1:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 15, y + 5, "-0.5");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 21, y + 5, "%.0f", -0.5f * r0f);
                         break;
                     case 2:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "-1");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "%.0f", -1 * r0f);
                         break;
                     case 3:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "-2");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "%.0f", -2 * r0f);
                         break;
                     case 4:
-                        FONT_Write(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "-4");
+                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", -4 * r0f);
                         break;
                     default:
                         break;
@@ -935,11 +943,11 @@ static void DrawSmith()
     }
 
     //Draw R cirle labels
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "0.2");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "0.5");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "1");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "2");
-    FONT_Write(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "4");
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "%.0f", 0.2f * r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "%.0f", 0.5f * r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "%.0f", r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "%.0f", 2 * r0f);
+    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "%.0f", 4 * r0f);
 
     LCD_Circle(LCD_MakePoint(cx0, cy0), 100, WGRIDCOLORBR); //Outer circle
 
@@ -1008,26 +1016,6 @@ static void RedrawWindow()
         DrawAutoText();
     }
 }
-
-static const uint8_t bmp_hdr[] =
-{
-    0x42, 0x4D,             //"BM"
-    0x36, 0xFA, 0x05, 0x00, //size in bytes
-    0x00, 0x00, 0x00, 0x00, //reserved
-    0x36, 0x00, 0x00, 0x00, //offset to image in bytes
-    0x28, 0x00, 0x00, 0x00, //info size in bytes
-    0xE0, 0x01, 0x00, 0x00, //width
-    0x10, 0x01, 0x00, 0x00, //height
-    0x01, 0x00,             //planes
-    0x18, 0x00,             //bits per pixel
-    0x00, 0x00, 0x00, 0x00, //compression
-    0x00, 0xfa, 0x05, 0x00, //image size
-    0x00, 0x00, 0x00, 0x00, //x resolution
-    0x00, 0x00, 0x00, 0x00, //y resolution
-    0x00, 0x00, 0x00, 0x00, // colours
-    0x00, 0x00, 0x00, 0x00  //important colours
-};
-
 
 static void save_snapshot(void)
 {

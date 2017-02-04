@@ -100,10 +100,7 @@ void* SDRH_malloc(size_t nbytes)
     SDRH_Init();
 
     uint32_t nblocks;
-    if (0 != nbytes % SDRH_BLKSIZE)
-        nblocks = (nbytes / SDRH_BLKSIZE) + 1;
-    else
-        nblocks = (nbytes / SDRH_BLKSIZE);
+    nblocks = (nbytes / SDRH_BLKSIZE) + (0 != (nbytes % SDRH_BLKSIZE));
 
     uint32_t start_block = _find_area(nblocks);
 
@@ -145,10 +142,7 @@ void* SDRH_realloc(void* ptr, size_t nbytes)
     SDRH_Init();
 
     uint32_t nblocks;
-    if (0 != nbytes % SDRH_BLKSIZE)
-        nblocks = (nbytes / SDRH_BLKSIZE) + 1;
-    else
-        nblocks = (nbytes / SDRH_BLKSIZE);
+    nblocks = (nbytes / SDRH_BLKSIZE) + (0 != (nbytes % SDRH_BLKSIZE));
 
     //Check if ptr already has enough memory to fit nbytes
     uint32_t block = (ptr - SDRH_START) / SDRH_BLKSIZE;

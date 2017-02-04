@@ -45,6 +45,7 @@ static uint8_t si5351_write_bulk(uint8_t, uint8_t, uint8_t *);
 static uint8_t si5351_write(uint8_t, uint8_t);
 static uint8_t si5351_read(uint8_t, uint8_t *);
 static void si5351_set_clk_control(enum si5351_clock, enum si5351_pll, int isIntegerMode, enum si5351_drive drive);
+static void si5351_set_pll(uint32_t a, uint32_t b, uint32_t c, enum si5351_pll pll);
 static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum si5351_clock clk);
 static uint8_t si5351_detect_address(void);
 
@@ -89,11 +90,24 @@ void si5351_Init(void)
 
     si5351_write(SI5351_OUTPUT_ENABLE_CTRL, 0xFF); //Disable all outputs
 
+    //Powerdown all output drivers
+    uint8_t a;
+    for (a = SI5351_CLK0_CTRL; a <= SI5351_CLK0_CTRL; a++)
+    {
+        si5351_write(a, SI5351_CLK_POWERDOWN);
+    }
+
     // Set crystal load capacitance
     si5351_write(SI5351_CRYSTAL_LOAD, SI5351_CRYSTAL_LOAD_10PF | 0x12); //Bits 5:0 should be written as 0x12
 
-    //Disable spread spectrum (value after reset is unknown)
-    si5351_write(SI5351_SSC_PARAM0, 0);
+    //Set input source
+    si5351_write(SI5351_PLL_INPUT_SOURCE, 0); // Input source is XTAL for both PLLs, CLK not divided
+
+    //Disable spread spectrum (value after reset is unknown), including the entire range of SS registers
+    for (a = SI5351_SSC_PARAM0; a <= SI5351_SSC_PARAM12; a++)
+    {
+        si5351_write(a, 0);
+    }
 
     //Disable fanout (initial value is unknown)
     si5351_write(SI5351_FANOUT_ENABLE, 0);
@@ -122,8 +136,10 @@ void si5351_Off(void)
     si5351_clock_enable(SI5351_CLK0, 0);
     si5351_clock_enable(SI5351_CLK1, 0);
     si5351_clock_enable(SI5351_CLK2, 0);
+    si5351_write(SI5351_CLK0_CTRL, SI5351_CLK_POWERDOWN);
+    si5351_write(SI5351_CLK1_CTRL, SI5351_CLK_POWERDOWN);
+    si5351_write(SI5351_CLK2_CTRL, SI5351_CLK_POWERDOWN);
 }
-
 
 //-----------------------------------------------------------------------------------------
 
@@ -141,6 +157,7 @@ static void si5351_set_freq(uint32_t freq, enum si5351_clock clk)
 {
     set_multisynth_alt(freq, clk);
 }
+
 
 /*
  * si5351_clock_enable(enum si5351_clock clk, uint8_t enable)
@@ -301,6 +318,7 @@ static void si5351_set_ms(uint32_t a, uint32_t b, uint32_t c, uint8_t rdiv, enum
         si5351_write_bulk(SI5351_CLK2_PARAMETERS, 8, params);
     }
 }
+
 
 static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
 {

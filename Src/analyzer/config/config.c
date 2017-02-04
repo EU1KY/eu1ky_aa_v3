@@ -87,7 +87,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351),
         .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351"),
         .type = CFG_PARAM_T_U32,
-        .dstring = "Frequency synthesizer type used. Requires reset.",
+        .dstring = "Frequency synthesizer type used.",
         .isvalid = isShowHidden,
         .resetRequired = 1,
     },
