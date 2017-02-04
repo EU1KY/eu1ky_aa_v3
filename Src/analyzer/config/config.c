@@ -48,8 +48,7 @@ typedef struct
 //Callback that returns nonzero if Si5351 frequency synthesizer is selected
 static uint32_t isSi5351(void)
 {
-    return (uint32_t)(CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE) ||
-                      CFG_SYNTH_SI5351_SS == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
+    return (uint32_t)(CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
 }
 
 //Callback that returns nonzero if ADF4350 frequency synthesizer is selected
@@ -84,9 +83,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
-        .nvalues = 4,
-        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351, CFG_SYNTH_SI5351_SS),
-        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351", "Si5351A SpreadSpec"),
+        .nvalues = 3,
+        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351),
+        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used.",
         .isvalid = isShowHidden,

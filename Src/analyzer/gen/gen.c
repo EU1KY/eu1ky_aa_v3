@@ -52,13 +52,6 @@ void GEN_Init(void)
         gen.SetF0 = ADF4351_SetF0;
         gen.SetLO = ADF4351_SetLO;
     }
-    else if (CFG_SYNTH_SI5351_SS == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
-    {
-        gen.Init = si5351_ss_Init;
-        gen.Off = si5351_ss_Off;
-        gen.SetF0 = si5351_ss_SetF0;
-        gen.SetLO = si5351_ss_SetLO;
-    }
     else
     {
         CRASH("Unexpected frequency synthesizer type in configuration");
@@ -77,23 +70,15 @@ void GEN_SetMeasurementFreq(uint32_t fhz)
         return;
     }
 
-    if ( (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE) ||
-          CFG_SYNTH_SI5351_SS == CFG_GetParam(CFG_PARAM_SYNTH_TYPE) )
-         && fhz > 150000000ul )
+    if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE) && fhz > 150000000ul)
     {
         gen.SetF0(fhz / 3);
-        if (CFG_SYNTH_SI5351_SS == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
-            gen.SetLO((fhz - IF) / 3);
-        else
-            gen.SetLO((fhz + IF) / 3);
+        gen.SetLO((fhz + IF) / 3);
     }
     else
     {
         gen.SetF0(fhz);
-        if (CFG_SYNTH_SI5351_SS == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
-            gen.SetLO(fhz - IF); //In order to enable device operation up to 150 MHz: SI5351_SS is unable to work above this freq
-        else
-            gen.SetLO(fhz + IF);
+        gen.SetLO(fhz + IF);
     }
 
     lastSetFreq = fhz;
