@@ -17,6 +17,9 @@
 #include "crash.h"
 #include "gen.h"
 #include "dsp.h"
+#include "ff.h"
+#include "config.h"
+#include "si5351.h"
 
 #define step 1
 
@@ -86,6 +89,9 @@ void FFTWND_Proc(void)
     FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
 
     GEN_SetMeasurementFreq(3500000);
+
+    if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
+        si5351_dump_regs();
 
     while(TOUCH_IsPressed())
     {
