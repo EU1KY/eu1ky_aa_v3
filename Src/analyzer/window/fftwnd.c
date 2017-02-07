@@ -90,8 +90,10 @@ void FFTWND_Proc(void)
 
     GEN_SetMeasurementFreq(3500000);
 
+#ifdef SI5351_ENABLE_DUMP_REGS
     if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
         si5351_dump_regs();
+#endif
 
     while(TOUCH_IsPressed())
     {
