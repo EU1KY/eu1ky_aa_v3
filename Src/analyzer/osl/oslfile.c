@@ -77,6 +77,8 @@ static uint32_t OSL_GetCalFreqByIdx(int32_t idx)
     return BAND_FMIN + idx * OSL_SCAN_STEP;
 }
 
+//Fix by OM0IM: now returns floor instead of round in order to linearly interpolate
+//HW calibration in OSL_CorrectErr(). This improves precision on low frequencies.
 static int GetIndexForFreq(uint32_t fhz)
 {
     int idx = -1;
@@ -84,7 +86,8 @@ static int GetIndexForFreq(uint32_t fhz)
         return idx;
     if (fhz <= BAND_FMAX)
     {
-        idx = (int)roundf((float)fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
+        //idx = (int)roundf((float)fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
+        idx = (int)((float)fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
         return idx;
     }
     return idx;
@@ -157,8 +160,17 @@ void OSL_CorrectErr(uint32_t fhz, float *magdif, float *phdif)
     int idx = GetIndexForFreq(fhz);
     if (-1 == idx)
         return;
-    *magdif *= osl_errCorr[idx].mag0;
-    *phdif -= osl_errCorr[idx].phase0;
+    float corect;
+    corect = osl_errCorr[idx + 1].mag0;
+    corect = corect - osl_errCorr[idx].mag0;
+    corect = osl_errCorr[idx].mag0 + (corect * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
+    *magdif *= corect;
+    //*magdif *= osl_errCorr[idx].mag0;
+    corect = osl_errCorr[idx + 1].phase0;
+    corect = corect - osl_errCorr[idx].phase0;
+    corect = osl_errCorr[idx].phase0 + (corect * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
+    *phdif -= corect;
+    //*phdif -= osl_errCorr[idx].phase0;
 }
 
 // Function to calculate determinant of 3x3 matrix
