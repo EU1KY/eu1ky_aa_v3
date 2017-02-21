@@ -243,6 +243,12 @@ void si5351_SetF0(uint32_t fhz);
 void si5351_SetLO(uint32_t fhz);
 void si5351_SetF2(uint32_t fhz);
 
+#define SI5351_ENABLE_DUMP_REGS
+
+#ifdef SI5351_ENABLE_DUMP_REGS
+void si5351_dump_regs(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

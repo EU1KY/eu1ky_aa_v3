@@ -5,11 +5,10 @@
 
 #define AAVERSION "3.0d" //Must be 4 characters
 
-//Frequency range of the analyzer
 #define BAND_FMIN 500000ul    //BAND_FMIN must be multiple 100000
-#define BAND_FMAX 150000000ul //BAND_FMAX must be multiple of 100000
+#define MAX_BAND_FREQ  450000000ul
 
-#if (BAND_FMAX % 100000) != 0 || BAND_FMAX < BAND_FMIN || (BAND_FMIN % 100000) != 0
+#if (BAND_FMIN % 100000) != 0
     #error "Incorrect band limit settings"
 #endif
 
@@ -59,6 +58,7 @@ typedef enum
     CFG_PARAM_S1P_TYPE,              //Type of Touchstone S1P file saved with panoramic screenshot
     CFG_PARAM_SHOW_HIDDEN,           //Show hidden options in configuration menu
     CFG_PARAM_SCREENSHOT_FORMAT,     //If 0, use BMP format for screenshots, otherwise use PNG
+    CFG_PARAM_BAND_FMAX,             //Maximum frequency of the device's working band, Hz
 
     //---------------------
     CFG_NUM_PARAMS

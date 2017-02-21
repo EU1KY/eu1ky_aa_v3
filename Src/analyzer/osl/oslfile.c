@@ -56,12 +56,13 @@ typedef enum
 
 #define OSL_SCAN_STEP 100000
 
-#define OSL_NUM_FILE_ENTRIES (((BAND_FMAX) - (BAND_FMIN)) / OSL_SCAN_STEP + 1)
+#define OSL_ENTRIES ((MAX_BAND_FREQ - (BAND_FMIN)) / OSL_SCAN_STEP + 1)
+#define OSL_NUM_VALID_ENTRIES ((CFG_GetParam(CFG_PARAM_BAND_FMAX) - (BAND_FMIN)) / OSL_SCAN_STEP + 1)
 
 
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
-static S_OSLDATA __attribute__((section (".user_sdram"))) osl_data[OSL_NUM_FILE_ENTRIES];
-static OSL_ERRCORR __attribute__((section (".user_sdram"))) osl_errCorr[OSL_NUM_FILE_ENTRIES];
+static S_OSLDATA __attribute__((section (".user_sdram"))) osl_data[OSL_ENTRIES] = { 0 };
+static OSL_ERRCORR __attribute__((section (".user_sdram"))) osl_errCorr[OSL_ENTRIES] = { 0 };
 static int32_t osl_file_loaded = -1;
 static int32_t osl_err_loaded = 0;
 
@@ -72,19 +73,22 @@ static int32_t OSL_LoadFromFile(void);
 
 static uint32_t OSL_GetCalFreqByIdx(int32_t idx)
 {
-    if (idx < 0 || idx >= OSL_NUM_FILE_ENTRIES)
+    if (idx < 0 || idx >= OSL_NUM_VALID_ENTRIES)
         return 0;
     return BAND_FMIN + idx * OSL_SCAN_STEP;
 }
 
+//Fix by OM0IM: now returns floor instead of round in order to linearly interpolate
+//HW calibration in OSL_CorrectErr(). This improves precision on low frequencies.
 static int GetIndexForFreq(uint32_t fhz)
 {
     int idx = -1;
     if (fhz < BAND_FMIN)
         return idx;
-    if (fhz <= BAND_FMAX)
+    if (fhz <= CFG_GetParam(CFG_PARAM_BAND_FMAX))
     {
-        idx = (int)roundf((float)fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
+        //idx = (int)roundf((float)fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
+        idx = (int)(fhz / OSL_SCAN_STEP) - BAND_FMIN / OSL_SCAN_STEP;
         return idx;
     }
     return idx;
@@ -108,9 +112,9 @@ void OSL_LoadErrCorr(void)
     if (FR_OK != res)
         return;
     UINT br =  0;
-    res = f_read(&fp, osl_errCorr, sizeof(osl_errCorr), &br);
+    res = f_read(&fp, osl_errCorr, sizeof(*osl_errCorr) * OSL_NUM_VALID_ENTRIES, &br);
     f_close(&fp);
-    if (FR_OK != res || sizeof(osl_errCorr) != br)
+    if (FR_OK != res || (sizeof(*osl_errCorr) * OSL_NUM_VALID_ENTRIES != br))
         return;
     osl_err_loaded = 1;
 }
@@ -118,7 +122,7 @@ void OSL_LoadErrCorr(void)
 void OSL_ScanErrCorr(void(*progresscb)(uint32_t))
 {
     uint32_t i;
-    for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
+    for (i = 0; i < OSL_NUM_VALID_ENTRIES; i++)
     {
         uint32_t freq = OSL_GetCalFreqByIdx(i);
         GEN_SetMeasurementFreq(freq);
@@ -130,7 +134,7 @@ void OSL_ScanErrCorr(void(*progresscb)(uint32_t))
         osl_errCorr[i].mag0 = 1.0f / DSP_MeasuredDiff();
         osl_errCorr[i].phase0 = DSP_MeasuredPhase();
         if (progresscb)
-            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
+            progresscb((i * 100) / OSL_NUM_VALID_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     //Store to file
@@ -143,13 +147,14 @@ void OSL_ScanErrCorr(void(*progresscb)(uint32_t))
     if (FR_OK != res)
         CRASHF("Failed to open file %s for write: error %d", path, res);
     UINT bw;
-    res = f_write(&fp, osl_errCorr, sizeof(osl_errCorr), &bw);
-    if (FR_OK != res || bw != sizeof(osl_errCorr))
+    res = f_write(&fp, osl_errCorr, sizeof(*osl_errCorr) * OSL_NUM_VALID_ENTRIES, &bw);
+    if (FR_OK != res || bw != sizeof(*osl_errCorr) * OSL_NUM_VALID_ENTRIES)
         CRASHF("Failed to write file %s: error %d", path, res);
     f_close(&fp);
     osl_err_loaded = 1;
 }
 
+//Linear interpolation added by OM0IM
 void OSL_CorrectErr(uint32_t fhz, float *magdif, float *phdif)
 {
     if (!osl_err_loaded)
@@ -157,8 +162,16 @@ void OSL_CorrectErr(uint32_t fhz, float *magdif, float *phdif)
     int idx = GetIndexForFreq(fhz);
     if (-1 == idx)
         return;
-    *magdif *= osl_errCorr[idx].mag0;
-    *phdif -= osl_errCorr[idx].phase0;
+    float corect;
+    corect = osl_errCorr[idx + 1].mag0;
+    corect = corect - osl_errCorr[idx].mag0;
+    corect = osl_errCorr[idx].mag0 + (corect * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
+    *magdif *= corect;
+
+    corect = osl_errCorr[idx + 1].phase0;
+    corect = corect - osl_errCorr[idx].phase0;
+    corect = osl_errCorr[idx].phase0 + (corect * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
+    *phdif -= corect;
 }
 
 // Function to calculate determinant of 3x3 matrix
@@ -262,7 +275,7 @@ void OSL_ScanShort(void(*progresscb)(uint32_t))
     osl_file_status &= ~OSL_FILE_VALID;
 
     int i;
-    for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
+    for (i = 0; i < OSL_NUM_VALID_ENTRIES; i++)
     {
         uint32_t oslCalFreqHz = OSL_GetCalFreqByIdx(i);
         if (oslCalFreqHz == 0)
@@ -277,7 +290,7 @@ void OSL_ScanShort(void(*progresscb)(uint32_t))
 
         osl_data[i].gshort = gamma;
         if (progresscb)
-            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
+            progresscb((i * 100) / OSL_NUM_VALID_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     osl_file_status |= OSL_FILE_SCANNED_SHORT;
@@ -293,7 +306,7 @@ void OSL_ScanLoad(void(*progresscb)(uint32_t))
     osl_file_status &= ~OSL_FILE_VALID;
 
     int i;
-    for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
+    for (i = 0; i < OSL_NUM_VALID_ENTRIES; i++)
     {
         uint32_t oslCalFreqHz = OSL_GetCalFreqByIdx(i);
         if (oslCalFreqHz == 0)
@@ -308,7 +321,7 @@ void OSL_ScanLoad(void(*progresscb)(uint32_t))
 
         osl_data[i].gload = gamma;
         if (progresscb)
-            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
+            progresscb((i * 100) / OSL_NUM_VALID_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     osl_file_status |= OSL_FILE_SCANNED_LOAD;
@@ -324,7 +337,7 @@ void OSL_ScanOpen(void(*progresscb)(uint32_t))
     osl_file_status &= ~OSL_FILE_VALID;
 
     int i;
-    for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
+    for (i = 0; i < OSL_NUM_VALID_ENTRIES; i++)
     {
         uint32_t oslCalFreqHz = OSL_GetCalFreqByIdx(i);
         if (oslCalFreqHz == 0)
@@ -339,7 +352,7 @@ void OSL_ScanOpen(void(*progresscb)(uint32_t))
 
         osl_data[i].gopen = gamma;
         if (progresscb)
-            progresscb((i * 100) / OSL_NUM_FILE_ENTRIES);
+            progresscb((i * 100) / OSL_NUM_VALID_ENTRIES);
     }
     GEN_SetMeasurementFreq(0);
     osl_file_status |= OSL_FILE_SCANNED_OPEN;
@@ -387,9 +400,9 @@ static int32_t OSL_LoadFromFile(void)
         return 1;
     }
     UINT br =  0;
-    res = f_read(&fp, osl_data, sizeof(osl_data), &br);
+    res = f_read(&fp, osl_data, sizeof(*osl_data) * OSL_NUM_VALID_ENTRIES, &br);
     f_close(&fp);
-    if (FR_OK != res || sizeof(osl_data) != br)
+    if (FR_OK != res || (sizeof(*osl_data) * OSL_NUM_VALID_ENTRIES != br))
     {
         osl_file_status = OSL_FILE_EMPTY;
         return 2;
@@ -420,7 +433,7 @@ void OSL_Calculate(void)
 
     //Calculate calibration coefficients from measured reflection coefficients
     int i;
-    for (i = 0; i < OSL_NUM_FILE_ENTRIES; i++)
+    for (i = 0; i < OSL_NUM_VALID_ENTRIES; i++)
     {
         S_OSLDATA* pd = &osl_data[i];
         COMPLEX result[3]; //[e00, e11, de]
@@ -472,7 +485,7 @@ float complex OSL_ZFromG(float complex G, float Rbase)
 //Correct measured G (vs OSL_BASE_R0) using selected OSL calibration file
 static float complex OSL_CorrectG(uint32_t fhz, float complex gMeasured)
 {
-    if (fhz < BAND_FMIN || fhz > BAND_FMAX) //We can't do anything with frequencies beyond the range
+    if (fhz < BAND_FMIN || fhz > CFG_GetParam(CFG_PARAM_BAND_FMAX)) //We can't do anything with frequencies beyond the range
     {
         return gMeasured;
     }

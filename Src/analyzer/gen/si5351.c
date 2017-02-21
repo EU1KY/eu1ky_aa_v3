@@ -30,6 +30,7 @@
 #include "config.h"
 #include "rational.h"
 #include "font.h"
+#include "crash.h"
 
 struct Si5351Status dev_status;
 struct Si5351IntStatus dev_int_status;
@@ -496,3 +497,28 @@ static uint8_t si5351_detect_address(void)
     }
     return addr;
 }
+
+#ifdef SI5351_ENABLE_DUMP_REGS
+
+#include "ff.h"
+
+void si5351_dump_regs(void)
+{
+    uint16_t da;
+    uint8_t reg_dump[256];
+    uint8_t* ptr = reg_dump;
+    for (da = 0; da < 256; da++)
+    {
+        si5351_read((uint8_t)da, ptr++);
+    }
+
+    FRESULT fr = FR_OK;
+    FIL fo = { 0 };
+    fr = f_open(&fo, "/aa/snapshot/5351reg.bin", FA_CREATE_ALWAYS | FA_WRITE);
+    if (FR_OK != fr)
+        CRASH("Failed to open /aa/snapshot/5351reg.bin file");
+    uint32_t bw;
+    f_write(&fo, reg_dump, 256, &bw);
+    f_close(&fo);
+}
+#endif

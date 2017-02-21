@@ -238,7 +238,7 @@ void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasureme
     }
     else
     {
-        if (freqHz < BAND_FMIN || freqHz > BAND_FMAX)
+        if (freqHz < BAND_FMIN || freqHz > CFG_GetParam(CFG_PARAM_BAND_FMAX))
         { // Set defaults for out of band measurements
             magmv_v = 500.f;
             magmv_i = 500.f;
