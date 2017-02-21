@@ -146,7 +146,7 @@ static void DrawCursor()
 
     if (grType == GRAPH_SMITH)
     {
-        float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+        float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
         float complex g = OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0));
         uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
         uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
@@ -176,7 +176,7 @@ static void DrawCursor()
 
 static void DrawCursorText()
 {
-    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
     float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
 
     uint32_t fstart;
@@ -186,7 +186,7 @@ static void DrawCursorText()
         fstart = f1 - BSVALUES[span] / 2;
 
     float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
-    if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
+    if (fcur * 1000000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
         fcur = 0.f;
 
     float Q = 0.f;
@@ -206,7 +206,7 @@ static void DrawCursorText()
 
 static void DrawCursorTextWithS11()
 {
-    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (BAND_FMAX / 1000) ? 1 : 0);
+    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
     float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
 
     uint32_t fstart;
@@ -216,7 +216,7 @@ static void DrawCursorTextWithS11()
         fstart = f1 - BSVALUES[span] / 2;
 
     float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
-    if (fcur * 1000000.f > (float)(BAND_FMAX + 1))
+    if (fcur * 1000000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
         fcur = 0.f;
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   S11: %.2f dB          ",
                fcur,
@@ -367,7 +367,7 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
         {
             char f[10];
             float flabel = ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f;
-            if (flabel * 1000000.f > (float)(BAND_FMAX+1))
+            if (flabel * 1000000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX)+1))
                 continue;
             sprintf(f, "%.2f", ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
@@ -581,7 +581,7 @@ static void DrawVSWR(void)
     for(i = 0; i <= WWIDTH; i++)
     {
         int offset = swroffset(DSP_CalcVSWR(values[i]));
-        int offset_sm = swroffset(DSP_CalcVSWR(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0)));
+        int offset_sm = swroffset(DSP_CalcVSWR(SmoothRX(i,  f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0)));
         int x = X0 + i;
         if(i == 0)
         {
@@ -602,7 +602,7 @@ static void LoadBkups()
 {
     //Load saved frequency and span values from config file
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_PAN_F1);
-    if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && fbkup <= BAND_FMAX/1000 && (fbkup % 100) == 0)
+    if (fbkup != 0 && fbkup >= BAND_FMIN/1000 && fbkup <= CFG_GetParam(CFG_PARAM_BAND_FMAX)/1000 && (fbkup % 100) == 0)
     {
         f1 = fbkup;
     }
@@ -804,7 +804,7 @@ static void DrawRX()
         else if (r > 1999.f)
             r = 1999.f;
         yofs = RXOFFS(r);
-        r = crealf(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0));
+        r = crealf(SmoothRX(i,  f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0));
         if (r < -1999.f)
             r = -1999.f;
         else if (r > 1999.f)
@@ -836,7 +836,7 @@ static void DrawRX()
         else if (ix > 1999.f)
             ix = 1999.f;
         yofs = RXOFFS(ix);
-        ix = cimagf(SmoothRX(i,  f1 > (BAND_FMAX / 1000) ? 1 : 0));
+        ix = cimagf(SmoothRX(i,  f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0));
         if (ix < -1999.f)
             ix = -1999.f;
         else if (ix > 1999.f)

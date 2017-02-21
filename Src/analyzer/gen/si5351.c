@@ -30,6 +30,7 @@
 #include "config.h"
 #include "rational.h"
 #include "font.h"
+#include "crash.h"
 
 struct Si5351Status dev_status;
 struct Si5351IntStatus dev_int_status;

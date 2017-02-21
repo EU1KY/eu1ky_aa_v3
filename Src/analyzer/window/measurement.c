@@ -273,10 +273,10 @@ static void FIncr(uint32_t step)
         CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
         fChanged = 1;
     }
-    if(MeasurementFreq < BAND_FMAX)
+    if(MeasurementFreq < CFG_GetParam(CFG_PARAM_BAND_FMAX))
     {
-        if ((MeasurementFreq + step) > BAND_FMAX)
-            MeasurementFreq = BAND_FMAX;
+        if ((MeasurementFreq + step) > CFG_GetParam(CFG_PARAM_BAND_FMAX))
+            MeasurementFreq = CFG_GetParam(CFG_PARAM_BAND_FMAX);
         else
             MeasurementFreq = MeasurementFreq + step;
         CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
@@ -318,7 +318,7 @@ static void MEASUREMENT_SmithMatch(void)
 static void MEASUREMENT_SetFreq(void)
 {
     while(TOUCH_IsPressed());
-    uint32_t val = NumKeypad(CFG_GetParam(CFG_PARAM_MEAS_F)/1000, BAND_FMIN/1000, BAND_FMAX/1000, "Set measurement frequency, kHz");
+    uint32_t val = NumKeypad(CFG_GetParam(CFG_PARAM_MEAS_F)/1000, BAND_FMIN/1000, CFG_GetParam(CFG_PARAM_BAND_FMAX)/1000, "Set measurement frequency, kHz");
     CFG_SetParam(CFG_PARAM_MEAS_F, val * 1000);
     CFG_Flush();
     redrawWindow = 1;
@@ -361,7 +361,7 @@ void MEASUREMENT_Proc(void)
     //to MeasurementFreq
     uint32_t fbkup = CFG_GetParam(CFG_PARAM_MEAS_F);
     if (!(fbkup >= BAND_FMIN &&
-          fbkup <= BAND_FMAX &&
+          fbkup <= CFG_GetParam(CFG_PARAM_BAND_FMAX) &&
           (fbkup % 1000) == 0))
     {
         CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
