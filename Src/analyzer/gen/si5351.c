@@ -512,6 +512,8 @@ void si5351_dump_regs(void)
         si5351_read((uint8_t)da, ptr++);
     }
 
+    f_mkdir("/aa/snapshot");
+
     FRESULT fr = FR_OK;
     FIL fo = { 0 };
     fr = f_open(&fo, "/aa/snapshot/5351reg.bin", FA_CREATE_ALWAYS | FA_WRITE);
