@@ -162,16 +162,26 @@ void OSL_CorrectErr(uint32_t fhz, float *magdif, float *phdif)
     int idx = GetIndexForFreq(fhz);
     if (-1 == idx)
         return;
-    float corect;
-    corect = osl_errCorr[idx + 1].mag0;
-    corect = corect - osl_errCorr[idx].mag0;
-    corect = osl_errCorr[idx].mag0 + (corect * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
-    *magdif *= corect;
+    float correct;
+    if (fhz == CFG_GetParam(CFG_PARAM_BAND_FMAX))
+        correct = 0.0f;
+    else
+    {
+        correct = osl_errCorr[idx + 1].mag0;
+        correct = correct - osl_errCorr[idx].mag0;
+    }
+    correct = osl_errCorr[idx].mag0 + (correct * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
+    *magdif *= correct;
 
-    corect = osl_errCorr[idx + 1].phase0;
-    corect = corect - osl_errCorr[idx].phase0;
-    corect = osl_errCorr[idx].phase0 + (corect * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
-    *phdif -= corect;
+    if (fhz == CFG_GetParam(CFG_PARAM_BAND_FMAX))
+        correct = 0.0f;
+    else
+    {
+        correct = osl_errCorr[idx + 1].phase0;
+        correct = correct - osl_errCorr[idx].phase0;
+    }
+    correct = osl_errCorr[idx].phase0 + (correct * (((float)fhz / OSL_SCAN_STEP) - (fhz / OSL_SCAN_STEP)));
+    *phdif -= correct;
 }
 
 // Function to calculate determinant of 3x3 matrix

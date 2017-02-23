@@ -218,6 +218,7 @@ GENERATOR_REDRAW:
         //Measure without changing current frequency and without any corrections
         DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
+        LCD_WaitForRedraw();
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 100);
         FONT_Printf(0, 100, "Raw I: %.1f, V: %.1f. Diff %.2f dB", DSP_MeasuredMagImv(),
                      DSP_MeasuredMagVmv(), DSP_MeasuredDiffdB());
@@ -236,7 +237,6 @@ GENERATOR_REDRAW:
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
-        //SCB_CleanDCache();
         Sleep(100);
     }
 }
