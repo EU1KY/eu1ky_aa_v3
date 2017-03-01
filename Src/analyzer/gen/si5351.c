@@ -333,8 +333,8 @@ static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk)
 
     if (freq < SI5351_MULTISYNTH_MIN_FREQ / 128)
         freq = SI5351_MULTISYNTH_MIN_FREQ / 128;
-    else if (freq > SI5351_MULTISYNTH_MAX_FREQ)
-        freq = SI5351_MULTISYNTH_MAX_FREQ;
+    else if (freq > CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ))
+        freq = CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ);
 
     if (freq >= 112500000ul)
     {//Use output multisynth constant divider = 4, calculate PLL feedback multisynth to set desired frequency

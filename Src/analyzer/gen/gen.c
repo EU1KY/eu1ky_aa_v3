@@ -70,10 +70,17 @@ void GEN_SetMeasurementFreq(uint32_t fhz)
         return;
     }
 
-    if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE) && fhz > 150000000ul)
+    if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
     {
-        gen.SetF0(fhz / 3);
-        gen.SetLO((fhz + IF) / 3);
+        if (fhz > CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ))
+            gen.SetF0(fhz / 3); //Set F0 on 3rd harmonic
+        else
+            gen.SetF0(fhz);
+
+        if ((fhz + IF) > CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ))
+            gen.SetLO((fhz + IF) / 3);
+        else
+            gen.SetLO(fhz + IF);
     }
     else
     {

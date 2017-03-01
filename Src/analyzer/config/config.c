@@ -68,6 +68,11 @@ static uint32_t isShowHidden(void)
     return 1 == CFG_GetParam(CFG_PARAM_SHOW_HIDDEN);
 }
 
+static uint32_t isShowHiddenSi(void)
+{
+    return (1 == CFG_GetParam(CFG_PARAM_SHOW_HIDDEN)) && (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE));
+
+}
 //Array of user changeable parameters descriptors
 static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 {
@@ -125,6 +130,16 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Si5351 XTAL frequency correction, Hz",
         .isvalid = isSi5351,
         .repeatdelay = 20,
+    },
+    {
+        .id = CFG_PARAM_SI5351_MAX_FREQ,
+        .idstring = "SI5351_MAX_FREQ",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .strvalues = CFG_SARR("160 MHz", "200 MHz"),
+        .values = CFG_IARR(160000000ul, 200000000ul),
+        .dstring = "Maximum frequency that Si5351 can output (160 or 200 MHz.)",
+        .isvalid = isShowHiddenSi,
     },
     {
         .id = CFG_PARAM_OSL_RLOAD,
@@ -342,6 +357,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_SHOW_HIDDEN, 0);
     CFG_SetParam(CFG_PARAM_SCREENSHOT_FORMAT, 0);
     CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
+    CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
 
     //Load parameters from file on SD card
     FRESULT res;
@@ -398,6 +414,9 @@ void CFG_Init(void)
     {
         if (CFG_GetParam(CFG_PARAM_BAND_FMAX) > MAX_BAND_FREQ)
             CFG_SetParam(CFG_PARAM_BAND_FMAX, MAX_BAND_FREQ);
+        if (CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 160000000ul
+            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 200000000ul)
+            CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     }
     if ((CFG_GetParam(CFG_PARAM_BAND_FMAX) <= BAND_FMIN) || (CFG_GetParam(CFG_PARAM_BAND_FMAX) % 1000000 != 0))
         CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);

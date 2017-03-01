@@ -454,7 +454,7 @@ MEASUREMENT_REDRAW:
         }
         else
         {
-            FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK");
+            FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK  ");
         }
 
         Sleep(5);

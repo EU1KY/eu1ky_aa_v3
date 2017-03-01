@@ -59,6 +59,7 @@ typedef enum
     CFG_PARAM_SHOW_HIDDEN,           //Show hidden options in configuration menu
     CFG_PARAM_SCREENSHOT_FORMAT,     //If 0, use BMP format for screenshots, otherwise use PNG
     CFG_PARAM_BAND_FMAX,             //Maximum frequency of the device's working band, Hz
+    CFG_PARAM_SI5351_MAX_FREQ,       //Maximum frequency that Si5351 can output, Hz (160 MHz by default, but some samples can reliably provide 200 MHz)
 
     //---------------------
     CFG_NUM_PARAMS
