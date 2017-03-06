@@ -365,6 +365,8 @@ static void BandHitCb(const TEXTBOX_t* tb)
         _f1 = 425000;
         _bs = BS20M;
     }
+    else
+        return;
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
         _f1 += BSVALUES[_bs] / 2;
     Show_F();
