@@ -54,15 +54,21 @@ typedef enum
     OSL_FILE_SCANNED_ALL = OSL_FILE_SCANNED_SHORT | OSL_FILE_SCANNED_LOAD | OSL_FILE_SCANNED_OPEN
 } OSL_FILE_STATUS;
 
-#define OSL_SCAN_STEP 100000
+#define OSL_SCAN_STEP           (100000)
+#define OSL_TABLES_IN_SDRAM     (0)
 
 #define OSL_ENTRIES ((MAX_BAND_FREQ - (BAND_FMIN)) / OSL_SCAN_STEP + 1)
 #define OSL_NUM_VALID_ENTRIES ((CFG_GetParam(CFG_PARAM_BAND_FMAX) - (BAND_FMIN)) / OSL_SCAN_STEP + 1)
 
+#if (1 == OSL_TABLES_IN_SDRAM)
+#define MEMATTR_OSL __attribute__((section (".user_sdram")))
+#else
+#define MEMATTR_OSL
+#endif
 
 static OSL_FILE_STATUS osl_file_status = OSL_FILE_EMPTY;
-static S_OSLDATA __attribute__((section (".user_sdram"))) osl_data[OSL_ENTRIES] = { 0 };
-static OSL_ERRCORR __attribute__((section (".user_sdram"))) osl_errCorr[OSL_ENTRIES] = { 0 };
+static S_OSLDATA MEMATTR_OSL osl_data[OSL_ENTRIES] = { 0 };
+static OSL_ERRCORR MEMATTR_OSL osl_errCorr[OSL_ENTRIES] = { 0 };
 static int32_t osl_file_loaded = -1;
 static int32_t osl_err_loaded = 0;
 

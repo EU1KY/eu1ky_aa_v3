@@ -107,8 +107,8 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SI5351_XTAL_FREQ,
         .idstring = "SI5351_XTAL_FREQ",
-        .nvalues = 2,
-        .values = CFG_IARR(25000000ul, 27000000ul),
+        .nvalues = 6,
+        .values = CFG_IARR(25000000ul, 26000000ul, 27000000ul, 30000000ul, 32000000ul, 33000000ul ),
         .type = CFG_PARAM_T_U32,
         .dstring = "Si5351 XTAL frequency, Hz",
         .isvalid = isSi5351,
