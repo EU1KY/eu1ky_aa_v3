@@ -142,6 +142,17 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .isvalid = isShowHiddenSi,
     },
     {
+        .id = CFG_PARAM_SI5351_CAPS,
+        .idstring = "SI5351_CAPS",
+        .type = CFG_PARAM_T_U8,
+        .nvalues = 3,
+        .strvalues = CFG_SARR("6 pF", "8 pF", "10 pF"),
+        .values = CFG_IARR(1, 2, 3),
+        .dstring = "Crystal Internal Load Capacitance. Recalibrate F if changed.",
+        .isvalid = isShowHiddenSi,
+        .resetRequired = 1
+    },
+    {
         .id = CFG_PARAM_OSL_RLOAD,
         .idstring = "OSL_RLOAD",
         .nvalues = 4,
@@ -255,17 +266,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_U32,
         .dstring = "Enter low power mode (display off) after this period of inactivity. Tap to wake up."
     },
-/* unused yet
-    {
-        .id = CFG_PARAM_3RD_HARMONIC_ENABLED,
-        .idstring = "Allow operation on 3rd harmonic",
-        .nvalues = 2,
-        .values = CFG_IARR(0, 1),
-        .strvalues = CFG_SARR("No", "Yes"),
-        .type = CFG_PARAM_T_U32,
-        .dstring = "Allow measurements on 3rd harmonic (above maximum frequency)"
-    },
-*/
     {
         .id = CFG_PARAM_S11_SHOW,
         .idstring = "S11_GRAPH_SHOW",
@@ -358,6 +358,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_SCREENSHOT_FORMAT, 0);
     CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
+    CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
 
     //Load parameters from file on SD card
     FRESULT res;
