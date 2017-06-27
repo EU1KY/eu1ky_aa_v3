@@ -207,7 +207,7 @@ void LCD_FillCircle(LCDPoint center, uint16_t r, LCDColor color)
 // Quadrants:
 //     1 0
 //     2 3
-#define LCD_ArcPixel(x, y) if ((xmin <= x) && (x <= xmax)) LCD_SetPixel(LCD_MakePoint(centerx + x, centerx + y), color);
+#define LCD_ArcPixel(x, y) if ((xmin <= x) && (x <= xmax)) LCD_SetPixel(LCD_MakePoint(centerx + x, centery + y), color)
 static void LCD_DrawArcQuadrant(int32_t centerx, uint32_t centery, int32_t radius,
                                 uint32_t quadrant, int32_t xmin, int32_t xmax, LCDColor color)
 {
@@ -246,20 +246,20 @@ static void LCD_DrawArcQuadrant(int32_t centerx, uint32_t centery, int32_t radiu
         else
         {
             tswitch += (4 * (x - y) + 10);
-            y -= 1;
+            y--;
         }
-        x += 1;
+        x++;
     }
 }
 
 
 void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float startDegrees, float endDegrees, LCDColor color)
 {
+    if (startDegrees < 0.f || startDegrees > endDegrees || startDegrees > 360.f || endDegrees > 360.f)
+        return;
+
     float astart = M_PI * startDegrees / 180.f;
     float aend = M_PI * endDegrees / 180.f;
-
-    if (astart < 0.f || astart > aend || astart > (2 * M_PI) || aend > (2 * M_PI))
-        return;
 
     int32_t xmax, xmin;
     if (astart <= M_PI / 2)
@@ -270,7 +270,7 @@ void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float startDegrees, float
         else
             xmin = 0;
         LCD_DrawArcQuadrant(x, y, radius, 0, xmin, xmax, color);
-        if (aend <= M_PI / 2)
+        if (endDegrees <= 90.f)
             return;
         astart = M_PI / 2;
     }
@@ -283,7 +283,7 @@ void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float startDegrees, float
         else
             xmin = -radius;
         LCD_DrawArcQuadrant(x, y, radius, 1, xmin, xmax, color);
-        if (aend <= M_PI)
+        if (endDegrees <= 180.f)
             return;
         astart = M_PI;
     }
@@ -296,7 +296,7 @@ void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float startDegrees, float
         else
             xmax = 0;
         LCD_DrawArcQuadrant(x, y, radius, 2, xmin, xmax, color);
-        if (aend <= (M_PI + M_PI / 2))
+        if (endDegrees <= 270.f)
             return;
         astart = (M_PI + M_PI / 2);
     }

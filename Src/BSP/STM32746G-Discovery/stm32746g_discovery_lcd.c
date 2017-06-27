@@ -343,6 +343,11 @@ void BSP_LCD_SelectLayer(uint32_t LayerIndex)
   ActiveLayer = LayerIndex;
 }
 
+uint32_t BSP_LCD_GetActiveLayer(void)
+{
+    return ActiveLayer;
+}
+
 /**
   * @brief  Sets an LCD Layer visible
   * @param  LayerIndex: Visible Layer

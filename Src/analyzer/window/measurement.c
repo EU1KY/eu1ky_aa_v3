@@ -23,6 +23,7 @@
 #include "match.h"
 #include "num_keypad.h"
 #include "screenshot.h"
+#include "smith.h"
 
 extern void Sleep(uint32_t ms);
 
@@ -81,10 +82,8 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
     }
     float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     LCDColor sc = LCD_RGB(96, 96, 96);
-    LCD_Circle(LCD_MakePoint(X0, Y0), R, sc);
-    LCD_Circle(LCD_MakePoint(X0 - R / 2 , Y0), R / 2, sc);
-    LCD_Circle(LCD_MakePoint(X0 + R / 2 , Y0), R / 2, sc);
-    LCD_Line(LCD_MakePoint(X0 - R, Y0), LCD_MakePoint(X0 + R, Y0), sc);
+    SMITH_DrawGrid(X0, Y0, R, sc, 0, SMITH_R50 | SMITH_Y50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
+                                     SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10);
 
     //Draw mini-scan points
     uint32_t i;
@@ -94,9 +93,8 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
         if (i == 10)
             continue;
         float complex Gx = OSL_GFromZ(z500[i], CFG_GetParam(CFG_PARAM_R0));
-        x = (int)(crealf(Gx) * R) + X0;
-        y = Y0 - (int)(cimagf(Gx) * R);
-        LCD_SetPixel(LCD_MakePoint(x, y), LCD_RGB(0, 0, 128));
+        SMITH_DrawG(Gx, LCD_RGB(0, 0, 192));
+        SMITH_ResetStartPoint();
     }
 
     x = (int)(crealf(G) * R) + X0;
@@ -384,6 +382,7 @@ void MEASUREMENT_Proc(void)
     while(TOUCH_IsPressed());
 
 MEASUREMENT_REDRAW:
+
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 25, "VSWR (1.0 ... 3.0), F +/- 500 KHz, step 50:");
     LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
@@ -444,6 +443,10 @@ MEASUREMENT_REDRAW:
         DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
 
         rx = DSP_MeasuredZ();
+
+        uint32_t activeLayer = BSP_LCD_GetActiveLayer();
+        BSP_LCD_SelectLayer(!activeLayer);
+
         MeasurementModeDraw(rx);
         if (scanres)
             MeasurementModeGraph(rx);
@@ -457,8 +460,10 @@ MEASUREMENT_REDRAW:
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK  ");
         }
 
+        BSP_LCD_SetLayerVisible_NoReload(activeLayer, DISABLE);
+        BSP_LCD_SetLayerVisible_NoReload(!activeLayer, ENABLE);
+
         Sleep(5);
-        //SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
 
         LCDPoint pt;
         while (TOUCH_Poll(&pt))
