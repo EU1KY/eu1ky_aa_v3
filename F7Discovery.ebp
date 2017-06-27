@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <EmBitz_project_file>
-	<EmBitzVersion release="1.10" revision="0" />
+	<EmBitzVersion release="1.11" revision="0" />
 	<FileVersion major="1" minor="0" />
 	<Project>
 		<Option title="F7Discovery" />
@@ -280,6 +280,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\lcd\sdigits.h" />
+		<Unit filename="Src\analyzer\lcd\smith.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\lcd\smith.h" />
 		<Unit filename="Src\analyzer\lcd\textbox.c">
 			<Option compilerVar="CC" />
 		</Unit>
