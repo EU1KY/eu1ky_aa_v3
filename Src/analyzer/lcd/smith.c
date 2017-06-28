@@ -12,8 +12,8 @@
 #include <limits.h>
 
 static float complex lastg = 2.f + 0.fi;
-static int32_t lastx = -1;
-static int32_t lasty = -1;
+static int32_t centerx = -1;
+static int32_t centery = -1;
 static int32_t lastradius = -1;
 static int32_t lastxoffset = INT_MAX;
 static int32_t lastyoffset = 0;
@@ -35,8 +35,8 @@ void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bg
     //LCD_WaitForRedraw();
     if (0 != bgcolor)
         LCD_FillCircle(LCD_MakePoint(x, y), (uint16_t)r, bgcolor);
-    lastx = x;
-    lasty = y;
+    centerx = x;
+    centery = y;
     lastradius = r;
 
     LCD_Line(LCD_MakePoint(x-r, y), LCD_MakePoint(x + r, y), color);
@@ -99,6 +99,13 @@ void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bg
         LCD_Circle(LCD_MakePoint(x , y), r / 3, color);
 }
 
+void SMITH_DrawLabels(LCDColor color, uint32_t flags)
+{
+    if (centerx < 0)
+        return;
+    // TODO
+}
+
 void SMITH_ResetStartPoint(void)
 {
     lastxoffset = INT_MAX;
@@ -114,12 +121,24 @@ void SMITH_DrawG(float complex G, LCDColor color)
 
     if (lastxoffset == INT_MAX)
     {
-        LCD_SetPixel(LCD_MakePoint(lastx + xoffset, lasty + yoffset), color);
+        LCD_SetPixel(LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
     }
     else
     {
-        LCD_Line(LCD_MakePoint(lastx + lastxoffset, lasty + lastyoffset), LCD_MakePoint(lastx + xoffset, lasty + yoffset), color);
+        LCD_Line(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
     }
     lastxoffset = xoffset;
     lastyoffset = yoffset;
+}
+
+void SMITH_DrawGEndMark(LCDColor color)
+{
+    if (lastxoffset == INT_MAX)
+        return;
+    LCD_SetPixel(LCD_MakePoint(centerx+lastxoffset, centery+lastyoffset), LCD_RED);
+    LCD_SetPixel(LCD_MakePoint(centerx+lastxoffset-1, centery+lastyoffset), LCD_RED);
+    LCD_SetPixel(LCD_MakePoint(centerx+lastxoffset+1, centery+lastyoffset), LCD_RED);
+    LCD_SetPixel(LCD_MakePoint(centerx+lastxoffset, centery+lastyoffset-1), LCD_RED);
+    LCD_SetPixel(LCD_MakePoint(centerx+lastxoffset, centery+lastyoffset+1), LCD_RED);
+    lastxoffset = INT_MAX;
 }

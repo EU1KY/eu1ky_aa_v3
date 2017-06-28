@@ -34,9 +34,13 @@ extern "C" {
 
 void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bgcolor, uint32_t flags);
 
+void SMITH_DrawLabels(LCDColor color, uint32_t flags);
+
 void SMITH_ResetStartPoint(void);
 
 void SMITH_DrawG(float complex G, LCDColor color);
+
+void SMITH_DrawGEndMark(LCDColor color);
 
 #ifdef __cplusplus
 }
