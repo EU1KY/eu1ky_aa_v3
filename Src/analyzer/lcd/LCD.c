@@ -107,7 +107,7 @@ void LCD_FillRect(LCDPoint p1, LCDPoint p2, LCDColor color)
     if (p2.y >= LCD_GetHeight()) p2.y = LCD_GetHeight() - 1;
 
     color |= 0xFF000000;
-    BSP_LCD_SelectLayer(1);
+    //BSP_LCD_SelectLayer(1);
     BSP_LCD_SetTextColor(color);
     BSP_LCD_FillRect(p1.x, p1.y, p2.x - p1.x + 1, p2.y - p1.y + 1);
 }

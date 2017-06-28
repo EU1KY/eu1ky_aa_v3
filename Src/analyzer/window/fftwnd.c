@@ -84,7 +84,12 @@ void FFTWND_Proc(void)
 
     rqExit = 0;
     oscilloscope = 0;
+    BSP_LCD_SelectLayer(0);
     LCD_FillAll(LCD_BLACK);
+    BSP_LCD_SetTransparency(0, 0);
+    BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_BLACK);
+    BSP_LCD_SetTransparency(1, 255);
 
     FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
 
@@ -100,6 +105,7 @@ void FFTWND_Proc(void)
         Sleep(10);
     }
 
+    uint32_t activeLayer;
     while (1)
     {
         (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);
@@ -115,6 +121,8 @@ void FFTWND_Proc(void)
         }
         else
         {
+            activeLayer = BSP_LCD_GetActiveLayer();
+            BSP_LCD_SelectLayer(!activeLayer);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
         }
 
@@ -131,7 +139,6 @@ void FFTWND_Proc(void)
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
 
-            LCD_WaitForRedraw();
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
 
@@ -191,7 +198,6 @@ void FFTWND_Proc(void)
         }
         else //Spectrum
         {
-            LCD_WaitForRedraw();
             //Draw spectrum
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
@@ -240,7 +246,6 @@ void FFTWND_Proc(void)
                 }
 
                 float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
-                LCD_WaitForRedraw();
                 if (0 == ch)
                 {
                     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
@@ -255,6 +260,8 @@ void FFTWND_Proc(void)
                 }
             }
         }
+        BSP_LCD_SetTransparency(activeLayer, 0);
+        BSP_LCD_SetTransparency(!activeLayer, 255);
         Sleep(100);
     }
 }

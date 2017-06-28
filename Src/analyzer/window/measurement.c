@@ -120,11 +120,17 @@ static int Scan500(void)
     {
         vswr500[i] = 9999.0;
     }
+    BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + i * 10, SCAN_ORIGIN_Y), LCD_GREEN);
+    BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
     LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + i * 10, SCAN_ORIGIN_Y), LCD_GREEN);
     i++;
     if (i == 21)
     {
         i = 0;
+        BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
+        LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y), LCD_BLUE);
+        BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
         LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y), LCD_BLUE);
         return 1;
     }
@@ -371,7 +377,13 @@ void MEASUREMENT_Proc(void)
     isMatch = 0;
     redrawWindow = 0;
 
+    BSP_LCD_SelectLayer(0);
     LCD_FillAll(LCD_BLACK);
+    BSP_LCD_SetTransparency(0, 0);
+    BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_BLACK);
+    BSP_LCD_SetTransparency(1, 255);
+
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 60, "Measurement mode");
     if (-1 == OSL_GetSelected())
     {
@@ -381,75 +393,84 @@ void MEASUREMENT_Proc(void)
     Sleep(300);
     while(TOUCH_IsPressed());
 
+    uint32_t activeLayer;
+
 MEASUREMENT_REDRAW:
-
-    LCD_FillAll(LCD_BLACK);
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 25, "VSWR (1.0 ... 3.0), F +/- 500 KHz, step 50:");
-    LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
-    LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
-
-    //Draw freq change areas bar
-    uint16_t y;
-    for (y = 0; y <2; y++)
+    for (uint32_t layer = 0; layer < 2; layer++)
     {
-        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
-        LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
-    }
+        BSP_LCD_SelectLayer(layer);
+        LCD_FillAll(LCD_BLACK);
+        FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 25, "VSWR (1.0 ... 3.0), F +/- 500 KHz, step 50:");
+        LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
+        LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
 
-    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 70, 250, "  Set frequency...  ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_RGB(0, 64, 0), 190, 250, "  Save snapshot  ");
-    ShowF();
-    DSP_RX rx;
-
-    if (-1 == OSL_GetSelected())
-    {
-        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 18, "No OSL");
-    }
-    else
-    {
-        OSL_CorrectZ(BAND_FMIN, 0+0*I); //To force lazy loading OSL file if it has not been loaded yet
-        if (OSL_IsSelectedValid())
+        //Draw freq change areas bar
+        uint16_t y;
+        for (y = 0; y <2; y++)
         {
-            FONT_Print(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 18, "OSL: %s, OK", OSL_GetSelectedName());
+            LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
+            LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
+            LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
+            LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
+            LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
+            LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
+        }
+
+        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
+        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 70, 250, "  Set frequency...  ");
+        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_RGB(0, 64, 0), 190, 250, "  Save snapshot  ");
+
+        ShowF();
+        DSP_RX rx;
+
+        if (-1 == OSL_GetSelected())
+        {
+            FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 18, "No OSL");
         }
         else
         {
-            FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 380, 18, "OSL: %s, BAD", OSL_GetSelectedName());
+            OSL_CorrectZ(BAND_FMIN, 0+0*I); //To force lazy loading OSL file if it has not been loaded yet
+            if (OSL_IsSelectedValid())
+            {
+                FONT_Print(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 18, "OSL: %s, OK", OSL_GetSelectedName());
+            }
+            else
+            {
+                FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 380, 18, "OSL: %s, BAD", OSL_GetSelectedName());
+            }
+        }
+
+        if (OSL_IsErrCorrLoaded())
+        {
+            FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 36, "HW cal: OK");
+        }
+        else
+        {
+            FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 36, "HW cal: NO");
         }
     }
 
-    if (OSL_IsErrCorrLoaded())
-    {
-        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 36, "HW cal: OK");
-    }
-    else
-    {
-        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 36, "HW cal: NO");
-    }
-
-    uint32_t speedcnt = 0;
-    meas_maxstep = 500000;
-
+    //Main window cycle
     for(;;)
     {
         int scanres = Scan500();
         GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
         Sleep(10);
         DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+        DSP_RX rx = DSP_MeasuredZ();
 
-        rx = DSP_MeasuredZ();
-
-        uint32_t activeLayer = BSP_LCD_GetActiveLayer();
+        activeLayer = BSP_LCD_GetActiveLayer();
         BSP_LCD_SelectLayer(!activeLayer);
 
+        ShowF();
         MeasurementModeDraw(rx);
         if (scanres)
+        {
+            BSP_LCD_SelectLayer(activeLayer);
             MeasurementModeGraph(rx);
+            BSP_LCD_SelectLayer(!activeLayer);
+            MeasurementModeGraph(rx);
+        }
 
         if (DSP_MeasuredMagVmv() < 20.)
         {
@@ -460,11 +481,11 @@ MEASUREMENT_REDRAW:
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK  ");
         }
 
-        BSP_LCD_SetLayerVisible_NoReload(activeLayer, DISABLE);
-        BSP_LCD_SetLayerVisible_NoReload(!activeLayer, ENABLE);
+        BSP_LCD_SetTransparency(activeLayer, 0);
+        BSP_LCD_SetTransparency(!activeLayer, 255);
 
-        Sleep(5);
-
+        uint32_t speedcnt = 0;
+        meas_maxstep = 500000;
         LCDPoint pt;
         while (TOUCH_Poll(&pt))
         {
