@@ -876,6 +876,10 @@ static void DrawSmith(void)
 
     float r0f = (float)CFG_GetParam(CFG_PARAM_R0);
 
+/*
+    SMITH_DrawLabels(WGRIDCOLORBR, 0, SMITH_R10 | SMITH_R25 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
+                                      SMITH_J10 | SMITH_J25 | SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J500);
+*/
     //Draw X arc labels
     static const float xx[] = {10., 25., 50., 100., 200.};
     for (i = 0; i < 5; i++)
@@ -932,6 +936,7 @@ static void DrawSmith(void)
     FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "%.0f", 2 * r0f);
     FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "%.0f", 4 * r0f);
 
+    //Draw measured data
     if (isMeasured)
     {
         uint32_t lastx = 0;
