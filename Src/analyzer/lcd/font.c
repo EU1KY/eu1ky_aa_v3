@@ -110,7 +110,8 @@ int FONT_Write_N(FONTS fnt, LCDColor fg, LCDColor bg, uint16_t x, uint16_t y, co
     FONT_GetParams(fnt, &fp);
 
     //Fill the rectangle with background color
-    LCD_FillRect(LCD_MakePoint(x, y), LCD_MakePoint(x + FONT_GetStrPixelWidth(fnt, pStr), y + fp.charHeight), bg);
+    if (0 != bg)
+        LCD_FillRect(LCD_MakePoint(x, y), LCD_MakePoint(x + FONT_GetStrPixelWidth(fnt, pStr), y + fp.charHeight), bg);
 
     while (*pStr != '\0' && nChars--)
     {
@@ -151,21 +152,6 @@ int FONT_Write_N(FONTS fnt, LCDColor fg, LCDColor bg, uint16_t x, uint16_t y, co
 
         if (*++pStr == '\0')
             break;
-/* optimized away: background is already drawn
-        x = x + charWidth;
-        //Draw character spacing
-        {
-            pCharData = fp.pFont[0x20];
-            uint8_t byteCtr = 0;
-            yCurr = y;
-            while (byteCtr < fp.charHeight)
-            {
-                FONT_DrawByte(*pCharData++, fp.charSpacing, fg, x + fp.charSpacing, yCurr++);
-                ++byteCtr;
-            }
-        }
-        x = x + fp.charSpacing;
-*/
         x = x + charWidth + fp.charSpacing;
     } //while(*pStr != '\0')
     return nPrinted;

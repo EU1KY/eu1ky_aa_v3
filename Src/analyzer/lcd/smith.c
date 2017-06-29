@@ -7,6 +7,8 @@
 
 #include "smith.h"
 #include "LCD.h"
+#include "font.h"
+#include "config.h"
 #include <math.h>
 #include <complex.h>
 #include <limits.h>
@@ -97,13 +99,77 @@ void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bg
     // SWR = 2.0 circle
     if (flags & SMITH_SWR2)
         LCD_Circle(LCD_MakePoint(x , y), r / 3, color);
+
 }
 
-void SMITH_DrawLabels(LCDColor color, uint32_t flags)
+//Use bgcolor 0 (i.e. transparent black) to avoid applying font background
+void SMITH_DrawLabels(LCDColor color, LCDColor bgcolor, uint32_t flags)
 {
-    if (centerx < 0)
+    if (centerx < 0) //Grid must have been drawn
         return;
-    // TODO
+
+    int32_t x = centerx;
+    int32_t y = centery;
+    int32_t r = lastradius;
+
+    float r0f = (float)CFG_GetParam(CFG_PARAM_R0);
+
+    if (flags & SMITH_J10)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 3, y - r * 2 / 5, "j%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 3, y + r * 2 / 5, "-j%.0f", 0.2f * r0f);
+    }
+
+    if (flags & SMITH_J25)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r/3, y - r * 85 / 100, "j%.0f", 0.5f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r/3, y + r * 85 / 100, "-j%.0f", 0.5f * r0f);
+    }
+
+    if (flags & SMITH_J50)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x, y - r - 7, "j%.0f", r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x, y + r + 7, "-j%.0f", r0f );
+    }
+
+    if (flags & SMITH_J100)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y - r * 7 / 8 - 5, "j%.0f", 2 * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y + r * 7 / 8 + 5, "-j%.0f", 2 * r0f);
+    }
+
+    if (flags & SMITH_J200)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r, y - r * 4 / 8, "j%.0f", 4 * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r, y + r * 4 / 8, "-j%.0f", 4 * r0f);
+    }
+
+    if (flags & SMITH_J500)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 7, y - r * 2 / 10, "j%.0f", 10 * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 7, y + r * 2 / 10, "-j%.0f", 10 * r0f);
+    }
+
+    if (flags & SMITH_R10)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 27/100, y + 2, "%.0f", 0.2f * r0f );
+    }
+    if (flags & SMITH_R25)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 60/100, y + 2, "%.0f", 0.2f * r0f );
+    }
+    if (flags & SMITH_R100)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 75/100, y + 2, "%.0f", 0.2f * r0f );
+    }
+    if (flags & SMITH_R200)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 50/100, y + 2, "%.0f", 0.2f * r0f );
+    }
+    if (flags & SMITH_R500)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 25/100, y + 2, "%.0f", 0.2f * r0f );
+    }
 }
 
 void SMITH_ResetStartPoint(void)

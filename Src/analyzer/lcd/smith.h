@@ -31,10 +31,11 @@ extern "C" {
 #define SMITH_J200 (1<<11)
 #define SMITH_J500 (1<<12)
 #define SMITH_SWR2 (1<<13)
+#define SMITH_LABELS (1<<14)
 
 void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bgcolor, uint32_t flags);
 
-void SMITH_DrawLabels(LCDColor color, uint32_t flags);
+void SMITH_DrawLabels(LCDColor color, LCDColor bgcolor, uint32_t flags);
 
 void SMITH_ResetStartPoint(void);
 
