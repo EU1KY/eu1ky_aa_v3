@@ -199,6 +199,14 @@ TCDATA sdigits_UZ[6]={3,
     b2b(0,0,0,0,0,1,0,0),
     b2b(0,0,0,0,0,1,1,1)};
 
+/**  0x6A - 106 - 'j'  **/
+TCDATA sdigits_lj[17]={3,
+    b2b(0,0,0,0,0,0,0,1),
+    b2b(0,0,0,0,0,0,0,0),
+    b2b(0,0,0,0,0,0,0,1),
+    b2b(0,0,0,0,0,0,0,1),
+    b2b(0,0,0,0,0,0,1,1)};
+
 /**  0x6E - 110 - 'n'  **/
 TCDATA sdigits_ln[6]={3,
     b2b(0,0,0,0,0,0,0,0),
@@ -343,7 +351,7 @@ const uint8_t* const sdigits[256] =
          sdigits_blank, //sdigits_lg,
          sdigits_blank, //sdigits_lh,
          sdigits_blank, //sdigits_li,
-         sdigits_blank, //sdigits_lj,
+         sdigits_lj,
          sdigits_blank, //sdigits_lk,
          sdigits_blank, //sdigits_ll,
          sdigits_blank, //sdigits_lm,

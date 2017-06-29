@@ -872,69 +872,13 @@ static void DrawSmith(void)
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
 
     SMITH_DrawGrid(cx0, cy0, smithradius, WGRIDCOLOR, SMITH_CIRCLE_BG, SMITH_R50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
-                                 SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10 | SMITH_J500 | SMITH_SWR2);
+                                 SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10 | SMITH_J500 | SMITH_SWR2 | SMITH_Y50);
 
     float r0f = (float)CFG_GetParam(CFG_PARAM_R0);
 
-/*
-    SMITH_DrawLabels(WGRIDCOLORBR, 0, SMITH_R10 | SMITH_R25 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
+
+    SMITH_DrawLabels(WGRIDCOLORBR, 0, SMITH_R10 | SMITH_R25 | SMITH_R50 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
                                       SMITH_J10 | SMITH_J25 | SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J500);
-*/
-    //Draw X arc labels
-    static const float xx[] = {10., 25., 50., 100., 200.};
-    for (i = 0; i < 5; i++)
-    {
-        float j = 1.;
-        float complex g = OSL_GFromZ(j + xx[i] * I, 50.f);
-        uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * smithradius);
-        uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * smithradius);
-        switch (i)
-        {
-        case 0:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "%.0f", 0.2f * r0f );
-            break;
-        case 1:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 18, y - 5, "%.0f", 0.5f * r0f);
-            break;
-        case 3:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "%.0f", 2.f * r0f);
-            break;
-        case 4:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", 4.f * r0f);
-            break;
-        default:
-            break;
-        }
-
-        y = (uint32_t)roundf(cy0 + cimagf(g) * smithradius);
-        switch (i)
-        {
-        case 0:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 24, y, "%.0f", -0.2f * r0f);
-            break;
-        case 1:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 21, y + 5, "%.0f", -0.5f * r0f);
-            break;
-        case 2:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "%.0f", -1 * r0f);
-            break;
-        case 3:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "%.0f", -2 * r0f);
-            break;
-        case 4:
-            FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", -4 * r0f);
-            break;
-        default:
-            break;
-        }
-    }
-
-    //Draw R cirle labels
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "%.0f", 0.2f * r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "%.0f", 0.5f * r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "%.0f", r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "%.0f", 2 * r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "%.0f", 4 * r0f);
 
     //Draw measured data
     if (isMeasured)

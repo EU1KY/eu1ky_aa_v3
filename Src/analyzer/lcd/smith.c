@@ -25,7 +25,7 @@ static void _rcirc(float R, float R0, int32_t radius, int32_t x, int32_t y, LCDC
 {
     float g = (R - R0) / (R + R0);
     float roffset = radius * g;
-    int32_t rr = (int32_t)((radius - roffset) / 2);
+    int32_t rr = (int32_t)(roundf((radius - roffset) / 2));
     LCD_Circle(LCD_MakePoint(x + radius - rr, y), rr, color);
 }
 
@@ -98,7 +98,7 @@ void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bg
 
     // SWR = 2.0 circle
     if (flags & SMITH_SWR2)
-        LCD_Circle(LCD_MakePoint(x , y), r / 3, color);
+        LCD_Circle(LCD_MakePoint(x , y), (int32_t)(r / 3.f), color);
 
 }
 
@@ -116,59 +116,63 @@ void SMITH_DrawLabels(LCDColor color, LCDColor bgcolor, uint32_t flags)
 
     if (flags & SMITH_J10)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 3, y - r * 2 / 5, "j%.0f", 0.2f * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 3, y + r * 2 / 5, "-j%.0f", 0.2f * r0f);
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 7, y - r * 2 / 5, "j%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 10, y + r * 2 / 5, "-j%.0f", 0.2f * r0f);
     }
 
     if (flags & SMITH_J25)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r/3, y - r * 85 / 100, "j%.0f", 0.5f * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r/3, y + r * 85 / 100, "-j%.0f", 0.5f * r0f);
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 23 / 100, y - r * 85 / 100, "j%.0f", 0.5f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 27 / 100, y + r * 85 / 100, "-j%.0f", 0.5f * r0f);
     }
 
     if (flags & SMITH_J50)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x, y - r - 7, "j%.0f", r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x, y + r + 7, "-j%.0f", r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - 5, y - r - 5, "j%.0f", r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - 5, y + r + 5, "-j%.0f", r0f );
     }
 
     if (flags & SMITH_J100)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y - r * 7 / 8 - 5, "j%.0f", 2 * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y + r * 7 / 8 + 5, "-j%.0f", 2 * r0f);
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y - r * 7 / 8, "j%.0f", 2 * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y + r * 7 / 8, "-j%.0f", 2 * r0f);
     }
 
     if (flags & SMITH_J200)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r, y - r * 4 / 8, "j%.0f", 4 * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r, y + r * 4 / 8, "-j%.0f", 4 * r0f);
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - 9, y - r * 4 / 8, "j%.0f", 4 * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - 9, y + r * 4 / 8, "-j%.0f", 4 * r0f);
     }
 
     if (flags & SMITH_J500)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 7, y - r * 2 / 10, "j%.0f", 10 * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 7, y + r * 2 / 10, "-j%.0f", 10 * r0f);
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 2, y - r * 2 / 10, "j%.0f", 10 * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 2, y + r * 2 / 10, "-j%.0f", 10 * r0f);
     }
 
     if (flags & SMITH_R10)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 27/100, y + 2, "%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 25/100, y + 2, "%.0f", 0.2f * r0f );
     }
     if (flags & SMITH_R25)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 60/100, y + 2, "%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 60/100, y + 2, "%.0f", 0.5f * r0f );
+    }
+    if (flags & SMITH_R50)
+    {
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - 9, y + 2, "%.0f", r0f );
     }
     if (flags & SMITH_R100)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 75/100, y + 2, "%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 80/100, y + 2, "%.0f", 2 * r0f );
     }
     if (flags & SMITH_R200)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 50/100, y + 2, "%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 53/100, y + 2, "%.0f", 4 * r0f );
     }
     if (flags & SMITH_R500)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 25/100, y + 2, "%.0f", 0.2f * r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 30/100, y + 2, "%.0f", 10 * r0f );
     }
 }
 
