@@ -87,8 +87,8 @@ uint32_t MATCH_Calc(float complex ZL, MATCH_S *pResult)
 
     float R0 = (float)CFG_GetParam(CFG_PARAM_R0);
 
-    if (crealf(ZL) == R0)
-    {//Only one solution: compensate with serial reactance
+    if ((crealf(ZL) > (0.91f * R0)) && (crealf(ZL) < (1.1f * R0)))
+    {//Only one solution is enough: just a serial reactance, this gives SWR < 1.1 if R is within the range 0.91 .. 1.1 of R0
         pResult[0].XPL = NAN;
         pResult[0].XPS = NAN;
         pResult[0].XS = -cimagf(ZL);
