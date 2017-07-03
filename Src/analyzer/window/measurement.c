@@ -84,6 +84,8 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
     LCDColor sc = LCD_RGB(96, 96, 96);
     SMITH_DrawGrid(X0, Y0, R, sc, 0, SMITH_R50 | SMITH_Y50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
                                      SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10);
+    SMITH_DrawLabels(LCD_RGB(128, 128, 0), 0, SMITH_R50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
+                     SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10);
 
     //Draw mini-scan points
     uint32_t i;
