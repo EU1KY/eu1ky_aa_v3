@@ -89,6 +89,7 @@ SRC :=   Src/analyzer/config/config.c \
         Src/analyzer/dsp/dsp.c \
         Src/analyzer/gen/adf4350.c \
         Src/analyzer/gen/adf4351.c \
+        Src/analyzer/gen/si5338a.c \
         Src/analyzer/gen/gen.c \
         Src/analyzer/gen/rational.c \
         Src/analyzer/gen/si5351.c \
