@@ -88,9 +88,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
-        .nvalues = 3,
-        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351),
-        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351"),
+        .nvalues = 4,
+        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351, CFG_SYNTH_SI5338A),
+        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351", "Si5338A"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used.",
         .isvalid = isShowHidden,
@@ -214,8 +214,8 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_BRIDGE_RM,
         .idstring = "BRIDGE_RM",
-        .nvalues = 3,
-        .values = (int32_t*)CFG_FARR(1.f, 5.1f, 10.f),
+        .nvalues = 4,
+        .values = (int32_t*)CFG_FARR(1.f, 2.f, 5.1f, 10.f),
         .type = CFG_PARAM_T_F32,
         .dstring = "Bridge Rm value, Ohm",
         .isvalid = isShowHidden

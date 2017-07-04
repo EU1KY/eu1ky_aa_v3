@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <EmBitz_project_file>
-	<EmBitzVersion release="1.11" revision="0" />
+	<EmBitzVersion release="1.10" revision="0" />
 	<FileVersion major="1" minor="0" />
 	<Project>
 		<Option title="F7Discovery" />
+		<Option makefile="makefile" />
 		<Option compiler="armelfgcc" />
 		<Option extended_obj_names="1" />
 		<Build>
@@ -236,6 +237,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\gen\rational.h" />
+		<Unit filename="Src\analyzer\gen\si5338a.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\gen\si5338a.h" />
 		<Unit filename="Src\analyzer\gen\si5351.c">
 			<Option compilerVar="CC" />
 		</Unit>
