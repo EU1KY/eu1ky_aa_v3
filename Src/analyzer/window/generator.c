@@ -26,10 +26,8 @@ void Sleep(uint32_t ms);
 
 static void ShowF()
 {
-    char str[50];
-    sprintf(str, "F: %u kHz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) / 1000));
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 40);
-    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 160 - FONT_GetStrPixelWidth(FONT_FRANBIG, str) / 2, 40, str);
+    FONT_Print(FONT_FRANBIG, LCD_RED, LCD_BLACK, 120, 40, "F: %u kHz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) / 1000));
 }
 
 static void GENERATOR_SwitchWindow(void)
@@ -148,36 +146,47 @@ void GENERATOR_Window_Proc(void)
             CFG_Flush();
         }
     }
-GENERATOR_REDRAW:
-    LCD_FillAll(LCD_BLACK);
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 70, 2, "Generator mode");
 
+    BSP_LCD_SelectLayer(0);
+    LCD_FillAll(LCD_BLACK);
+    BSP_LCD_SetTransparency(0, 0);
+    BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_BLACK);
+    BSP_LCD_SetTransparency(1, 255);
+
+GENERATOR_REDRAW:
     while(TOUCH_IsPressed());
+
+    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
+
+    for (uint32_t layer = 0; layer < 2; layer++)
+    {
+        BSP_LCD_SelectLayer(layer);
+        LCD_FillAll(LCD_BLACK);
+        FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 2, "Generator mode");
+        //Draw freq change areas bar
+        uint16_t y;
+        for (y = 0; y <2; y++)
+        {
+            LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
+            LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
+            LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
+            LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
+            LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
+            LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
+        }
+
+        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
+        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 150, 250, "  Set frequency...  ");
+        ShowF();
+    }
 
     uint32_t speedcnt = 0;
     f_maxstep = 500000;
-
-    //Draw freq change areas bar
-    uint16_t y;
-    for (y = 0; y <2; y++)
-    {
-        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
-        LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
-        LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
-        LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
-    }
-
-    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 150, 250, "  Set frequency...  ");
-
     rqExit = 0;
     fChanged = 0;
     redrawWindow = 0;
 
-    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
-    ShowF();
     while(1)
     {
         LCDPoint pt;
@@ -215,12 +224,16 @@ GENERATOR_REDRAW:
             fChanged = 0;
         }
 
-        //Measure without changing current frequency and without any corrections
+        //Measure without changing current frequency and without OSL
         DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+
+        uint32_t activeLayer = BSP_LCD_GetActiveLayer();
+        BSP_LCD_SelectLayer(!activeLayer);
+
+        ShowF();
         FONT_SetAttributes(FONT_FRAN, LCD_WHITE, LCD_BLACK);
-        LCD_WaitForRedraw();
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 100);
-        FONT_Printf(0, 100, "Raw I: %.1f, V: %.1f. Diff %.2f dB", DSP_MeasuredMagImv(),
+        FONT_Printf(0, 100, "Raw Vi: %.2f mV, Vv: %.2f mV Diff %.2f dB", DSP_MeasuredMagImv(),
                      DSP_MeasuredMagVmv(), DSP_MeasuredDiffdB());
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 120);
         FONT_Printf(0, 120, "Raw phase diff: %.1f deg", DSP_MeasuredPhaseDeg());
@@ -229,7 +242,7 @@ GENERATOR_REDRAW:
         FONT_ClearLine(FONT_FRAN, LCD_BLACK, 140);
         FONT_Printf(0, 140, "Raw R: %.1f X: %.1f", crealf(rx), cimagf(rx));
 
-        if (DSP_MeasuredMagVmv() < 20.)
+        if (DSP_MeasuredMagVmv() < 1.f)
         {
             FONT_Write(FONT_FRAN, LCD_BLACK, LCD_RED, 0, 160,   "No signal  ");
         }
@@ -237,6 +250,10 @@ GENERATOR_REDRAW:
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
+
+        BSP_LCD_SetTransparency(activeLayer, 0);
+        BSP_LCD_SetTransparency(!activeLayer, 255);
+
         Sleep(100);
     }
 }
