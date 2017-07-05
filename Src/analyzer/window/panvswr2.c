@@ -1014,8 +1014,10 @@ CRASH_WR:
 
 void PANVSWR2_Proc(void)
 {
+    BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 100, "Panoramic scan mode");
+    LCD_ShowActiveLayerOnly();
     Sleep(500);
     while(TOUCH_IsPressed());
 
@@ -1044,7 +1046,7 @@ void PANVSWR2_Proc(void)
 
     for(;;)
     {
-        Sleep(50);
+        Sleep(20);
         if (autofast)
         {
             ScanRXFast();

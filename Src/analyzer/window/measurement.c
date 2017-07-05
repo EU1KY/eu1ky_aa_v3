@@ -381,10 +381,9 @@ void MEASUREMENT_Proc(void)
 
     BSP_LCD_SelectLayer(0);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SetTransparency(0, 0);
     BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SetTransparency(1, 255);
+    LCD_ShowActiveLayerOnly();
 
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 60, "Measurement mode");
     if (-1 == OSL_GetSelected())
@@ -451,6 +450,7 @@ MEASUREMENT_REDRAW:
             FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 380, 36, "HW cal: NO");
         }
     }
+    LCD_ShowActiveLayerOnly();
 
     //Main window cycle
     for(;;)
@@ -483,8 +483,7 @@ MEASUREMENT_REDRAW:
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 380, 2, "Signal OK  ");
         }
 
-        BSP_LCD_SetTransparency(activeLayer, 0);
-        BSP_LCD_SetTransparency(!activeLayer, 255);
+        LCD_ShowActiveLayerOnly();
 
         uint32_t speedcnt = 0;
         meas_maxstep = 500000;

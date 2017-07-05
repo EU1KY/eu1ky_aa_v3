@@ -292,7 +292,10 @@ static void PROTOCOL_Handler(void)
 // Main window procedure (never returns)
 void MainWnd(void)
 {
+    BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
+    LCD_ShowActiveLayerOnly();
+
     while (TOUCH_IsPressed());
 
     //Initialize textbox context
@@ -356,8 +359,10 @@ void MainWnd(void)
         {
             Sleep(50);
             //Redraw main window
+            BSP_LCD_SelectLayer(1);
             LCD_FillAll(LCD_BLACK);
             TEXTBOX_DrawContext(&main_ctx);
+            LCD_ShowActiveLayerOnly();
             PROTOCOL_Reset();
         }
         PROTOCOL_Handler();

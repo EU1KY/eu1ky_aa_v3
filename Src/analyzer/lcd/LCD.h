@@ -109,6 +109,8 @@ uint32_t LCD_IsOff(void);
 
 void LCD_DrawBitmap(LCDPoint origin, const uint8_t *bmpData, uint32_t bmpDataSize);
 
+void LCD_ShowActiveLayerOnly(void);
+
 // Functions that store and recover window bitmaps
 // to be used in temporary windows and pop-ups
 

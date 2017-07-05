@@ -86,10 +86,9 @@ void FFTWND_Proc(void)
     oscilloscope = 0;
     BSP_LCD_SelectLayer(0);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SetTransparency(0, 0);
     BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SetTransparency(1, 255);
+    LCD_ShowActiveLayerOnly();
 
     FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
 
@@ -260,8 +259,7 @@ void FFTWND_Proc(void)
                 }
             }
         }
-        BSP_LCD_SetTransparency(activeLayer, 0);
-        BSP_LCD_SetTransparency(!activeLayer, 255);
+        LCD_ShowActiveLayerOnly();
         Sleep(100);
     }
 }

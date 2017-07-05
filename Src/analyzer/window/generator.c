@@ -149,10 +149,10 @@ void GENERATOR_Window_Proc(void)
 
     BSP_LCD_SelectLayer(0);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SetTransparency(0, 0);
     BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SetTransparency(1, 255);
+
+    LCD_ShowActiveLayerOnly();
 
 GENERATOR_REDRAW:
     while(TOUCH_IsPressed());
@@ -251,9 +251,7 @@ GENERATOR_REDRAW:
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
 
-        BSP_LCD_SetTransparency(activeLayer, 0);
-        BSP_LCD_SetTransparency(!activeLayer, 255);
-
+        LCD_ShowActiveLayerOnly();
         Sleep(100);
     }
 }

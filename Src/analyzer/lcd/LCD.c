@@ -49,6 +49,14 @@ void LCD_BacklightOff(void)
 {
 }
 
+void LCD_ShowActiveLayerOnly(void)
+{
+    uint32_t activeLayer = BSP_LCD_GetActiveLayer();
+    BSP_LCD_SetLayerVisible_NoReload(!activeLayer, DISABLE);
+    BSP_LCD_SetLayerVisible_NoReload(activeLayer, ENABLE);
+    BSP_LCD_Reload(LCD_RELOAD_VERTICAL_BLANKING);
+}
+
 void LCD_Init(void)
 {
     // Configure LCD : Only one layer is used
