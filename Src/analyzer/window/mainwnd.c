@@ -29,6 +29,7 @@
 #include "gen.h"
 #include "aauart.h"
 #include "build_timestamp.h"
+#include "tdr.h"
 
 extern void Sleep(uint32_t);
 
@@ -43,6 +44,7 @@ static TEXTBOX_t hbRemote;
 static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
+static TEXTBOX_t hbTDR;
 
 #define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
@@ -317,6 +319,11 @@ void MainWnd(void)
     hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 120, .text = " Configuration  ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
     TEXTBOX_Append(&main_ctx, &hbConfig);
+
+    //TDR window
+    hbTDR = (TEXTBOX_t){.x0 = COL1, .y0 = 180, .text = "Time Domain Refl. ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbTDR);
 
     //Panoramic scan window
     hbPan = (TEXTBOX_t){.x0 = COL2, .y0 =   0, .text =    " Panoramic scan ", .font = FONT_FRANBIG,
