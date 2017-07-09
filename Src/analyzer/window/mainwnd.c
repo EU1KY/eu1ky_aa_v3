@@ -320,10 +320,10 @@ void MainWnd(void)
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
     TEXTBOX_Append(&main_ctx, &hbConfig);
 
-    //TDR window
-    hbTDR = (TEXTBOX_t){.x0 = COL1, .y0 = 180, .text = "Time Domain Refl. ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
-    TEXTBOX_Append(&main_ctx, &hbTDR);
+    //USB access
+    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 180, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
+    TEXTBOX_Append(&main_ctx, &hbUSBD);
 
     //Panoramic scan window
     hbPan = (TEXTBOX_t){.x0 = COL2, .y0 =   0, .text =    " Panoramic scan ", .font = FONT_FRANBIG,
@@ -345,10 +345,10 @@ void MainWnd(void)
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc };
     TEXTBOX_Append(&main_ctx, &hbDsp);
 
-    //USB access
-    hbUSBD = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text =   " USB access     ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
-    TEXTBOX_Append(&main_ctx, &hbUSBD);
+    //TDR window
+    hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Time Domain ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbTDR);
 
     hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
