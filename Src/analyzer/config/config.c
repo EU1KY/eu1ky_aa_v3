@@ -88,9 +88,9 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_SYNTH_TYPE,
         .idstring = "SYNTH_TYPE",
-        .nvalues = 3,
-        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351),
-        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351"),
+        .nvalues = 4,
+        .values = CFG_IARR(CFG_SYNTH_SI5351, CFG_SYNTH_ADF4350, CFG_SYNTH_ADF4351, CFG_SYNTH_SI5338A),
+        .strvalues = CFG_SARR("Si5351A", "2x ADF4350", "2x ADF4351", "Si5338A"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Frequency synthesizer type used.",
         .isvalid = isShowHidden,
@@ -214,8 +214,8 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
     {
         .id = CFG_PARAM_BRIDGE_RM,
         .idstring = "BRIDGE_RM",
-        .nvalues = 3,
-        .values = (int32_t*)CFG_FARR(1.f, 5.1f, 10.f),
+        .nvalues = 4,
+        .values = (int32_t*)CFG_FARR(1.f, 2.f, 5.1f, 10.f),
         .type = CFG_PARAM_T_F32,
         .dstring = "Bridge Rm value, Ohm",
         .isvalid = isShowHidden
@@ -306,6 +306,13 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Screenshot file format",
     },
     {
+        .id = CFG_PARAM_TDR_VF,
+        .idstring = "TDR Vf",
+        .dstring = "Velocity factor for TDR, percent (1..100)",
+        .type = CFG_PARAM_T_U8,
+        .repeatdelay = 100,
+    },
+    {
         .id = CFG_PARAM_SHOW_HIDDEN,
         .idstring = "SHOW_HIDDEN",
         .type = CFG_PARAM_T_U32,
@@ -359,6 +366,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
+    CFG_SetParam(CFG_PARAM_TDR_VF, 66);
 
     //Load parameters from file on SD card
     FRESULT res;
@@ -421,6 +429,8 @@ void CFG_Init(void)
     }
     if ((CFG_GetParam(CFG_PARAM_BAND_FMAX) <= BAND_FMIN) || (CFG_GetParam(CFG_PARAM_BAND_FMAX) % 1000000 != 0))
         CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
+    if (CFG_GetParam(CFG_PARAM_TDR_VF) < 1 || CFG_GetParam(CFG_PARAM_TDR_VF) > 100)
+        CFG_SetParam(CFG_PARAM_TDR_VF, 66);
 }
 
 uint32_t CFG_GetParam(CFG_PARAM_t param)

@@ -217,6 +217,7 @@ void     BSP_LCD_ResetColorKeying(uint32_t LayerIndex);
 void     BSP_LCD_ResetColorKeying_NoReload(uint32_t LayerIndex);
 void     BSP_LCD_SetLayerWindow(uint16_t LayerIndex, uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height);
 void     BSP_LCD_SetLayerWindow_NoReload(uint16_t LayerIndex, uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height);
+uint32_t BSP_LCD_GetActiveLayer(void);
 void     BSP_LCD_SelectLayer(uint32_t LayerIndex);
 void     BSP_LCD_SetLayerVisible(uint32_t LayerIndex, FunctionalState State);
 void     BSP_LCD_SetLayerVisible_NoReload(uint32_t LayerIndex, FunctionalState State);

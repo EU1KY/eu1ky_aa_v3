@@ -17,6 +17,7 @@ typedef enum
     CFG_SYNTH_SI5351  = 0,
     CFG_SYNTH_ADF4350 = 1,
     CFG_SYNTH_ADF4351 = 2,
+    CFG_SYNTH_SI5338A = 3,
 } CFG_SYNTH_TYPE_t;
 
 typedef enum
@@ -61,6 +62,7 @@ typedef enum
     CFG_PARAM_BAND_FMAX,             //Maximum frequency of the device's working band, Hz
     CFG_PARAM_SI5351_MAX_FREQ,       //Maximum frequency that Si5351 can output, Hz (160 MHz by default, but some samples can reliably provide 200 MHz)
     CFG_PARAM_SI5351_CAPS,           //Si5351a crystal capacitors setting
+    CFG_PARAM_TDR_VF,                //Velocity factor for TDR, % (1..100)
 
     //---------------------
     CFG_NUM_PARAMS

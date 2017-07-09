@@ -27,6 +27,7 @@
 #include "screenshot.h"
 #include "panvswr2.h"
 #include "panfreq.h"
+#include "smith.h"
 
 #define X0 40
 #define Y0 20
@@ -85,6 +86,7 @@ static const HAM_BANDS hamBands[] =
 static const uint32_t hamBandsNum = sizeof(hamBands) / sizeof(*hamBands);
 static const uint32_t cx0 = 240; //Smith chart center
 static const uint32_t cy0 = 120; //Smith chart center
+static const int32_t smithradius = 100;
 static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
@@ -858,7 +860,7 @@ static void DrawRX()
     }
 }
 
-static void DrawSmith()
+static void DrawSmith(void)
 {
     int i;
 
@@ -868,111 +870,30 @@ static void DrawSmith()
     else
         sprintf(buf, "Smith chart: %d kHz +/- %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
-    LCD_FillCircle(LCD_MakePoint(cx0, cy0), 100, SMITH_CIRCLE_BG); //Chart circle
-    LCD_Circle(LCD_MakePoint(cx0, cy0), 33, WGRIDCOLOR); //VSWR 2.0 circle
-    LCD_Circle(LCD_MakePoint(cx0, cy0), 20, WGRIDCOLOR); //VSWR 1.5 circle
-    LCD_Circle(LCD_MakePoint(cx0 - 50, cy0), 50, LCD_RGB(12,12,12)); //Constant Y circle
-    LCD_Circle(LCD_MakePoint(cx0 + 17, cy0), 83, WGRIDCOLOR); //Constant R 10 circle
-    LCD_Circle(LCD_MakePoint(cx0 + 33, cy0), 66, WGRIDCOLOR); //Constant R 25 circle
-    LCD_Circle(LCD_MakePoint(cx0 + 50, cy0), 50, WGRIDCOLOR); //Constant R 50 circle
-    LCD_Circle(LCD_MakePoint(cx0 + 66, cy0), 33, WGRIDCOLOR); //Constant R 100 circle
-    LCD_Circle(LCD_MakePoint(cx0 + 80, cy0), 20, WGRIDCOLOR); //Constant R 200 circle
-    LCD_Line(LCD_MakePoint(cx0 - 100, cy0),LCD_MakePoint(cx0 + 100, cy0), WGRIDCOLOR); //Middle line
+
+    SMITH_DrawGrid(cx0, cy0, smithradius, WGRIDCOLOR, SMITH_CIRCLE_BG, SMITH_R50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
+                                 SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10 | SMITH_J500 | SMITH_SWR2 | SMITH_Y50);
 
     float r0f = (float)CFG_GetParam(CFG_PARAM_R0);
-    //Draw X arcs
-    {
-        static const float xx[] = {10., 25., 50., 100., 200.};
-        for (i = 0; i < 5; i++)
-        {
-            float j;
-            for (j = 1.; j < 1000.; j *= 1.3)
-            {
-                float complex g = OSL_GFromZ(j + xx[i] * I, 50.f); //Intentoionally using 50 Ohms to calc arcs from the xx[] values
-                uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
-                uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
-                LCD_SetPixel(LCD_MakePoint(x, y), WGRIDCOLOR);
-                if (j == 1.)
-                {
-                    switch (i)
-                    {
-                    case 0:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 20, y, "%.0f", 0.2f * r0f );
-                        break;
-                    case 1:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 18, y - 5, "%.0f", 0.5f * r0f);
-                        break;
-                    case 3:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y - 5, "%.0f", 2.f * r0f);
-                        break;
-                    case 4:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", 4.f * r0f);
-                        break;
-                    default:
-                        break;
-                    }
-                }
 
-                y = (uint32_t)roundf(cy0 + cimagf(g) * 100.);
-                LCD_SetPixel(LCD_MakePoint(x, y), WGRIDCOLOR);
-                if (j == 1.)
-                {
-                    switch (i)
-                    {
-                    case 0:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 24, y, "%.0f", -0.2f * r0f);
-                        break;
-                    case 1:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 21, y + 5, "%.0f", -0.5f * r0f);
-                        break;
-                    case 2:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x - 7, y + 7, "%.0f", -1 * r0f);
-                        break;
-                    case 3:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 3, y + 5, "%.0f", -2 * r0f);
-                        break;
-                    case 4:
-                        FONT_Print(FONT_SDIGITS, WGRIDCOLORBR, LCD_BLACK, x + 5, y, "%.0f", -4 * r0f);
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
-        }
-    }
 
-    //Draw R cirle labels
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 75, cy0 + 2, "%.0f", 0.2f * r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 - 42, cy0 + 2, "%.0f", 0.5f * r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 2, cy0 + 2, "%.0f", r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 34, cy0 + 2, "%.0f", 2 * r0f);
-    FONT_Print(FONT_SDIGITS, WGRIDCOLOR, SMITH_CIRCLE_BG, cx0 + 62, cy0 + 2, "%.0f", 4 * r0f);
+    SMITH_DrawLabels(WGRIDCOLORBR, 0, SMITH_R10 | SMITH_R25 | SMITH_R50 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
+                                      SMITH_J10 | SMITH_J25 | SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J500);
 
-    LCD_Circle(LCD_MakePoint(cx0, cy0), 100, WGRIDCOLORBR); //Outer circle
-
+    //Draw measured data
     if (isMeasured)
     {
         uint32_t lastx = 0;
         uint32_t lasty = 0;
         for(i = 0; i <= WWIDTH; i++)
         {
-            float complex g = OSL_GFromZ(values[i], (float)CFG_GetParam(CFG_PARAM_R0));
-            uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
-            uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
-            if (i != 0)
-            {
-                LCD_Line(LCD_MakePoint(lastx, lasty), LCD_MakePoint(x, y), SMITH_LINE_FG); //LCD_RGB(0, SM_INTENSITY, 0));
-            }
-            lastx = x;
-            lasty = y;
+            float complex g = OSL_GFromZ(values[i], r0f);
+            lastx = (uint32_t)roundf(cx0 + crealf(g) * smithradius);
+            lasty = (uint32_t)roundf(cy0 - cimagf(g) * smithradius);
+            SMITH_DrawG(g, SMITH_LINE_FG);
         }
         //Mark the end of sweep range with red cross
-        LCD_SetPixel(LCD_MakePoint(lastx, lasty), LCD_RED);
-        LCD_SetPixel(LCD_MakePoint(lastx-1, lasty), LCD_RED);
-        LCD_SetPixel(LCD_MakePoint(lastx+1, lasty), LCD_RED);
-        LCD_SetPixel(LCD_MakePoint(lastx, lasty-1), LCD_RED);
-        LCD_SetPixel(LCD_MakePoint(lastx, lasty+1), LCD_RED);
+        SMITH_DrawGEndMark(LCD_RED);
     }
 }
 
@@ -1093,8 +1014,10 @@ CRASH_WR:
 
 void PANVSWR2_Proc(void)
 {
+    BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 100, "Panoramic scan mode");
+    LCD_ShowActiveLayerOnly();
     Sleep(500);
     while(TOUCH_IsPressed());
 
@@ -1123,7 +1046,7 @@ void PANVSWR2_Proc(void)
 
     for(;;)
     {
-        Sleep(50);
+        Sleep(20);
         if (autofast)
         {
             ScanRXFast();

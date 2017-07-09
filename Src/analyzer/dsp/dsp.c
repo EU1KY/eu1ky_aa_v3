@@ -31,8 +31,8 @@
 //Maximum number of measurements to average
 #define MAXNMEAS 20
 
-//Magnitude correction factor
-#define MCF 1.0f //TODO
+//Magnitude correction factor @ max linear input gain
+#define MCF 0.013077f
 
 extern void Sleep(uint32_t);
 
@@ -345,12 +345,20 @@ float complex DSP_MeasuredMagPhaseI(void)
 
 float DSP_MeasuredMagVmv(void)
 {
-    return magmv_v;
+    //from WM8994 spec & from the driver
+    uint8_t attvalue = VOLUME_IN_CONVERT(100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION));
+    float dbatt = (239 - attvalue) * 0.375f;
+    float fatt = powf(10.f, dbatt / 20);
+    return magmv_v * fatt;
 }
 
 float DSP_MeasuredMagImv(void)
 {
-    return magmv_i;
+    //from WM8994 spec & from the driver
+    uint8_t attvalue = VOLUME_IN_CONVERT(100 - CFG_GetParam(CFG_PARAM_LIN_ATTENUATION));
+    float dbatt = (239 - attvalue) * 0.375f;
+    float fatt = powf(10.f, dbatt / 20);
+    return magmv_i * fatt;
 }
 
 static float DSP_CalcR(void)

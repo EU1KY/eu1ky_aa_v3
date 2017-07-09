@@ -73,6 +73,9 @@ void LCD_Circle(LCDPoint center, uint16_t r, LCDColor color);
 
 void LCD_FillCircle(LCDPoint center, uint16_t r, LCDColor color);
 
+///Draw arc using start and end in degrees (0 .. 360)
+void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float astartdeg, float aenddeg, LCDColor color);
+
 ///Draw line between given points with given color
 void LCD_Line(LCDPoint p1, LCDPoint p2, LCDColor c);
 
@@ -105,6 +108,8 @@ void LCD_WaitForRedraw(void);
 uint32_t LCD_IsOff(void);
 
 void LCD_DrawBitmap(LCDPoint origin, const uint8_t *bmpData, uint32_t bmpDataSize);
+
+void LCD_ShowActiveLayerOnly(void);
 
 // Functions that store and recover window bitmaps
 // to be used in temporary windows and pop-ups

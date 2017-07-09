@@ -11,6 +11,7 @@
 #include "stm32746g_discovery_lcd.h"
 #include "libnsbmp.h"
 #include "crash.h"
+#include <math.h>
 //==============================================================================
 //                  Module's static functions
 //==============================================================================
@@ -46,6 +47,14 @@ void LCD_BacklightOn(void)
 
 void LCD_BacklightOff(void)
 {
+}
+
+void LCD_ShowActiveLayerOnly(void)
+{
+    uint32_t activeLayer = BSP_LCD_GetActiveLayer();
+    BSP_LCD_SetLayerVisible_NoReload(!activeLayer, DISABLE);
+    BSP_LCD_SetLayerVisible_NoReload(activeLayer, ENABLE);
+    BSP_LCD_Reload(LCD_RELOAD_VERTICAL_BLANKING);
 }
 
 void LCD_Init(void)
@@ -106,7 +115,7 @@ void LCD_FillRect(LCDPoint p1, LCDPoint p2, LCDColor color)
     if (p2.y >= LCD_GetHeight()) p2.y = LCD_GetHeight() - 1;
 
     color |= 0xFF000000;
-    BSP_LCD_SelectLayer(1);
+    //BSP_LCD_SelectLayer(1);
     BSP_LCD_SetTextColor(color);
     BSP_LCD_FillRect(p1.x, p1.y, p2.x - p1.x + 1, p2.y - p1.y + 1);
 }
@@ -201,6 +210,111 @@ void LCD_FillCircle(LCDPoint center, uint16_t r, LCDColor color)
     color |= 0xFF000000;
     BSP_LCD_SetTextColor(color);
     BSP_LCD_FillCircle(center.x, center.y, r);
+}
+
+// Quadrants:
+//     1 0
+//     2 3
+#define LCD_ArcPixel(x, y) if ((xmin <= x) && (x <= xmax)) LCD_SetPixel(LCD_MakePoint(centerx + x, centery + y), color)
+static void LCD_DrawArcQuadrant(int32_t centerx, uint32_t centery, int32_t radius,
+                                uint32_t quadrant, int32_t xmin, int32_t xmax, LCDColor color)
+{
+    int32_t x = 0;
+    int32_t y = radius;
+    int32_t tswitch = 3 - 2 * radius;
+
+    while (x <= y)
+    {
+        if (quadrant == 0)
+        {
+            // arc right upper
+            LCD_ArcPixel(x, -y);
+            LCD_ArcPixel(y, -x);
+        }
+        else if (quadrant == 1)
+        {
+            // arc left upper
+            LCD_ArcPixel(-x, -y);
+            LCD_ArcPixel(-y, -x);
+        }
+        else if (quadrant == 2)
+        {
+            // arc left lower
+            LCD_ArcPixel(-x, y);
+            LCD_ArcPixel(-y, x);
+        }
+        else if (quadrant == 3)
+        {
+            // arc right lower
+            LCD_ArcPixel(x, y);
+            LCD_ArcPixel(y, x);
+        }
+        if (tswitch < 0)
+            tswitch += (4 * x + 6);
+        else
+        {
+            tswitch += (4 * (x - y) + 10);
+            y--;
+        }
+        x++;
+    }
+}
+
+
+void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float startDegrees, float endDegrees, LCDColor color)
+{
+    if (startDegrees < 0.f || startDegrees > endDegrees || startDegrees > 360.f || endDegrees > 360.f)
+        return;
+
+    float astart = M_PI * startDegrees / 180.f;
+    float aend = M_PI * endDegrees / 180.f;
+
+    int32_t xmax, xmin;
+    if (astart <= M_PI / 2)
+    {// Q0
+        xmax = (int32_t)(cosf(astart) * radius);
+        if (aend <= M_PI / 2)
+            xmin = (int32_t)(cosf(aend) * radius);
+        else
+            xmin = 0;
+        LCD_DrawArcQuadrant(x, y, radius, 0, xmin, xmax, color);
+        if (endDegrees <= 90.f)
+            return;
+        astart = M_PI / 2;
+    }
+
+    if (astart <= M_PI)
+    {// Q1
+        xmax = (int32_t)(cosf(astart) * radius);
+        if (aend <= M_PI)
+            xmin = (int32_t)(cosf(aend) * radius);
+        else
+            xmin = -radius;
+        LCD_DrawArcQuadrant(x, y, radius, 1, xmin, xmax, color);
+        if (endDegrees <= 180.f)
+            return;
+        astart = M_PI;
+    }
+
+    if (astart <= (M_PI + M_PI / 2))
+    {// Q2
+        xmin = (int32_t)(cosf(astart) * radius);
+        if (aend <= (M_PI + M_PI / 2))
+            xmax = (int32_t)(cosf(aend) * radius);
+        else
+            xmax = 0;
+        LCD_DrawArcQuadrant(x, y, radius, 2, xmin, xmax, color);
+        if (endDegrees <= 270.f)
+            return;
+        astart = (M_PI + M_PI / 2);
+    }
+
+    if (astart < 2 * M_PI)
+    {// Q3
+        xmin = (int32_t)(cosf(astart) * radius);
+        xmax = (int32_t)(cosf(aend) * radius);
+        LCD_DrawArcQuadrant(x, y, radius, 3, xmin, xmax, color);
+    }
 }
 
 //===================================================================

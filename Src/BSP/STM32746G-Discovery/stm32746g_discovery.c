@@ -856,7 +856,14 @@ void TS_IO_Init(void)
   */
 void TS_IO_Write(uint8_t Addr, uint8_t Reg, uint8_t Value)
 {
-  I2Cx_WriteMultiple(&hI2cAudioHandler, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT,(uint8_t*)&Value, 1);
+  HAL_StatusTypeDef res;
+  uint32_t tries = 0;
+  do
+  {
+    res = I2Cx_WriteMultiple(&hI2cAudioHandler, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT,(uint8_t*)&Value, 1);
+    if (HAL_OK != res)
+        TS_IO_Delay(2);
+  } while ((HAL_OK != res) && (++tries < 6));
 }
 
 /**
@@ -869,7 +876,14 @@ uint8_t TS_IO_Read(uint8_t Addr, uint8_t Reg)
 {
   uint8_t read_value = 0;
 
-  I2Cx_ReadMultiple(&hI2cAudioHandler, Addr, Reg, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&read_value, 1);
+  HAL_StatusTypeDef res;
+  uint32_t tries = 0;
+  do
+  {
+    res = I2Cx_ReadMultiple(&hI2cAudioHandler, Addr, Reg, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&read_value, 1);
+    if (HAL_OK != res)
+        TS_IO_Delay(2);
+  } while ((HAL_OK != res) && (++tries < 6));
 
   return read_value;
 }

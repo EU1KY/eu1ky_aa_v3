@@ -29,6 +29,7 @@
 #include "gen.h"
 #include "aauart.h"
 #include "build_timestamp.h"
+#include "tdr.h"
 
 extern void Sleep(uint32_t);
 
@@ -43,6 +44,7 @@ static TEXTBOX_t hbRemote;
 static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
+static TEXTBOX_t hbTDR;
 
 #define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
@@ -292,7 +294,10 @@ static void PROTOCOL_Handler(void)
 // Main window procedure (never returns)
 void MainWnd(void)
 {
+    BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
+    LCD_ShowActiveLayerOnly();
+
     while (TOUCH_IsPressed());
 
     //Initialize textbox context
@@ -315,6 +320,11 @@ void MainWnd(void)
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
     TEXTBOX_Append(&main_ctx, &hbConfig);
 
+    //USB access
+    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 180, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
+    TEXTBOX_Append(&main_ctx, &hbUSBD);
+
     //Panoramic scan window
     hbPan = (TEXTBOX_t){.x0 = COL2, .y0 =   0, .text =    " Panoramic scan ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc };
@@ -335,10 +345,10 @@ void MainWnd(void)
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc };
     TEXTBOX_Append(&main_ctx, &hbDsp);
 
-    //USB access
-    hbUSBD = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text =   " USB access     ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
-    TEXTBOX_Append(&main_ctx, &hbUSBD);
+    //TDR window
+    hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Time Domain ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbTDR);
 
     hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
@@ -356,8 +366,10 @@ void MainWnd(void)
         {
             Sleep(50);
             //Redraw main window
+            BSP_LCD_SelectLayer(1);
             LCD_FillAll(LCD_BLACK);
             TEXTBOX_DrawContext(&main_ctx);
+            LCD_ShowActiveLayerOnly();
             PROTOCOL_Reset();
         }
         PROTOCOL_Handler();
