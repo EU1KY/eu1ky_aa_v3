@@ -120,6 +120,7 @@ SRC :=   Src/analyzer/config/config.c \
         Src/analyzer/window/panfreq.c \
         Src/analyzer/window/panvswr2.c \
         Src/analyzer/window/screenshot.c \
+        Src/analyzer/window/tdr.c \
         Src/BSP/Components/ft5336/ft5336.c \
         Src/BSP/Components/ov9655/ov9655.c \
         Src/BSP/Components/s5k5cag/s5k5cag.c \
