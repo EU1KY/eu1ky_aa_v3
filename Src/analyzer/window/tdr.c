@@ -33,7 +33,7 @@ extern void Sleep(uint32_t);
 static float time_domain[NUMTDRSAMPLES*2];
 static float complex freq_domain[NUMTDRSAMPLES];
 static uint32_t rqExit = 0;
-static float normFactor = 1.f;
+static float normFactor = 1.f; //Factor for calculating graph magnitude scale. Calculated from maximum value in time domain.
 
 static uint32_t TDR_isScanned = 0;
 static uint32_t TDR_cursorPos = WWIDTH / 2;
@@ -76,6 +76,9 @@ static const float halfKBDwnd[] =
     0.158912001554 , 0.155495666994 , 0.152104618371 , 0.148739021723 , 0.14539903948 , 0.142084830453 , 0.138796549824 , 0.135534349139
 };
 
+static const float KBD_td_factor = 1.43502708f; //Factor for the above window to normalize time-domain cumulative power to 1.0
+
+
 //Scan 255 samples from 500 KHz up to 127.5 MHz step 500KHz
 static void TDR_Scan(void)
 {
@@ -103,6 +106,7 @@ static void TDR_Scan(void)
     float max = -9999999.f;
     for (i = 0; i < NUMTDRSAMPLES*2; i++)
     {
+        time_domain[i] * KBD_td_factor; //Normalization to compensate windowing
         float d = fabs(time_domain[i]);
         if (d > max)
         {
