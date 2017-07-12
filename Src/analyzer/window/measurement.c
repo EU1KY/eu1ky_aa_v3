@@ -474,7 +474,7 @@ MEASUREMENT_REDRAW:
             MeasurementModeGraph(rx);
         }
 
-        if (DSP_MeasuredMagVmv() < 20.)
+        if (DSP_MeasuredMagVmv() < 1.)
         {
             FONT_Write(FONT_FRAN, LCD_BLACK, LCD_RED, 380, 2, "No signal  ");
         }
