@@ -133,7 +133,7 @@ void OSL_ScanErrCorr(void(*progresscb)(uint32_t))
         uint32_t freq = OSL_GetCalFreqByIdx(i);
         GEN_SetMeasurementFreq(freq);
         DSP_Measure(freq, 0, 0, CFG_GetParam(CFG_PARAM_OSL_NSCANS));
-        if (DSP_MeasuredMagImv() < 10. || DSP_MeasuredMagVmv() < 10.)
+        if (DSP_MeasuredMagImv() < 1. || DSP_MeasuredMagVmv() < 1.)
         {
             CRASH("No signal");
         }
