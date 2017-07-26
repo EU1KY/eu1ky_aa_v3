@@ -76,6 +76,10 @@ void LCD_FillCircle(LCDPoint center, uint16_t r, LCDColor color);
 ///Draw arc using start and end in degrees (0 .. 360)
 void LCD_DrawArc(int32_t x, int32_t y, int32_t radius, float astartdeg, float aenddeg, LCDColor color);
 
+void LCD_VLine(LCDPoint p1, uint16_t lenght, LCDColor color);
+
+void LCD_HLine(LCDPoint p1, uint16_t lenght, LCDColor color);
+
 ///Draw line between given points with given color
 void LCD_Line(LCDPoint p1, LCDPoint p2, LCDColor c);
 

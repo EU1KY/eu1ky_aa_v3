@@ -33,6 +33,7 @@ static uint32_t hbScanProgressId;
 static TEXTBOX_t hbSave;
 static TEXTBOX_CTX_t osl_ctx = {0};
 static int percents = 0;
+extern volatile uint32_t autosleep_timer;
 
 static void _hit_ex(void)
 {
@@ -48,6 +49,7 @@ static void progress_cb(uint32_t new_percent)
     progressval = new_percent;
     sprintf(progresstxt, "%u%%", (unsigned int)progressval);
     TEXTBOX_SetText(&osl_ctx, hbScanProgressId, progresstxt);
+    autosleep_timer = 30000; //CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
 }
 
 static void _hb_scan_short(void)
@@ -173,6 +175,7 @@ void OSL_CalWnd(void)
             }
             Sleep(50);
         }
+        autosleep_timer = 30000; //CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
         Sleep(0);
     }
 }

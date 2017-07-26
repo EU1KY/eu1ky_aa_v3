@@ -115,7 +115,6 @@ void LCD_FillRect(LCDPoint p1, LCDPoint p2, LCDColor color)
     if (p2.y >= LCD_GetHeight()) p2.y = LCD_GetHeight() - 1;
 
     color |= 0xFF000000;
-    //BSP_LCD_SelectLayer(1);
     BSP_LCD_SetTextColor(color);
     BSP_LCD_FillRect(p1.x, p1.y, p2.x - p1.x + 1, p2.y - p1.y + 1);
 }
@@ -197,6 +196,28 @@ void LCD_Line(LCDPoint a, LCDPoint b, LCDColor color)
     BSP_LCD_SetTextColor(color);
     BSP_LCD_DrawLine(a.x, a.y, b.x, b.y);
 } //LCD_Line
+
+void LCD_VLine(LCDPoint a, uint16_t lenght, LCDColor color)
+{
+    if (a.x >= LCD_GetWidth())
+        a.x = LCD_GetWidth() - 1;
+    if (a.y >= LCD_GetHeight())
+        a.y = LCD_GetHeight() - 1;
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+    BSP_LCD_DrawVLine(a.x, a.y, lenght);
+} //LCD_VLine
+
+void LCD_HLine(LCDPoint a, uint16_t lenght, LCDColor color)
+{
+    if (a.x >= LCD_GetWidth())
+        a.x = LCD_GetWidth() - 1;
+    if (a.y >= LCD_GetHeight())
+        a.y = LCD_GetHeight() - 1;
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+    BSP_LCD_DrawHLine(a.x, a.y, lenght);
+} //LCD_HLine
 
 void LCD_Circle(LCDPoint center, uint16_t r, LCDColor color)
 {

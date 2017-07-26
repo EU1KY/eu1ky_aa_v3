@@ -142,8 +142,6 @@ static int Scan500(void)
 //Display measured data
 static void MeasurementModeDraw(DSP_RX rx)
 {
-    LCD_WaitForRedraw();
-
     char str[50] = "";
     sprintf(str, "Magnitude diff %.2f dB     ", DSP_MeasuredDiffdB());
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, 38, str);
@@ -344,16 +342,16 @@ static void MEASUREMENT_Screenshot(void)
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
-    HITRECT(   0, 200,   60,     72, MEASUREMENT_Exit),
-    HITRECT( 70, 200,   80,     72, MEASUREMENT_SetFreq),
-    HITRECT( 190, 200,   80,     72, MEASUREMENT_Screenshot),
+    HITRECT(   0, 200,  60,  72, MEASUREMENT_Exit),
+    HITRECT(  75, 200,  80,  72, MEASUREMENT_SetFreq),
+    HITRECT( 190, 200,  80,  72, MEASUREMENT_Screenshot),
     HITRECT(   0,   0,  80, 100, MEASUREMENT_FDecr_500k),
     HITRECT(  80,   0,  80, 100, MEASUREMENT_FDecr_100k),
     HITRECT( 160,   0,  70, 100, MEASUREMENT_FDecr_10k),
     HITRECT( 250,   0,  70, 100, MEASUREMENT_FIncr_10k),
     HITRECT( 320,   0,  80, 100, MEASUREMENT_FIncr_100k),
     HITRECT( 400,   0,  80, 100, MEASUREMENT_FIncr_500k),
-    HITRECT( 300,   110,  180, 110, MEASUREMENT_SmithMatch),
+    HITRECT( 300, 110, 180, 110, MEASUREMENT_SmithMatch),
     HITEND
 };
 
@@ -418,7 +416,7 @@ MEASUREMENT_REDRAW:
         }
 
         FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 70, 250, "  Set frequency...  ");
+        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 75, 250, "  Set frequency...  ");
         FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_RGB(0, 64, 0), 190, 250, "  Save snapshot  ");
 
         ShowF();

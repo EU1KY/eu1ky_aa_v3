@@ -27,6 +27,7 @@ extern void Sleep(uint32_t nms);
 
 static uint32_t oscilloscope = 0;
 static uint32_t rqExit = 0;
+static uint32_t fChanged1 = 0;
 static float rfft_mags[NSAMPLES/2];
 
 extern int16_t audioBuf[(NSAMPLES + NDUMMY) * 2];
@@ -34,6 +35,90 @@ extern float rfft_input[NSAMPLES];
 extern float rfft_output[NSAMPLES];
 extern const float complex *prfft;
 extern float windowfunc[NSAMPLES];
+
+static void ShowF(void)
+{
+    char str[50];
+    sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
+    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
+}
+
+static void FDecr(uint32_t step1)
+{
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
+    if(MeasurementFreq > step1 && MeasurementFreq % step1 != 0)
+    {
+        MeasurementFreq -= (MeasurementFreq % step1);
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged1 = 1;
+    }
+    if(MeasurementFreq < BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged1 = 1;
+    }
+    if(MeasurementFreq > BAND_FMIN)
+    {
+        if(MeasurementFreq > step1 && (MeasurementFreq - step1) >= BAND_FMIN)
+        {
+            MeasurementFreq = MeasurementFreq - step1;
+            CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+            fChanged1 = 1;
+        }
+    }
+}
+
+static void FIncr(uint32_t step1)
+{
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
+    if(MeasurementFreq > step1 && MeasurementFreq % step1 != 0)
+    {
+        MeasurementFreq -= (MeasurementFreq % step1);
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged1 = 1;
+    }
+    if(MeasurementFreq < BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged1 = 1;
+    }
+    if(MeasurementFreq <  CFG_GetParam(CFG_PARAM_BAND_FMAX))
+    {
+        if ((MeasurementFreq + step1) >  CFG_GetParam(CFG_PARAM_BAND_FMAX))
+            MeasurementFreq =  CFG_GetParam(CFG_PARAM_BAND_FMAX);
+        else
+            MeasurementFreq = MeasurementFreq + step1;
+        CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+        fChanged1 = 1;
+    }
+}
+
+static void FFTWND_FDecr_10k(void)
+{
+    FDecr(500000);
+}
+static void FFTWND_FDecr_5k(void)
+{
+    FDecr(100000);
+}
+static void FFTWND_FDecr_1k(void)
+{
+    FDecr(5000);
+}
+static void FFTWND_FIncr_1k(void)
+{
+    FIncr(5000);
+}
+static void FFTWND_FIncr_5k(void)
+{
+    FIncr(100000);
+}
+static void FFTWND_FIncr_10k(void)
+{
+    FIncr(500000);
+}
 
 static void FFTWND_ExitWnd(void)
 {
@@ -48,8 +133,14 @@ static void FFTWND_SwitchDispMode(void)
 static const struct HitRect hitArr[] =
 {
     //        x0,   y0, width,  height, callback
-    HITRECT(   0,  200,   100,      80, FFTWND_ExitWnd),
-    HITRECT(   0,  140,   480,     140, FFTWND_SwitchDispMode),
+    HITRECT(   0, 200, 100,  80, FFTWND_ExitWnd),
+    HITRECT(   0, 140, 480, 140, FFTWND_SwitchDispMode),
+    HITRECT(   0,   0,  80, 100, FFTWND_FDecr_10k),
+    HITRECT(  80,   0,  80, 100, FFTWND_FDecr_5k),
+    HITRECT( 160,   0,  70, 100, FFTWND_FDecr_1k),
+    HITRECT( 250,   0,  70, 100, FFTWND_FIncr_1k),
+    HITRECT( 320,   0,  80, 100, FFTWND_FIncr_5k),
+    HITRECT( 400,   0,  80, 100, FFTWND_FIncr_10k),
     HITEND
 };
 
@@ -92,7 +183,7 @@ void FFTWND_Proc(void)
 
     FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
 
-    GEN_SetMeasurementFreq(3500000);
+    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
 
 #ifdef SI5351_ENABLE_DUMP_REGS
     if (CFG_SYNTH_SI5351 == CFG_GetParam(CFG_PARAM_SYNTH_TYPE))
@@ -107,22 +198,49 @@ void FFTWND_Proc(void)
     uint32_t activeLayer;
     while (1)
     {
-        (HAL_GetTick() & 0x100 ? BSP_LED_On : BSP_LED_Off)(LED1);
         LCDPoint pt;
         if (TOUCH_Poll(&pt))
         {
             HitTest(hitArr, pt.x, pt.y);
+            if (fChanged1)
+            {
+                ShowF();
+                Sleep(70);
+                continue;
+            }
             Sleep(50);
             while(TOUCH_IsPressed());
             if (rqExit)
+            {
+                GEN_SetMeasurementFreq(0);
                 return;
+            }
             continue;
         }
         else
         {
+            if (fChanged1)
+            {
+                GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
+                CFG_Flush();
+                fChanged1 = 0;
+            }
             activeLayer = BSP_LCD_GetActiveLayer();
             BSP_LCD_SelectLayer(!activeLayer);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
+
+            //Draw freq change areas bar
+            uint16_t y;
+            for (y = 0; y < 2; y++)
+            {
+                LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
+                LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
+                LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
+                LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
+                LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
+                LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
+            }
+            ShowF();
         }
 
         uint32_t tmstart = HAL_GetTick();
@@ -175,8 +293,8 @@ void FFTWND_Proc(void)
                 }
                 else
                 {
-                    uint16_t y_left = 210 - (int)(*pData++ * windowfunc[i*step]) / 500;
-                    uint16_t y_right = 210 - (int)(*pData++ * windowfunc[i*step]) / 500;
+                    uint16_t y_left = 210 - (int)(*pData++ * windowfunc[i*step]) / 200; //500;
+                    uint16_t y_right = 210 - (int)(*pData++ * windowfunc[i*step]) / 200; //500;
                     if (y_left > LCD_GetHeight()-1)
                         y_left = LCD_GetHeight()-1;
                     if (y_left < 140)

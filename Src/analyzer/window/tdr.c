@@ -93,6 +93,10 @@ static void TDR_Scan(void)
         DSP_Measure(freqHz, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
         float complex G = OSL_GFromZ(DSP_MeasuredZ(), (float)CFG_GetParam(CFG_PARAM_R0));
         freq_domain[i] = G * halfKBDwnd[i];
+        LCD_SetPixel(LCD_MakePoint(X0 + i + 72, 145), LCD_BLUE);
+        LCD_SetPixel(LCD_MakePoint(X0 + i + 72, 146), LCD_BLUE);
+        LCD_SetPixel(LCD_MakePoint(X0 + i + 72, 147), LCD_BLUE);
+        LCD_SetPixel(LCD_MakePoint(X0 + i + 72, 148), LCD_BLUE);
     }
     GEN_SetMeasurementFreq(0);
 
@@ -218,6 +222,7 @@ static void TDR_DrawGraph(void)
 
 static void TDR_DoScan (void)
 {
+    TDR_DrawGrid();
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
     TDR_Scan();
     TDR_isScanned = 1;
