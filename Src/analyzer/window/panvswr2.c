@@ -301,7 +301,7 @@ static void DecrCursor()
         BSP_LCD_SelectLayer(1);
         DrawCursorText();
     }
-
+    LCD_ShowActiveLayerOnly();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
@@ -336,6 +336,7 @@ static void AdvCursor()
         BSP_LCD_SelectLayer(1);
         DrawCursorText();
     }
+    LCD_ShowActiveLayerOnly();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
