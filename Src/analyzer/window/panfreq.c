@@ -113,9 +113,9 @@ static const TEXTBOX_t tb_pan[] = {
     (TEXTBOX_t){ .x0 = BANDKEYX(4), .y0 = BANDKEYY(2), .text = "70cm", .font = FONT_FRAN, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0, 0, 100), .cb = (void(*)(void))BandHitCb, .cbparam = 1, .next = (void*)&tb_pan[26] },
 
-    (TEXTBOX_t){ .x0 = 20, .y0 =238, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
+    (TEXTBOX_t){ .x0 = 370, .y0 =238, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
                  .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = OKHitCb, .next = (void*)&tb_pan[27] },
-    (TEXTBOX_t){ .x0 = 370, .y0 = 238, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
+    (TEXTBOX_t){ .x0 = 20, .y0 = 238, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
                  .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = CancelHitCb, .next = (void*)&tb_pan[28] },
 
     (TEXTBOX_t){ .x0 = 5, .y0 = 5, .text = "-10", .font = FONT_FRAN, .width = 46, .height = 36, .center = 1,
@@ -177,7 +177,7 @@ static void BSPrevHitCb(void)
 {
     if (_bs == BS200)
     {
-        _bs = BS40M;
+        _bs = BS80M;
         if (!IsValidRange())
             _bs = BS200;
     }
@@ -188,7 +188,7 @@ static void BSPrevHitCb(void)
 
 static void BSNextHitCb(void)
 {
-    if (_bs == BS40M)
+    if (_bs == BS80M)
         _bs = BS200;
     else
     {
@@ -390,6 +390,7 @@ bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
     TEXTBOX_DrawContext(&fctx);
 
     Show_F();
+    while(TOUCH_IsPressed());
 
     for(;;)
     {

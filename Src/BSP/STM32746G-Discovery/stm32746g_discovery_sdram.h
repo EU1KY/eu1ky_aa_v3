@@ -78,8 +78,8 @@
 /* #define SDRAM_MEMORY_WIDTH            FMC_SDRAM_MEM_BUS_WIDTH_8  */
 #define SDRAM_MEMORY_WIDTH               FMC_SDRAM_MEM_BUS_WIDTH_16
 
-#define SDCLOCK_PERIOD                   FMC_SDRAM_CLOCK_PERIOD_2
-//#define SDCLOCK_PERIOD                FMC_SDRAM_CLOCK_PERIOD_3
+//#define SDCLOCK_PERIOD                   FMC_SDRAM_CLOCK_PERIOD_2
+#define SDCLOCK_PERIOD                FMC_SDRAM_CLOCK_PERIOD_3
 
 #define REFRESH_COUNT                    ((uint32_t)0x0603)   /* SDRAM refresh counter (100Mhz SD clock) */
 

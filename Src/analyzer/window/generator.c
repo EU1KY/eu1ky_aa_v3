@@ -124,8 +124,8 @@ static void GENERATOR_SetFreq(void)
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
-    HITRECT(   0, 200,   100,     79, GENERATOR_SwitchWindow),
-    HITRECT( 150, 200,   100,     79, GENERATOR_SetFreq),
+    HITRECT(   0, 200, 100,  79, GENERATOR_SwitchWindow),
+    HITRECT(  75, 200, 100,  79, GENERATOR_SetFreq),
     HITRECT(   0,   0,  80, 150, GENERATOR_FDecr_500k),
     HITRECT(  80,   0,  80, 150, GENERATOR_FDecr_100k),
     HITRECT( 160,   0,  70, 150, GENERATOR_FDecr_5k),
@@ -177,7 +177,7 @@ GENERATOR_REDRAW:
         }
 
         FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 150, 250, "  Set frequency...  ");
+        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 75, 250, "  Set frequency...  ");
         ShowF();
     }
 
@@ -250,6 +250,10 @@ GENERATOR_REDRAW:
         {
             FONT_Write(FONT_FRAN, LCD_GREEN, LCD_BLACK, 0, 160, "Signal OK   ");
         }
+        DSP_Measure(0, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+        rx = DSP_MeasuredZ();
+        FONT_ClearLine(FONT_FRAN, LCD_BLACK, 180);
+        FONT_Printf(0, 180, "With OSL R: %.1f X: %.1f", crealf(rx), cimagf(rx));
 
         LCD_ShowActiveLayerOnly();
         Sleep(100);

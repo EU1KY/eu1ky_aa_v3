@@ -91,9 +91,9 @@ static const char *modstr = "EU1KY AA v." AAVERSION;
 
 static uint32_t modstrw = 0;
 
-const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz"};
-const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz"};
-const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000};
+const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz", "80 MHz"};
+const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz", "40 MHz"};
+const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000, 80000};
 
 static uint32_t f1 = 14000; //Scan range start frequency, in kHz
 static BANDSPAN span = BS800;
@@ -106,6 +106,7 @@ static GRAPHTYPE grType = GRAPH_VSWR;
 static uint32_t isSaved = 0;
 static uint32_t cursorChangeCount = 0;
 static uint32_t autofast = 0;
+extern volatile uint32_t autosleep_timer;
 
 static void DrawRX();
 static void DrawSmith();
@@ -196,6 +197,7 @@ static void DrawCursorText()
         Q = fabs(cimagf(rx) / crealf(rx));
     if (Q > 2000.f)
         Q = 2000.f;
+    FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16);
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   MCL: %.2f dB   Q: %.1f       ",
                fcur,
                crealf(rx),
@@ -220,6 +222,7 @@ static void DrawCursorTextWithS11()
     float fcur = ((float)(fstart + (float)cursorPos * BSVALUES[span] / WWIDTH))/1000.;
     if (fcur * 1000000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
         fcur = 0.f;
+    FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16);
     FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, Y0 + WHEIGHT + 16, "F: %.4f   Z: %.1f%+.1fj   SWR: %.2f   S11: %.2f dB          ",
                fcur,
                crealf(rx),
@@ -274,14 +277,31 @@ static void DecrCursor()
         return;
     if (cursorPos == 0)
         return;
+    BSP_LCD_SelectLayer(0);
+    DrawCursor();
+    BSP_LCD_SelectLayer(1);
     DrawCursor();
     cursorPos--;
+    BSP_LCD_SelectLayer(0);
+    DrawCursor();
+    BSP_LCD_SelectLayer(1);
     DrawCursor();
     if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+    {
+        BSP_LCD_SelectLayer(0);
         DrawCursorTextWithS11();
+        BSP_LCD_SelectLayer(1);
+        DrawCursorTextWithS11();
+    }
+
     else
+    {
+        BSP_LCD_SelectLayer(0);
         DrawCursorText();
-    //SCB_CleanDCache();
+        BSP_LCD_SelectLayer(1);
+        DrawCursorText();
+    }
+    LCD_ShowActiveLayerOnly();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
@@ -292,13 +312,31 @@ static void AdvCursor()
         return;
     if (cursorPos == WWIDTH)
         return;
+    BSP_LCD_SelectLayer(0);
+    DrawCursor();
+    BSP_LCD_SelectLayer(1);
     DrawCursor();
     cursorPos++;
+    BSP_LCD_SelectLayer(0);
+    DrawCursor();
+    BSP_LCD_SelectLayer(1);
     DrawCursor();
     if ((grType == GRAPH_S11) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+    {
+        BSP_LCD_SelectLayer(0);
         DrawCursorTextWithS11();
+        BSP_LCD_SelectLayer(1);
+        DrawCursorTextWithS11();
+    }
+
     else
+    {
+        BSP_LCD_SelectLayer(0);
         DrawCursorText();
+        BSP_LCD_SelectLayer(1);
+        DrawCursorText();
+    }
+    LCD_ShowActiveLayerOnly();
     if (cursorChangeCount++ < 10)
         Sleep(100); //Slow down at first steps
 }
@@ -355,13 +393,17 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
         uint32_t f = fstart + (i * BSVALUES[span]) / WWIDTH;
         if (IsFinHamBands(f))
         {
-            LCD_Line(LCD_MakePoint(X0 + i, Y0), LCD_MakePoint(X0 + i, Y0 + WHEIGHT), LCD_RGB(0, 0, 64));
+            LCD_VLine(LCD_MakePoint(X0 + i, Y0), WHEIGHT, LCD_RGB(0, 0, 64));
         }
     }
 
+
+
     //Draw F grid and labels
-    int lmod = (BS20M == span) || (BS40M == span) || (BS16M == span) || (BS1600 == span) ? 4 : 5;
+ //   int lmod = (BS20M == span) || (BS40M == span) || (BS16M == span) || (BS1600 == span) ? 4 : 5;
+    int lmod = 5;
     int linediv = 10; //Draw vertical line every linediv pixels
+
     for (i = 0; i <= WWIDTH/linediv; i++)
     {
         int x = X0 + i * linediv;
@@ -374,11 +416,11 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
             sprintf(f, "%.2f", ((float)(fstart + i * BSVALUES[span] / (WWIDTH/linediv)))/1000.f);
             int w = FONT_GetStrPixelWidth(FONT_SDIGITS, f);
             FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, x - w / 2, Y0 + WHEIGHT + 5, f);
-            LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLORBR);
+            LCD_VLine(LCD_MakePoint(x, Y0), WHEIGHT, WGRIDCOLORBR);
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x, Y0), LCD_MakePoint(x, Y0 + WHEIGHT), WGRIDCOLOR);
+            LCD_VLine(LCD_MakePoint(x, Y0), WHEIGHT, WGRIDCOLOR);
         }
     }
 
@@ -397,7 +439,7 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
                 sprintf(s, "%.1f", swrs[i]);
                 FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 15, WY(yofs) - 2, s);
             }
-            LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
+            LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
         }
     }
 }
@@ -423,7 +465,7 @@ static void print_f1(uint32_t f)
 
 static void nextspan(BANDSPAN *sp)
 {
-    if (*sp == BS40M)
+    if (*sp == BS80M)
     {
         *sp = BS200;
     }
@@ -437,7 +479,7 @@ static void prevspan(BANDSPAN *sp)
 {
     if (*sp == BS200)
     {
-        *sp = BS40M;
+        *sp = BS80M;
     }
     else
     {
@@ -455,7 +497,7 @@ static void ScanRXFast(void)
         fstart = f1 - BSVALUES[span] / 2;
     fstart *= 1000; //Convert to Hz
 
-    DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
+    DSP_Measure(fstart, 1, 1, 1); //Fake initial run to let the circuit stabilize
 
     for(i = 0; i <= WWIDTH; i+=8)
     {
@@ -514,7 +556,7 @@ static void ScanRX(void)
         fstart = f1 - BSVALUES[span] / 2;
     fstart *= 1000; //Convert to Hz
 
-    DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
+    DSP_Measure(fstart, 1, 1, 1); //Fake initial run to let the circuit stabilize
 
     for(i = 0; i <= WWIDTH; i++)
     {
@@ -617,7 +659,7 @@ static void LoadBkups()
     }
 
     int spbkup = CFG_GetParam(CFG_PARAM_PAN_SPAN);
-    if (spbkup <= BS40M)
+    if (spbkup <= BS80M)
     {
         span = (BANDSPAN)spbkup;
     }
@@ -631,8 +673,8 @@ static void LoadBkups()
 
 static void DrawHelp(void)
 {
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 15, "(Tap here to set F and Span)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 150, 110, "(Tap here change graph type)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160,  20, "(Tap here to set F and Span)");
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 110, "(Tap here change graph type)");
 }
 
 /*
@@ -716,9 +758,10 @@ static void DrawS11()
         yofs = S11OFFS(labelValue);
         FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 25, WY(yofs) - 2, buf);
         if (roundf(labelValue) == 0)
-            LCD_Line(LCD_MakePoint(X0, WY(S11OFFS(0.f))), LCD_MakePoint(X0 + WWIDTH, WY(S11OFFS(0.f))), WGRIDCOLORBR);
+            LCD_HLine(LCD_MakePoint(X0, WY(S11OFFS(0.f))), WWIDTH, WGRIDCOLORBR);
         else
-            LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
+            LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
+
     }
 
     uint16_t lasty = 0;
@@ -783,16 +826,15 @@ static void DrawRX()
     float labelValue;
 
 #define RXOFFS(rx) ((int)roundf(((rx - graphmin) * WHEIGHT) / grange) + 1)
-
     for (labelValue = graphmin; labelValue < graphmax + (.5 * d); labelValue += d)
     {
         sprintf(buf, str, labelValue); //Get label string in buf
         yofs = RXOFFS(labelValue);
         FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 25, WY(yofs) - 2, buf);
         if (roundf(labelValue) == 0)
-            LCD_Line(LCD_MakePoint(X0, WY(RXOFFS(0.f))), LCD_MakePoint(X0 + WWIDTH, WY(RXOFFS(0.f))), WGRIDCOLORBR);
+            LCD_HLine(LCD_MakePoint(X0, WY(RXOFFS(0.f))), WWIDTH, WGRIDCOLORBR);
         else
-            LCD_Line(LCD_MakePoint(X0, WY(yofs)), LCD_MakePoint(X0 + WWIDTH, WY(yofs)), WGRIDCOLOR);
+            LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
     }
 
     //Now draw R graph
@@ -865,11 +907,12 @@ static void DrawSmith(void)
     int i;
 
     LCD_FillAll(LCD_BLACK);
+    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
         sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
     else
         sprintf(buf, "Smith chart: %d kHz +/- %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, 0, 0, buf);
+    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, modstrw + 10, 0, buf);
 
     SMITH_DrawGrid(cx0, cy0, smithradius, WGRIDCOLOR, SMITH_CIRCLE_BG, SMITH_R50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 | SMITH_R500 |
                                  SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10 | SMITH_J500 | SMITH_SWR2 | SMITH_Y50);
@@ -900,6 +943,7 @@ static void DrawSmith(void)
 static void RedrawWindow()
 {
     isSaved = 0;
+
     if (grType == GRAPH_VSWR)
     {
         DrawGrid(1);
@@ -1006,6 +1050,9 @@ static void save_snapshot(void)
     f_close(&fo);
 
     isSaved = 1;
+    BSP_LCD_SelectLayer(0);
+    DrawSavedText();
+    BSP_LCD_SelectLayer(1);
     DrawSavedText();
     return;
 CRASH_WR:
@@ -1014,6 +1061,10 @@ CRASH_WR:
 
 void PANVSWR2_Proc(void)
 {
+    int redrawRequired = 0;
+    uint32_t activeLayer;
+    BSP_LCD_SelectLayer(0);
+    LCD_FillAll(LCD_BLACK);
     BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 100, "Panoramic scan mode");
@@ -1032,26 +1083,41 @@ void PANVSWR2_Proc(void)
     {
         modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
     }
-    if (!isMeasured)
-    {
-        DrawGrid(1);
-        DrawHelp();
-    }
-    else
-        RedrawWindow();
 
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
-    DrawAutoText();
+    for (uint32_t layer = 0; layer < 2; layer++)
+    {
+        BSP_LCD_SelectLayer(layer);
+        if (!isMeasured)
+        {
+            DrawGrid(1);
+            DrawHelp();
+        }
+        else
+            RedrawWindow();
+
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+        DrawAutoText();
+    }
+
+    LCD_ShowActiveLayerOnly();
 
     for(;;)
     {
-        Sleep(20);
-        if (autofast)
+        Sleep(5);
+
+        activeLayer = BSP_LCD_GetActiveLayer();
+ /*       BSP_LCD_SelectLayer(!activeLayer);
+
+        if (autofast && (cursorChangeCount == 0))
         {
             ScanRXFast();
             RedrawWindow();
+            autosleep_timer = 30000; //CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
         }
+        LCD_ShowActiveLayerOnly(); */
+
+        BSP_LCD_SelectLayer(activeLayer);
         if (TOUCH_Poll(&pt))
         {
             if (pt.y < 80)
@@ -1061,7 +1127,7 @@ void PANVSWR2_Proc(void)
                 {
                     //Span or frequency has been changed
                     isMeasured = 0;
-                    RedrawWindow();
+                    redrawRequired = 1;
                 }
             }
             else if (pt.y > 90 && pt.y <= 170)
@@ -1083,7 +1149,7 @@ void PANVSWR2_Proc(void)
                         grType = GRAPH_SMITH;
                     else
                         grType = GRAPH_VSWR;
-                    RedrawWindow();
+                    redrawRequired = 1;
                 }
                 else if (pt.x > 430)
                 {
@@ -1097,6 +1163,7 @@ void PANVSWR2_Proc(void)
                 {
                     // Lower left corner
                     while(TOUCH_IsPressed());
+                    autofast = 0;
                     Sleep(100);
                     return;
                 }
@@ -1106,12 +1173,15 @@ void PANVSWR2_Proc(void)
                     {
                         FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
                         ScanRX();
+                        redrawRequired = 1;
                     }
                     else
                     {
                         autofast = 0;
+                        redrawRequired = 1;
+                        RedrawWindow();
                     }
-                    RedrawWindow();
+
                 }
                 else if (pt.x > 120 && pt.x < 240 && isMeasured && !isSaved)
                 {
@@ -1120,8 +1190,15 @@ void PANVSWR2_Proc(void)
                 else if (pt.x >= 250 && pt.x <= 370)
                 {
                     autofast = !autofast;
-                    DrawAutoText();
+                    redrawRequired = 1;
                 }
+            }
+            if(redrawRequired)
+            {
+                BSP_LCD_SelectLayer(!activeLayer);
+                RedrawWindow();
+                BSP_LCD_SelectLayer(activeLayer);
+                RedrawWindow();
             }
             while(TOUCH_IsPressed())
             {
@@ -1132,5 +1209,17 @@ void PANVSWR2_Proc(void)
         {
             cursorChangeCount = 0;
         }
+
+
+
+        if (autofast && (cursorChangeCount == 0))
+        {
+            activeLayer = BSP_LCD_GetActiveLayer();
+            BSP_LCD_SelectLayer(!activeLayer);
+            ScanRXFast();
+            RedrawWindow();
+            autosleep_timer = 30000; //CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
+        }
+        LCD_ShowActiveLayerOnly();
     }
 }

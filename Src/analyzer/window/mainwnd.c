@@ -85,7 +85,9 @@ static void USBD_Proc()
             {
                 USBD_Stop(&USBD_Device);
                 USBD_DeInit(&USBD_Device);
+                BSP_LCD_DisplayOff();
                 BSP_SD_DeInit();
+                Sleep(100);
                 NVIC_SystemReset(); //Never returns
             }
         }
@@ -168,7 +170,7 @@ static void PROTOCOL_Handler(void)
 
     if (0 == strcmp("ver", rxstr_p))
     {
-        AAUART_PutString("AA-170 201\r"); //OK is needed?
+        AAUART_PutString("AA-600 401\r");
         return;
     }
 

@@ -111,7 +111,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(25000000ul, 26000000ul, 27000000ul, 30000000ul, 32000000ul, 33000000ul ),
         .type = CFG_PARAM_T_U32,
         .dstring = "Si5351 XTAL frequency, Hz",
-        .isvalid = isSi5351,
+        .isvalid = isShowHiddenSi,
     },
     {
         .id = CFG_PARAM_SI5351_BUS_BASE_ADDR,
@@ -121,14 +121,14 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .strvalues = CFG_SARR("Autodetect", "C0h", "C4h", "CEh"),
         .type = CFG_PARAM_T_U8,
         .dstring = "Si5351 i2c bus base address (default C0h)",
-        .isvalid = isSi5351,
+        .isvalid = isShowHiddenSi,
     },
     {
         .id = CFG_PARAM_SI5351_CORR,
         .idstring = "SI5351_CORR",
         .type = CFG_PARAM_T_S16,
         .dstring = "Si5351 XTAL frequency correction, Hz",
-        .isvalid = isSi5351,
+        .isvalid = isShowHiddenSi,
         .repeatdelay = 20,
     },
     {
@@ -246,6 +246,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .strvalues = CFG_SARR("COM1 (ST-Link)", "COM2 (on the shield)"),
         .type = CFG_PARAM_T_U32,
         .dstring = "Select serial port to be used for remote control. Requires reset.",
+        .isvalid = isShowHidden,
         .resetRequired = 1
     },
     {
@@ -255,6 +256,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .values = CFG_IARR(9600, 19200, 38400, 57600, 115200),
         .type = CFG_PARAM_T_U32,
         .dstring = "Serial port baudrate. Requires reset.",
+        .isvalid = isShowHidden,
         .resetRequired = 1
     },
     {
@@ -319,7 +321,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .nvalues = 2,
         .values = CFG_IARR(0, 1),
         .strvalues = CFG_SARR("No", "Yes"),
-        .dstring = "Show hidden menu parameters. Requires reset.",
+        .dstring = "Show hidden menu parameters.",
     },
 };
 
