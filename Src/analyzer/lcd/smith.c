@@ -17,8 +17,8 @@ static float complex lastg = 2.f + 0.fi;
 static int32_t centerx = -1;
 static int32_t centery = -1;
 static int32_t lastradius = -1;
-static int32_t lastxoffset = INT_MAX;
-static int32_t lastyoffset = 0;
+static int32_t lastxoffset ;//= INT_MAX;
+static int32_t lastyoffset ;//= 0;
 
 //R circle
 static void _rcirc(float R, float R0, int32_t radius, int32_t x, int32_t y, LCDColor color)
@@ -33,7 +33,7 @@ static void _rcirc(float R, float R0, int32_t radius, int32_t x, int32_t y, LCDC
 // x and y are center coordinates, r is radius, color is grid color
 void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bgcolor, uint32_t flags)
 {
-    SMITH_ResetStartPoint();
+  //  SMITH_ResetStartPoint();
     //LCD_WaitForRedraw();
     if (0 != bgcolor)
         LCD_FillCircle(LCD_MakePoint(x, y), (uint16_t)r, bgcolor);
@@ -116,38 +116,38 @@ void SMITH_DrawLabels(LCDColor color, LCDColor bgcolor, uint32_t flags)
 
     if (flags & SMITH_J10)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 7, y - r * 2 / 5, "j%.0f", 0.2f * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r - 10, y + r * 2 / 5, "-j%.0f", 0.2f * r0f);
+        FONT_Print(FONT_FRAN, color, bgcolor, x - r - 19, y-6 - r * 2 / 5, "j%.0f", 0.2f * r0f );
+        FONT_Print(FONT_FRAN, color, bgcolor, x - r - 19, y-6 + r * 2 / 5, "-j%.0f", 0.2f * r0f);
     }
 
     if (flags & SMITH_J25)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 23 / 100, y - r * 85 / 100, "j%.0f", 0.5f * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - r + r * 27 / 100, y + r * 85 / 100, "-j%.0f", 0.5f * r0f);
+        FONT_Print(FONT_FRAN, color, bgcolor, x - 20 - r + r * 23 / 100, y-4 - r * 85 / 100, "j%.0f", 0.5f * r0f );
+        FONT_Print(FONT_FRAN, color, bgcolor, x - 20 - r + r * 27 / 100, y-4 + r * 85 / 100, "-j%.0f", 0.5f * r0f);
     }
 
     if (flags & SMITH_J50)
     {
         FONT_Print(FONT_SDIGITS, color, bgcolor, x - 5, y - r - 5, "j%.0f", r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x - 5, y + r + 5, "-j%.0f", r0f );
+        FONT_Print(FONT_SDIGITS, color, bgcolor, x - 5, y + r + 2, "-j%.0f", r0f );
     }
 
     if (flags & SMITH_J100)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y - r * 7 / 8, "j%.0f", 2 * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - r * 3 / 8, y + r * 7 / 8, "-j%.0f", 2 * r0f);
+        FONT_Print(FONT_FRAN, color, bgcolor, x + r+5 - r * 3 / 8, y -14- r * 7 / 8, "j%.0f", 2 * r0f );// WK
+        FONT_Print(FONT_FRAN, color, bgcolor, x-1 + r - r * 3 / 8, y-3 + r * 7 / 8, "-j%.0f", 2 * r0f);
     }
 
     if (flags & SMITH_J200)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - 9, y - r * 4 / 8, "j%.0f", 4 * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r - 9, y + r * 4 / 8, "-j%.0f", 4 * r0f);
+        FONT_Print(FONT_FRAN, color, bgcolor, x + r - 11, y-16 - r * 4 / 8, "j%.0f", 4 * r0f );
+        FONT_Print(FONT_FRAN, color, bgcolor, x + r - 14, y+2 + r * 4 / 8, "-j%.0f", 4 * r0f);
     }
 
     if (flags & SMITH_J500)
     {
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 2, y - r * 2 / 10, "j%.0f", 10 * r0f );
-        FONT_Print(FONT_SDIGITS, color, bgcolor, x + r + 2, y + r * 2 / 10, "-j%.0f", 10 * r0f);
+        FONT_Print(FONT_FRAN, color, bgcolor, x + r + 7, y - r * 2 / 10, "j%.0f", 10 * r0f );
+        FONT_Print(FONT_FRAN, color, bgcolor, x + r + 2, y + r * 2 / 10, "-j%.0f", 10 * r0f);
     }
 
     if (flags & SMITH_R10)
@@ -181,21 +181,26 @@ void SMITH_ResetStartPoint(void)
     lastxoffset = INT_MAX;
 }
 
-void SMITH_DrawG(float complex G, LCDColor color)
+void SMITH_DrawG(int index, float complex G, LCDColor color)
 {
     if (cabsf(G) > 1.0f)
         return;
 
     int32_t xoffset = (int32_t)(crealf(G) * lastradius);
     int32_t yoffset = (int32_t)(-cimagf(G) * lastradius);
-
-    if (lastxoffset == INT_MAX)
-    {
-        LCD_SetPixel(LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
-    }
-    else
-    {
-        LCD_Line(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
+    if(index<800){
+        if(index==0){
+            LCD_SetPixel(LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
+        }
+        else
+        {
+            LCD_Line(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
+            if(FatLines){
+                LCD_Line(LCD_MakePoint(centerx-1 + lastxoffset, centery-1 + lastyoffset), LCD_MakePoint(centerx+1 + xoffset, centery+1 + yoffset), color);
+                LCD_Line(LCD_MakePoint(centerx-1 + lastxoffset, centery+1 + lastyoffset), LCD_MakePoint(centerx + xoffset, centery+1 + yoffset), color);
+                LCD_Line(LCD_MakePoint(centerx+1 + lastxoffset, centery+1 + lastyoffset), LCD_MakePoint(centerx-1 + xoffset, centery-1 + yoffset), color);
+           }
+        }
     }
     lastxoffset = xoffset;
     lastyoffset = yoffset;

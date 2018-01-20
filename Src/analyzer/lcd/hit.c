@@ -6,11 +6,21 @@
  */
 
 #include "hit.h"
+void ShowHitRect(const struct HitRect* r){// WK
+
+    while(r->x1!=0xFFFFFFFFul){
+            LCD_Rectangle(LCD_MakePoint(r->x1,r->y1), LCD_MakePoint(r->x2-1,r->y2-1),LCD_RGB(150,150,150));
+            LCD_Rectangle(LCD_MakePoint(r->x1+1,r->y1+1), LCD_MakePoint(r->x2-2,r->y2-2),LCD_RGB(150,150,150));
+            ++r;
+    }
+}
 
 int HitTest(const struct HitRect* r, uint32_t x, uint32_t y)
 {
+
     while (r->x1 != 0xFFFFFFFFul)
     {
+
         if (x >= r->x1 && x <= r->x2 && y >= r->y1 && y <= r->y2)
         {
             if (r->HitCallback)

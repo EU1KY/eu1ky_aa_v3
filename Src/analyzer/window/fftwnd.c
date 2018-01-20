@@ -26,7 +26,7 @@
 extern void Sleep(uint32_t nms);
 
 static uint32_t oscilloscope = 0;
-static uint32_t rqExit = 0;
+uint32_t rqExit = 0;
 static uint32_t fChanged1 = 0;
 static float rfft_mags[NSAMPLES/2];
 
@@ -41,6 +41,8 @@ static void ShowF(void)
     char str[50];
     sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
+    LCD_Rectangle(LCD_MakePoint(400,55), LCD_MakePoint(478,96),Color2);
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 401, 60, " Exit");
 }
 
 static void FDecr(uint32_t step1)
@@ -133,14 +135,14 @@ static void FFTWND_SwitchDispMode(void)
 static const struct HitRect hitArr[] =
 {
     //        x0,   y0, width,  height, callback
-    HITRECT(   0, 200, 100,  80, FFTWND_ExitWnd),
+    HITRECT(   390, 55, 90,  40, FFTWND_ExitWnd),
     HITRECT(   0, 140, 480, 140, FFTWND_SwitchDispMode),
-    HITRECT(   0,   0,  80, 100, FFTWND_FDecr_10k),
-    HITRECT(  80,   0,  80, 100, FFTWND_FDecr_5k),
-    HITRECT( 160,   0,  70, 100, FFTWND_FDecr_1k),
-    HITRECT( 250,   0,  70, 100, FFTWND_FIncr_1k),
-    HITRECT( 320,   0,  80, 100, FFTWND_FIncr_5k),
-    HITRECT( 400,   0,  80, 100, FFTWND_FIncr_10k),
+    HITRECT(   0,   0,  80, 50, FFTWND_FDecr_10k),
+    HITRECT(  80,   0,  80, 50, FFTWND_FDecr_5k),
+    HITRECT( 160,   0,  70, 50, FFTWND_FDecr_1k),
+    HITRECT( 250,   0,  70, 50, FFTWND_FIncr_1k),
+    HITRECT( 320,   0,  80, 50, FFTWND_FIncr_5k),
+    HITRECT( 400,   0,  80, 50, FFTWND_FIncr_10k),
     HITEND
 };
 
@@ -172,7 +174,7 @@ void FFTWND_Proc(void)
 {
     uint32_t ctr = 0;
     int i;
-
+    SetColours();
     rqExit = 0;
     oscilloscope = 0;
     BSP_LCD_SelectLayer(0);
@@ -196,6 +198,7 @@ void FFTWND_Proc(void)
     }
 
     uint32_t activeLayer;
+    activeLayer = BSP_LCD_GetActiveLayer();
     while (1)
     {
         LCDPoint pt;
@@ -209,7 +212,7 @@ void FFTWND_Proc(void)
                 continue;
             }
             Sleep(50);
-            while(TOUCH_IsPressed());
+         //   while(TOUCH_IsPressed());  WK
             if (rqExit)
             {
                 GEN_SetMeasurementFreq(0);
@@ -255,7 +258,7 @@ void FFTWND_Proc(void)
             int16_t minMag = 32767;
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
-
+            BSP_LCD_SelectLayer(!activeLayer);// WK
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
 
@@ -270,7 +273,7 @@ void FFTWND_Proc(void)
             magnitude = (maxMag - minMag) / 2;
 
             FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
-            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+            LCD_FillRect(LCD_MakePoint(0, 64), LCD_MakePoint(398, 98), BackGrColor);
             FONT_Printf(0, 64, "Sampling %d ms, Magnitude: %d", tmstart, magnitude);
 
             pData = &audioBuf[NDUMMY];
@@ -312,11 +315,16 @@ void FFTWND_Proc(void)
                 if (i >= LCD_GetWidth()-1)
                     break;
             }
+             BSP_LCD_SelectLayer(!activeLayer);// WK
         }
         else //Spectrum
         {
+
+            BSP_LCD_SelectLayer(!activeLayer);// WK
+
             //Draw spectrum
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
+
 
             //Draw horizontal grid lines
             for (i = LCD_GetHeight()-1; i > 140; i-=10)
@@ -362,12 +370,14 @@ void FFTWND_Proc(void)
                         break;
                 }
 
+
                 float binwidth = ((float)(FSAMPLE)) / (NSAMPLES);
                 if (0 == ch)
                 {
-                    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+                   // FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 64);
+                    LCD_FillRect(LCD_MakePoint(0, 64), LCD_MakePoint(399,80),LCD_BLACK);
                     FONT_SetAttributes(FONT_FRANBIG, LCD_RED, LCD_BLACK);
-                    FONT_Printf(0, 64, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
+                    FONT_Printf(0, 64, "Mag %.0f @ bin %d (%.0f) Hz  ", maxmag, idxmax, binwidth * idxmax);
                 }
                 else
                 {
@@ -375,7 +385,12 @@ void FFTWND_Proc(void)
                     FONT_SetAttributes(FONT_FRANBIG, LCD_GREEN, LCD_BLACK);
                     FONT_Printf(0, 100, "Mag %.0f @ bin %d (%.0f) Hz", maxmag, idxmax, binwidth * idxmax);
                 }
+
             }
+             BSP_LCD_SelectLayer(!activeLayer);// WK
+             LCD_ShowActiveLayerOnly();
+
+
         }
         LCD_ShowActiveLayerOnly();
         Sleep(100);

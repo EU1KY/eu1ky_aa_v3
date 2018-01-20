@@ -97,7 +97,7 @@ void GEN_SetMeasurementFreq(uint32_t fhz)
     }
 
     lastSetFreq = fhz;
-    Sleep(2);
+    Sleep(0);// was 2 WK
 }
 
 uint32_t GEN_GetLastFreq()

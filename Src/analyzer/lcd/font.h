@@ -26,6 +26,7 @@ void FONT_SetAttributes(FONTS fnt, LCDColor fg, LCDColor bg);
 int FONT_Printf(uint16_t x, uint16_t y, const char *fmt, ...);
 int FONT_GetStrPixelWidth(FONTS fnt, const char* pStr);
 void FONT_ClearLine(FONTS fnt, LCDColor bg, uint16_t y0);
+void FONT_ClearHalfLine(FONTS fnt, LCDColor bg, uint16_t y0);
 uint16_t FONT_GetHeight(FONTS fnt);
 
 #ifdef __cplusplus

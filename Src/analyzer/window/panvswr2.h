@@ -16,7 +16,7 @@ typedef enum
 extern const char* BSSTR[];
 extern const char* BSSTR_HALF[];
 extern const uint32_t BSVALUES[];
-
+static uint32_t fr[5];
 void PANVSWR2_Proc(void);
 
 #endif

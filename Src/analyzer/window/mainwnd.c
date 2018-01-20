@@ -9,7 +9,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "LCD.h"
 #include "font.h"
 #include "touch.h"
 
@@ -20,6 +19,7 @@
 #include "measurement.h"
 #include "oslcal.h"
 #include "panvswr2.h"
+#include "panfreq.h"
 #include "main.h"
 #include "usbd_storage.h"
 #include "ff_gen_drv.h"
@@ -45,6 +45,13 @@ static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
 static TEXTBOX_t hbTDR;
+static TEXTBOX_t hbMulti;
+static TEXTBOX_t hbExitCal;
+
+
+static TEXTBOX_CTX_t menu1_ctx;
+static void Menu1(void);
+static void Colours(void);
 
 #define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
@@ -296,10 +303,14 @@ static void PROTOCOL_Handler(void)
 // Main window procedure (never returns)
 void MainWnd(void)
 {
-    BSP_LCD_SelectLayer(1);
-    LCD_FillAll(LCD_BLACK);
-    LCD_ShowActiveLayerOnly();
+uint8_t i;
 
+//    BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_BLACK);
+//    LCD_ShowActiveLayerOnly();
+    ColourSelection=1;
+    FatLines=false;
+    for(i=0;i<5;i++)fr[i]=0;
     while (TOUCH_IsPressed());
 
     //Initialize textbox context
@@ -308,24 +319,29 @@ void MainWnd(void)
     //Create menu items and append to textbox context
 
     //HW calibration menu
-    hbHwCal = (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =    " HW Calibration  ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr };
+    hbHwCal = (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =    " Calibration  ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Menu1 };
     TEXTBOX_Append(&main_ctx, &hbHwCal);
 
     //OSL calibration menu
-    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " OSL Calibration ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd };
+    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =  " Colours ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Colours };
     TEXTBOX_Append(&main_ctx, &hbOslCal);
 
     //Device configuration menu
-    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 120, .text = " Configuration  ", .font = FONT_FRANBIG,
+    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 100, .text = " Configuration  ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
     TEXTBOX_Append(&main_ctx, &hbConfig);
 
     //USB access
-    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 180, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
+    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 150, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
     TEXTBOX_Append(&main_ctx, &hbUSBD);
+
+    //MultiScan  WK
+    hbMulti = (TEXTBOX_t){.x0 = COL1, .y0 = 200, .text =   " Multi SWR ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MultiSWR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbMulti);
 
     //Panoramic scan window
     hbPan = (TEXTBOX_t){.x0 = COL2, .y0 =   0, .text =    " Panoramic scan ", .font = FONT_FRANBIG,
@@ -368,12 +384,138 @@ void MainWnd(void)
         {
             Sleep(50);
             //Redraw main window
-            BSP_LCD_SelectLayer(1);
+//            BSP_LCD_SelectLayer(1);
             LCD_FillAll(LCD_BLACK);
             TEXTBOX_DrawContext(&main_ctx);
-            LCD_ShowActiveLayerOnly();
+//            LCD_ShowActiveLayerOnly();
             PROTOCOL_Reset();
         }
         PROTOCOL_Handler();
+    }
+}
+#define XXa 2
+static void Daylight(void){
+    ColourSelection=0;
+    SetColours();
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 10,   "  Daylight Colours   ");
+   // FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 52, "%X BackGrColor", BackGrColor);
+  //  FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 92, "%X TextColor", TextColor);
+}
+
+static void Inhouse(void){
+    ColourSelection=1;
+    SetColours();
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 10,   "  Inhouse Colours   ");
+  //  FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 52, "%X BackGrColor", BackGrColor);
+  //  FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 92, "%X TextColor", TextColor);
+}
+static void Fatlines(void){
+    FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Fat Lines  ");
+    FatLines=true;
+}
+static void Thinlines(void){
+    FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Thin Lines ");
+    FatLines=false;
+}
+static bool rqExit1;
+
+static void Exit1(void){
+    rqExit1=true;
+}
+
+static const TEXTBOX_t tb_col[] = {
+    (TEXTBOX_t){ .x0 = XXa, .y0 = 50, .text = "Daylight", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Daylight, .cbparam = 1, .next = (void*)&tb_col[1] },
+    (TEXTBOX_t){ .x0 = XXa, .y0 = 100, .text = "Inhouse", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Inhouse, .cbparam = 1, .next = (void*)&tb_col[2] },
+    (TEXTBOX_t){ .x0 = XXa, .y0 = 150, .text = "Fat Lines", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Fatlines, .cbparam = 1, .next = (void*)&tb_col[3] },
+    (TEXTBOX_t){ .x0 = XXa, .y0 = 200, .text = "Thin Lines", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Thinlines, .cbparam = 1, .next = (void*)&tb_col[4] },
+    (TEXTBOX_t){ .x0 = 240, .y0 = 200, .text = "  Exit   ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1, .cbparam = 1,  },
+};
+
+
+static void Colours(void){
+
+    while(TOUCH_IsPressed());
+    SetColours();
+    rqExit1=false;
+ //   BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_COLOR_DARKGRAY);
+//    LCD_ShowActiveLayerOnly();
+    TEXTBOX_CTX_t fctx;
+    if(ColourSelection==1)
+        FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 240, 10,   "  Inhouse Colours   ");
+    else
+        FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 240, 10,   "  Daylight Colours   ");
+    if(FatLines==true)
+        FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Fat Lines  ");
+    else
+        FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Thin Lines ");
+
+    TEXTBOX_InitContext(&fctx);
+    TEXTBOX_Append(&fctx, (TEXTBOX_t*)tb_col); //Append the very first element of the list in the flash.
+                                                      //It is enough since all the .next fields are filled at compile time.
+    TEXTBOX_DrawContext(&fctx);
+
+
+    for(;;)
+    {
+        Sleep(0); //for autosleep to work
+        if (TEXTBOX_HitTest(&fctx))
+        {
+            Sleep(50);
+            if (rqExit1)
+            {
+                rqExit1=false;
+                return;
+            }
+            Sleep(50);
+        }
+        Sleep(0);
+    }
+}
+static const TEXTBOX_t tb_menu1[] = {
+    (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =    " HW Calibration  ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr , .cbparam = 1, .next = (void*)&tb_menu1[1] },
+    (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =  " OSL Calibration ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd , .cbparam = 1, .next = (void*)&tb_menu1[2] },
+    (TEXTBOX_t){ .x0 = 0, .y0 = 200, .text = "  Exit   ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1, .cbparam = 1,},
+};
+
+static void Menu1(void){
+
+    while(TOUCH_IsPressed());
+    rqExit1=false;
+//    BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_BLACK);
+//    LCD_ShowActiveLayerOnly();
+    //Initialize textbox context
+    TEXTBOX_InitContext(&menu1_ctx);
+//HW calibration menu
+    TEXTBOX_Append(&menu1_ctx, (TEXTBOX_t*)tb_menu1);
+    TEXTBOX_DrawContext(&menu1_ctx);
+
+ for(;;)
+    {
+        Sleep(0); //for autosleep to work
+        if (TEXTBOX_HitTest(&menu1_ctx))
+        {
+            Sleep(0);
+            //BSP_LCD_SelectLayer(1);
+            LCD_FillAll(LCD_BLACK);
+            TEXTBOX_DrawContext(&menu1_ctx);
+            //LCD_ShowActiveLayerOnly();
+            if (rqExit1)
+            {
+                rqExit1=false;
+                return;
+            }
+            Sleep(50);
+        }
+        Sleep(0);
     }
 }

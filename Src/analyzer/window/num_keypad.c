@@ -103,9 +103,9 @@ static const TEXTBOX_t tb_keybd[] = {
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[10] },
     (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(3), .text = "<-", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(200,0,0), .cb = KeybHitBackspaceCb, .next = (void*)&tb_keybd[11] },
-    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(4) + 4, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
+    (TEXTBOX_t){ .x0 = KBDX(0)+200, .y0 = KBDY(4) + 4, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
                  .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = KeybHitCancelCb, .next = (void*)&tb_keybd[12] },
-    (TEXTBOX_t){ .x0 = KBDX(0) + 110, .y0 = KBDY(4) + 4, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
+    (TEXTBOX_t){ .x0 = KBDX(0) + 310, .y0 = KBDY(4) + 4, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
                  .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = KeybHitOKCb },
 
 };

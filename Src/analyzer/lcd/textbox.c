@@ -178,6 +178,7 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                     }
                     else
                         pbox->cb();
+                        Sleep(500);// WK
                 }
                 if (pbox->nowait)
                 {
@@ -187,7 +188,7 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                 //Invert text colors while touch is pressed
                 LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
                 //Wait for touch release
-                while (TOUCH_IsPressed());
+               // while (TOUCH_IsPressed());// WK
                 //Restore textbox colors
                 LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
                 return 1;

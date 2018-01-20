@@ -100,6 +100,13 @@ void FONT_ClearLine(FONTS fnt, LCDColor bg, uint16_t y0)
     FONT_GetParams(fnt, &fp);
     LCD_FillRect(LCD_MakePoint(0, y0), LCD_MakePoint(LCD_GetWidth()-1, y0 + fp.charHeight), bg);
 }
+void FONT_ClearHalfLine(FONTS fnt, LCDColor bg, uint16_t y0)
+{
+    //Fill the rectangle with background color
+    struct _fontparams fp = {0};
+    FONT_GetParams(fnt, &fp);
+    LCD_FillRect(LCD_MakePoint(0, y0), LCD_MakePoint(LCD_GetWidth()/2-1, y0 + fp.charHeight), bg);
+}
 
 int FONT_Write_N(FONTS fnt, LCDColor fg, LCDColor bg, uint16_t x, uint16_t y, const char* pStr, int nChars)
 {

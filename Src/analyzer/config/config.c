@@ -11,6 +11,16 @@ static const char *g_cfg_dir = "/aa/config";
 static const char *g_cfg_fpath = "/aa/config/config.bin";
 const char *g_cfg_osldir = "/aa/osl";
 static uint32_t resetRequired = 0;
+ uint8_t ColourSelection;
+ bool FatLines;
+ uint32_t rqExit;
+ uint32_t BackGrColor;
+ uint32_t CurvColor;
+ uint32_t TextColor;
+ uint32_t Color1;
+ uint32_t Color2;
+ uint32_t Color3;
+ uint32_t Color4;
 
 typedef enum
 {
@@ -129,7 +139,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_S16,
         .dstring = "Si5351 XTAL frequency correction, Hz",
         .isvalid = isShowHiddenSi,
-        .repeatdelay = 20,
+        .repeatdelay = 2,// WK
     },
     {
         .id = CFG_PARAM_SI5351_MAX_FREQ,
@@ -600,7 +610,6 @@ const char * CFG_GetStringName(uint32_t param_idx)
 #include "textbox.h"
 extern void Sleep(uint32_t);
 
-static uint32_t rqExit = 0;
 static uint32_t selected_param = 0;
 static TEXTBOX_CTX_t *pctx = 0;
 static uint32_t hbNameIdx = 0;
@@ -693,12 +702,12 @@ static void _hit_next_value(void)
 // See these parameters described in cfg_ch_descr_table
 void CFG_ParamWnd(void)
 {
+    while(TOUCH_IsPressed());
     rqExit = 0;
     resetRequired = 0;
     selected_param = 0;
 
     LCD_FillAll(LCD_BLACK);
-    while (TOUCH_IsPressed());
 
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 100, 0, "Configuration editor");
 

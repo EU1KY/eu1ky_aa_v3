@@ -39,7 +39,7 @@ void SMITH_DrawLabels(LCDColor color, LCDColor bgcolor, uint32_t flags);
 
 void SMITH_ResetStartPoint(void);
 
-void SMITH_DrawG(float complex G, LCDColor color);
+void SMITH_DrawG(int index, float complex G, LCDColor color);
 
 void SMITH_DrawGEndMark(LCDColor color);
 

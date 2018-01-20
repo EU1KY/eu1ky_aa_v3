@@ -38,6 +38,10 @@ static float normFactor = 1.f; //Factor for calculating graph magnitude scale. C
 static uint32_t TDR_isScanned = 0;
 static uint32_t TDR_cursorPos = WWIDTH / 2;
 static uint32_t TDR_cursorChangeCount = 0;
+static uint16_t TDR_Length = 155;// length of measure WK
+static uint8_t colorScheme=0;
+static uint32_t BGColor=LCD_BLACK;
+static uint32_t GraphColor=LCD_BLUE;
 
 //Half of Kaiser Bessel Derived (beta=3.5) window
 static const float halfKBDwnd[] =
@@ -89,7 +93,7 @@ static void TDR_Scan(void)
     uint32_t i;
     for (i = 1; i < NUMTDRSAMPLES; i++)
     {
-        uint32_t freqHz = i * 500000;
+        uint32_t freqHz =i * 500000;
         DSP_Measure(freqHz, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
         float complex G = OSL_GFromZ(DSP_MeasuredZ(), (float)CFG_GetParam(CFG_PARAM_R0));
         freq_domain[i] = G * halfKBDwnd[i];
@@ -138,15 +142,15 @@ static void TDR_Screenshot (void)
 
 static void TDR_DrawCursorText(void)
 {
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 2, Y0 - 5, "<");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 465, Y0 - 5, ">");
-    float val = time_domain[TDR_cursorPos];
-    float ns = (float)TDR_cursorPos * (2000.f/512.f); //2000 ns is the period of 500 kHz scn step, 512 is number of equivalent time domain samples
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 4, Y0 - 10, "<");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 462, Y0 - 10, ">");
+    float val = time_domain[(uint16_t)(TDR_cursorPos*(TDR_Length/155.f))];
+    float ns = (float)TDR_cursorPos * (2000.f/512.f)*(TDR_Length/155.f); //2000 ns is the period of 500 kHz scn step, 512 is number of equivalent time domain samples
     float vf = (float)CFG_GetParam(CFG_PARAM_TDR_VF) / 100.f;
     if (vf < 0.01f || vf > 1.00f)
         vf = 0.66f;
     float lenm = vf * (0.299792458f * ns) * 0.5f;
-    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, X0, 15, "T: %.1f ns, Mag: %.5f Dist: %.1f m (@Vf=%.2f)      ",
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 15, "T: %.1f ns, Mag: %.5f Dist: %.1f m (@Vf=%.2f)      ",
                ns, val, lenm, vf);
 }
 
@@ -169,9 +173,18 @@ static void TDR_DrawCursor(void)
 
 static void TDR_DrawGrid(void)
 {
-    LCD_FillRect(LCD_MakePoint(0, Y0 - 100 - 2), LCD_MakePoint(LCD_GetWidth() - 1, Y0 + 100 + 2), LCD_BLACK);
+    LCD_FillRect(LCD_MakePoint(0, Y0 - 100 - 2), LCD_MakePoint(LCD_GetWidth() - 1, Y0 + 100 + 2), BGColor);
     LCD_Rectangle(LCD_MakePoint(X0, Y0 - 100), LCD_MakePoint(X0 + WWIDTH - 1, Y0 + 100), LCD_RGB(80,80,80));
     LCD_Line(LCD_MakePoint(X0, Y0), LCD_MakePoint(X0 + WWIDTH - 1, Y0), LCD_RGB(80,80,80));
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 364, 4, "10m");// WK
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 404, 4, "50m");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 444, 4, "155m");
+    if(TDR_Length==10)
+        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 364, 4, "10m");
+    else if(TDR_Length==50)
+        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 404, 4, "50m");
+    else
+        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 444, 4, "155m");
 }
 
 static void TDR_DecrCursor(void)
@@ -205,19 +218,23 @@ static void TDR_AdvCursor(void)
 static void TDR_DrawGraph(void)
 {
     uint32_t i;
-    uint32_t lasty = 0;
+    uint32_t lasty = Y0;
     uint32_t y;
-    for (i = 0; i < WWIDTH; i++)
+    for (i = 0; i*155/TDR_Length <= WWIDTH+1; i++)
     {
         y = Y0 - (int32_t)(time_domain[i] * normFactor * 100.f);
         if (0 != i)
         {
-            LCD_Line(LCD_MakePoint(X0 + i - 1, lasty), LCD_MakePoint(X0 + i, y), LCD_BLUE);
+            LCD_Line(LCD_MakePoint(X0 + (i-1)*155/TDR_Length, lasty), LCD_MakePoint(X0 + i*155/TDR_Length, y), GraphColor);
+            LCD_Line(LCD_MakePoint(X0 + (i-1)*155/TDR_Length, lasty+1), LCD_MakePoint(X0 + i*155/TDR_Length, y+1), GraphColor);
+            LCD_Line(LCD_MakePoint(X0 + (i-1)*155/TDR_Length-1, lasty), LCD_MakePoint(X0 + i*155/TDR_Length-1, y+1), GraphColor);
         }
         lasty = y;
     }
-    FONT_Print(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, 10, Y0 - 100, "%.5f", 1./normFactor);
-    FONT_Print(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, 5, Y0 + 100 - 5, "%.5f", -1./normFactor);
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, Y0 - 100-1, "%.3f", 1./normFactor);// WK
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, Y0 + 100 - 12, "%.3f", -1./normFactor);
+   /* FONT_Print(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, 10, Y0 - 100, "%.5f", 1./normFactor);
+    FONT_Print(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, 5, Y0 + 100 - 5, "%.5f", -1./normFactor);*/
 }
 
 static void TDR_DoScan (void)
@@ -232,12 +249,47 @@ static void TDR_DoScan (void)
     TDR_DrawCursorText();
 }
 
+static void TDR_10m(void){
+    TDR_Length=10;
+    TDR_DrawGrid();
+}
+static void TDR_50m(void){
+    TDR_Length=50;
+    TDR_DrawGrid();
+}
+static void TDR_155m(void){
+    TDR_Length=155;
+    TDR_DrawGrid();
+}
+
+static void TDR_Colors(void){
+    if(colorScheme==0){
+        BGColor=LCD_WHITE;
+        GraphColor=LCD_BLACK;
+        colorScheme=1;
+    }
+    else{
+        colorScheme=0;
+        BGColor=LCD_BLACK;
+        GraphColor=LCD_RGB(255, 255, 128);//   LCD_LightYELLOW;
+    }
+    TDR_DrawGrid();
+    TDR_DrawGraph();
+    TDR_DrawCursor();
+    TDR_DrawCursorText();
+    Sleep(500);
+}
+
 static const struct HitRect hitArr[] =
 {
     //        x0,  y0, width, height, callback
-    HITRECT(   0, 200,   60,     72, TDR_Exit),
-    HITRECT( 190, 200,   80,     72, TDR_Screenshot),
-    HITRECT( 400, 200,   60,     72, TDR_DoScan),
+    HITRECT(   0, 241,  80,     31, TDR_Exit),
+    HITRECT( 190, 241,  80,     31, TDR_Screenshot),
+    HITRECT( 300, 241,  80,     31, TDR_DoScan),
+    HITRECT( 400, 241,  60,     31, TDR_Colors),
+    HITRECT( 360, Y0 - 135,   38,     30, TDR_10m),
+    HITRECT( 400, Y0 - 135,   38,     30, TDR_50m),
+    HITRECT( 440, Y0 - 135,   38,     30, TDR_155m),
     HITRECT( 430, Y0 - 20,   60,     72, TDR_AdvCursor),
     HITRECT(   0, Y0 - 20,   60,     72, TDR_DecrCursor),
     HITEND
@@ -260,10 +312,12 @@ void TDR_Proc(void)
     LCD_ShowActiveLayerOnly();
 
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, "EU1KY AA v." AAVERSION " Time Domain Reflectometer mode");
-    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 400, 250, "  Scan  ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_RGB(0, 64, 0), 190, 250, "  Save snapshot  ");
+    FONT_Write(FONT_FRANBIG, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 242, " Exit ");
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLUE, 300, 242, " Scan ");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 404, 250, "ChgColors");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_RGB(0, 64, 0), 192, 250, "Save snapshot");
 
+    ShowHitRect(hitArr);
     TDR_DrawGrid();
     if (TDR_isScanned)
     {
@@ -281,7 +335,8 @@ void TDR_Proc(void)
             if (rqExit)
             {
                 GEN_SetMeasurementFreq(0);
-                while(TOUCH_IsPressed());
+                Sleep(20);
+               // while(TOUCH_IsPressed());
                 return;
             }
         }

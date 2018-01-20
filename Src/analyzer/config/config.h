@@ -2,7 +2,8 @@
 #define _CONFIG_H_
 
 #include <stdint.h>
-
+#include <stdbool.h>
+#include "LCD.h"
 #define AAVERSION "3.0d" //Must be 4 characters
 
 #define BAND_FMIN 500000ul    //BAND_FMIN must be multiple 100000
@@ -70,6 +71,17 @@ typedef enum
 
 const char *g_cfg_osldir;
 const char *g_aa_dir;
+
+extern  uint8_t ColourSelection;
+extern  bool FatLines;
+extern  uint32_t BackGrColor;
+extern  uint32_t CurvColor;
+extern  uint32_t TextColor;
+extern  uint32_t Color1;
+extern  uint32_t Color2;
+extern  uint32_t Color3;
+extern  uint32_t Color4;
+extern void SetColours();
 
 void CFG_Init(void);
 uint32_t CFG_GetParam(CFG_PARAM_t param);
