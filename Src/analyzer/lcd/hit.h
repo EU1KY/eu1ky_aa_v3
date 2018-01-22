@@ -26,6 +26,6 @@ struct HitRect
 #define HITEND { 0xFFFFFFFFul, 0, 0xFFFFFFFFul, 0, 0 }
 
 int HitTest(const struct HitRect* r, uint32_t x, uint32_t y);
-void ShowHitRect(const struct HitRect* hitArr);
+void ShowHitRect(const struct HitRect* hitArr);// WK
 
 #endif

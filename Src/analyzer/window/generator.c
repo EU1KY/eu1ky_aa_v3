@@ -24,6 +24,7 @@ static uint32_t fChanged = 0;
 static uint32_t rqExit = 0;
 static uint32_t f_maxstep = 500000;
 static uint32_t redrawWindow = 0;
+static uint32_t redrawWindowCompl;
 
 void Sleep(uint32_t ms);
 
@@ -179,10 +180,10 @@ void GENERATOR_ChgColrs(void){
     if(ColourSelection==0)ColourSelection=1;
     else ColourSelection=0;
     SetColours();
-    redrawWindow = 1;
-    while(TOUCH_IsPressed());
+    redrawWindowCompl = 1;
+ //   while(TOUCH_IsPressed());
 }
-static const struct HitRect hitArr[] =
+static const struct HitRect GENERATOR_hitArr[] =
 {
     //        x0,  y0, width, height, callback
     HITRECT(   0, 233,  80, 38, GENERATOR_SwitchWindow),//200
@@ -221,10 +222,10 @@ void SetColours(void){
         BackGrColor=LCD_WHITE;
         CurvColor=LCD_COLOR_DARKGREEN;// dark blue
         TextColor=LCD_BLACK;
-        Color1=LCD_COLOR_DARKBLUE;
+        Color1=LCD_COLOR_DARKGREEN;//LCD_COLOR_DARKBLUE;
         Color2=LCD_COLOR_DARKGRAY;
-        Color3=LCD_YELLOW;
-        Color4=LCD_MakeRGB(128,255,128);//Light green -ham bands area
+        Color3=LCD_YELLOW;// -ham bands area at daylight
+        Color4=LCD_MakeRGB(128,255,128);//Light green
 
     }
     else{// Inhouse
@@ -234,14 +235,18 @@ void SetColours(void){
         Color1=LCD_COLOR_LIGHTBLUE;
         Color2=LCD_COLOR_GRAY;
         Color3=LCD_MakeRGB(0, 0, 64);// very dark blue -ham bands area
-        Color4=LCD_MakeRGB(0, 64, 0);// very dark green -ham bands area
+        Color4=LCD_MakeRGB(0, 64, 0);// very dark green
     }
 }
 
 void GENERATOR_Window_Proc(void)
 {
-   while(TOUCH_IsPressed());
-   SetColours();
+   uint32_t activeLayer;
+   LCDPoint pt;
+   uint8_t i;
+
+    while(TOUCH_IsPressed());
+    SetColours();
     {
         uint32_t fbkup = CFG_GetParam(CFG_PARAM_GEN_F);
         if (!(fbkup >= BAND_FMIN && fbkup <= CFG_GetParam(CFG_PARAM_BAND_FMAX) && (fbkup % 1000) == 0))
@@ -250,30 +255,20 @@ void GENERATOR_Window_Proc(void)
             CFG_Flush();
         }
     }
-
- //   BSP_LCD_SelectLayer(0);
-    LCD_FillAll(BackGrColor);
-//    BSP_LCD_SelectLayer(1);
-//    LCD_FillAll(BackGrColor);
-
-//    LCD_ShowActiveLayerOnly();
-GENERATOR_REDRAW:
-//    while(TOUCH_IsPressed());  WK
-
+    redrawWindowCompl = 1;
     GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
-
-   // for (uint32_t layer = 0; layer < 2; layer++)
-   // {
-   //     BSP_LCD_SelectLayer(layer);
+GENERATOR_REDRAW:
+    if(redrawWindowCompl == 1){
+        redrawWindowCompl = 0;
         LCD_FillAll(BackGrColor);
-        ShowHitRect(hitArr);
-        ShowIncDec1();// ShowIncDec
+        ShowHitRect(GENERATOR_hitArr);
+        ShowIncDec1();
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 36, "Generator mode");// WK
-        FONT_Write(FONT_FRANBIG, LCD_GREEN, BackGrColor, 2, 235, "  Exit ");
+        FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 235, "  Exit ");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 95, 235, "Set frequency (kHz)");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 339, 235, "ChgColours");
-        ShowF();
-   // }
+    }
+    ShowF();
 
     uint32_t speedcnt = 0;
     f_maxstep = 500000;
@@ -283,32 +278,35 @@ GENERATOR_REDRAW:
 
     while(1)
     {
-        LCDPoint pt;
-        while (TOUCH_Poll(&pt))
-        {
-            if(HitTest(hitArr, pt.x, pt.y)==1){
-                if (rqExit)
-                {
-                    GEN_SetMeasurementFreq(0);
-      //              while(TOUCH_IsPressed()); WK
-                    return; //Change window
+        for(i=0;i<10;i++){
+            if(redrawWindowCompl == 1)   goto GENERATOR_REDRAW;
+            while (TOUCH_Poll(&pt))
+            {
+                if(HitTest(GENERATOR_hitArr, pt.x, pt.y)==1){
+                    if (rqExit)
+                    {
+                        GEN_SetMeasurementFreq(0);
+                        return; //Change window
+                    }
+                    if (redrawWindow)
+                    {
+                        redrawWindowCompl = 0;
+                        goto GENERATOR_REDRAW;
+                    }
+                    if (fChanged)
+                    {
+                        ShowF();
+                    }
+                    speedcnt++;
+                    if (speedcnt < 10)
+                        Sleep(500);// WK
+                    else
+                        Sleep(200);// WK
+                    if (speedcnt > 50)
+                        f_maxstep = 2000000;
                 }
-                if (redrawWindow)
-                {
-                    goto GENERATOR_REDRAW;
-                }
-                if (fChanged)
-                {
-                    ShowF();
-                }
-                speedcnt++;
-                if (speedcnt < 20)
-                    Sleep(500);// WK
-                else
-                    Sleep(200);// WK
-                if (speedcnt > 50)
-                    f_maxstep = 2000000;
             }
+            Sleep(50);
         }
         speedcnt = 0;
         f_maxstep = 500000;
@@ -322,9 +320,6 @@ GENERATOR_REDRAW:
 
         //Measure without changing current frequency and without OSL
         DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
-
-       // uint32_t activeLayer = BSP_LCD_GetActiveLayer();
-       // BSP_LCD_SelectLayer(!activeLayer);
 
         FONT_SetAttributes(FONT_FRAN, TextColor, BackGrColor);
         FONT_ClearHalfLine(FONT_FRAN, BackGrColor, 100);
@@ -350,8 +345,5 @@ GENERATOR_REDRAW:
         rx = DSP_MeasuredZ();
         FONT_ClearHalfLine(FONT_FRAN, BackGrColor, 180);
         FONT_Printf(0, 180, "With OSL R: %.1f X: %.1f", crealf(rx), cimagf(rx));
-
- //       LCD_ShowActiveLayerOnly();
-        Sleep(10);// WK
     }
 }

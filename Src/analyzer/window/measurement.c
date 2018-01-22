@@ -189,7 +189,7 @@ char str[50] = "";
     if(VSWR>100)
         sprintf(str, "VSWR: %.0f (Z0 %d)", VSWR, CFG_GetParam(CFG_PARAM_R0));
     else
-    sprintf(str, "VSWR: %.1f (Z0 %d)", VSWR, CFG_GetParam(CFG_PARAM_R0));
+    sprintf(str, "VSWR: %.1f (Z0 %d)   ", VSWR, CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 92, str);
 
     float XX = cimagf(rx);
@@ -412,7 +412,7 @@ void MEASUREMENT_Proc(void)
  float delta;
  uint32_t fbkup;
  uint32_t activeLayer;
- int i,j=0,k;
+ int i,j=0,k, firstRun;
  DSP_RX rx, rx0;
  int Cycles=0;
     DrawFine=0;
@@ -455,13 +455,13 @@ void MEASUREMENT_Proc(void)
 
     LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y-9), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), BackGrColor); // Graph rectangle
     LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
-
+    firstRun=0;
     InitScan500();
 MEASUREMENT_REDRAW:
      i=k=0;
         LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y-9), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), BackGrColor); // Graph rectangle
         LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 35, "VSWR (1.0 ... 12.0), F +/- 500 KHz, step 50:");
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 35, "VSWR (1.0 ... 12.0), F +/- 500 KHz, step 10:");
         ShowF();
 
         if (-1 == OSL_GetSelected())
@@ -492,6 +492,10 @@ MEASUREMENT_REDRAW:
 
         DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         rx = DSP_MeasuredZ();
+    //    if(firstRun==0){
+            firstRun=1;
+            DrawSmallSmith(380, 180, 80, rx);
+    //    }
         MeasurementModeDraw(rx);
         ShowHitRect(hitArr);
         ShowIncDec();

@@ -128,6 +128,11 @@ static char* _trim(char *str)
     return str;
 }
 
+static void Wait_proc(void){
+
+    Sleep(500);
+}
+
 static int PROTOCOL_RxCmd(void)
 {
     int ch = AAUART_Getchar();
@@ -369,7 +374,7 @@ uint8_t i;
     TEXTBOX_Append(&main_ctx, &hbTDR);
 
     hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = Wait_proc  };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
     //Draw context
     TEXTBOX_DrawContext(&main_ctx);
@@ -398,16 +403,12 @@ static void Daylight(void){
     ColourSelection=0;
     SetColours();
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 10,   "  Daylight Colours   ");
-   // FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 52, "%X BackGrColor", BackGrColor);
-  //  FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 92, "%X TextColor", TextColor);
 }
 
 static void Inhouse(void){
     ColourSelection=1;
     SetColours();
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 10,   "  Inhouse Colours   ");
-  //  FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 52, "%X BackGrColor", BackGrColor);
-  //  FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 220, 92, "%X TextColor", TextColor);
 }
 static void Fatlines(void){
     FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Fat Lines  ");

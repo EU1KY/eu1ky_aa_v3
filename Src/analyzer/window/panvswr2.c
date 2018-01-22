@@ -192,8 +192,6 @@ static void DrawCursor()
     LCDPoint p;
     if (!isMeasured)
         return;
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 2, 110, "<");
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 460, 110, ">");
 
     if (grType == GRAPH_SMITH)
     {
@@ -253,6 +251,10 @@ static void DrawCursor()
         LCD_FillRect((LCDPoint){X0 + cursorPos-3,Y0+WHEIGHT+1},(LCDPoint){X0 + cursorPos+3,Y0+WHEIGHT+3},BackGrColor);
         LCD_FillRect((LCDPoint){X0 + cursorPos-2,Y0+WHEIGHT+1},(LCDPoint){X0 + cursorPos+2,Y0+WHEIGHT+3},TextColor);
     }
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 2, 110, "<");
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 460, 110, ">");
+    Sleep(5);
+
 }
 
 static void DrawCursorText()
@@ -327,8 +329,6 @@ static void DrawBottomText(void)
                Y0 + WHEIGHT + 16 + 16, txt);
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 244, "Exit");
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 420, 244, "Scan");
-  //  FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-//FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
 }
 
 static void DrawSavingText(void)
@@ -348,8 +348,6 @@ static void DrawSavedText(void)
                Y0 + WHEIGHT + 16 + 16, txt);
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 244, "Exit");
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 420, 244, "Scan");
-   // FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-   // FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
     DrawAutoText();
 }
 
@@ -385,8 +383,8 @@ static void DecrCursor()
     }
 //    LCD_ShowActiveLayerOnly();
     if (cursorChangeCount++ < 10)
-        Sleep(200); //Slow down at first steps
-    Sleep(20);
+        Sleep(100); //Slow down at first steps
+    Sleep(5);
 }
 
 static void AdvCursor()
@@ -421,8 +419,8 @@ static void AdvCursor()
     }
  //   LCD_ShowActiveLayerOnly();
     if (cursorChangeCount++ < 10)
-        Sleep(200); //Slow down at first steps
-    Sleep(20);
+        Sleep(100); //Slow down at first steps
+    Sleep(5);
 }
 
 static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
@@ -1273,12 +1271,12 @@ uint8_t touch;
         if(x<-999) x=-999;
         LCD_FillRect((LCDPoint){XX0+137, YY0 + line*48}, (LCDPoint){XX0+210, YY0 + 30 + line*48}, BackGrColor);
         FONT_Print(FONT_FRAN, TextColor, BackGrColor, XX0+138, 38 + 48*line, " %u Ohm", r);// r
-        FONT_Print(FONT_FRAN, TextColor, BackGrColor, XX0+138, 58 + 48*line, "%d *j Ohm", x);// x
-        LCD_FillRect((LCDPoint){XX0-5, YY0-10  + line*48}, (LCDPoint){XX0+135, YY0 + 30 + line*48}, LCD_YELLOW);
+        FONT_Print(FONT_FRAN, Color1, BackGrColor, XX0+138, 58 + 48*line, "%d *j Ohm", x);// x
+        LCD_FillRect((LCDPoint){XX0-5, YY0-10  + line*48}, (LCDPoint){XX0+135, YY0 + 30 + line*48}, BackGrColor);
 //        BSP_LCD_SelectLayer(BSP_LCD_GetActiveLayer());
-        LCD_Line(LCD_MakePoint(XX0-5, YY0+10+48*line), LCD_MakePoint(XX0+135, YY0+10+48*line), LCD_BLACK);
-        LCD_Rectangle(LCD_MakePoint(XX0-5, YY0-10+48*line), LCD_MakePoint(XX0+135, YY0+30+48*line), LCD_BLACK);
-        LCD_Line(LCD_MakePoint(XX0+70, YY0+10+48*line), LCD_MakePoint(XX0+70, YY0+30+48*line), LCD_BLACK);
+        LCD_Line(LCD_MakePoint(XX0-5, YY0+10+48*line), LCD_MakePoint(XX0+135, YY0+10+48*line), Color2);
+        LCD_Rectangle(LCD_MakePoint(XX0-5, YY0-10+48*line), LCD_MakePoint(XX0+135, YY0+30+48*line), Color2);
+        LCD_Line(LCD_MakePoint(XX0+70, YY0+10+48*line), LCD_MakePoint(XX0+70, YY0+30+48*line), Color2);
 
     }
     else{
@@ -1292,17 +1290,17 @@ uint8_t touch;
         if(x<-16) x=-16;
         if(index1!=0){
             if(reverse1){
-                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r), LCD_BLACK);
-                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR-1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r-1), LCD_BLACK);
-                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR+1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r+1), LCD_BLACK);
+                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r), TextColor);
+                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR-1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r-1), TextColor);
+                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR+1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r+1), TextColor);
             }
-            LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastX), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-x), LCD_BLUE);
-            LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastX-1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-x-1), LCD_BLUE);
-            LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastX+1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-x+1), LCD_BLUE);
+            LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastX), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-x), Color1);
+            LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastX-1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-x-1), Color1);
+            LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastX+1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-x+1), Color1);
             if(!reverse1){
-                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r), LCD_BLACK);
-                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR-1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r-1), LCD_BLACK);
-                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR+1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r+1), LCD_BLACK);
+                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r), TextColor);
+                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR-1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r-1), TextColor);
+                LCD_Line(LCD_MakePoint(XX0+index1*6, YY0+10+48*line-lastR+1), LCD_MakePoint(XX0+index1*6+5, YY0+10+48*line-r+1), TextColor);
             }
             lastR=r;
             lastX=x;
@@ -1354,7 +1352,7 @@ if (PanFreqWindow(&f1, &span))
     return f1;
 }
 
-void MultiSWR_Proc(void){
+void MultiSWR_Proc(void){// WK
 int redrawRequired = 0;
 uint8_t touch;
 uint32_t activeLayer;
@@ -1373,7 +1371,7 @@ uint8_t i,j;
     LCD_Rectangle(LCD_MakePoint(420, 1), LCD_MakePoint(476, 35), BackGrColor);
     FONT_Write(FONT_FRANBIG, TextColor, LCD_MakeRGB(255, 0, 0), 428, 2, "Exit");
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 5, 0, "MHz           SWR      R /");
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 254, 0, "X");
+    FONT_Write(FONT_FRANBIG, Color1, BackGrColor, 254, 0, "X");
 //    LCD_ShowActiveLayerOnly();
     Sleep(500);
 
@@ -1412,13 +1410,9 @@ int redrawRequired = 0;
 uint32_t activeLayer;
 
     SetColours();
-//    BSP_LCD_SelectLayer(0);
     LCD_FillAll(BackGrColor);
-//    BSP_LCD_SelectLayer(1);
-//    LCD_FillAll(BackGrColor);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 100, "Panoramic scan mode");
-//    LCD_ShowActiveLayerOnly();
-    Sleep(500);
+    Sleep(1000);
     while(TOUCH_IsPressed());
 
     LoadBkups();
@@ -1433,9 +1427,6 @@ uint32_t activeLayer;
         modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
     }
 
-//    for (uint32_t layer = 0; layer < 2; layer++)
- //   {
- //       BSP_LCD_SelectLayer(layer);
         if (!isMeasured)
         {
             DrawGrid(1);
@@ -1446,12 +1437,7 @@ uint32_t activeLayer;
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 244, "Exit");
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 420, 244, "Scan");
 
-       // FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-        //FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
         DrawAutoText();
-  //  }
-
-//    LCD_ShowActiveLayerOnly();
 
     for(;;)
     {

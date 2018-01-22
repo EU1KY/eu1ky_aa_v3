@@ -195,7 +195,7 @@ void SMITH_DrawG(int index, float complex G, LCDColor color)
         else
         {
             LCD_Line(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
-            if(FatLines){
+            if(FatLines){// WK
                 LCD_Line(LCD_MakePoint(centerx-1 + lastxoffset, centery-1 + lastyoffset), LCD_MakePoint(centerx+1 + xoffset, centery+1 + yoffset), color);
                 LCD_Line(LCD_MakePoint(centerx-1 + lastxoffset, centery+1 + lastyoffset), LCD_MakePoint(centerx + xoffset, centery+1 + yoffset), color);
                 LCD_Line(LCD_MakePoint(centerx+1 + lastxoffset, centery+1 + lastyoffset), LCD_MakePoint(centerx-1 + xoffset, centery-1 + yoffset), color);

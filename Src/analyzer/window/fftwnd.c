@@ -42,7 +42,7 @@ static void ShowF(void)
     sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
     LCD_Rectangle(LCD_MakePoint(400,55), LCD_MakePoint(478,96),Color2);
-    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 401, 60, " Exit");
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 401, 60, " Exit  ");
 }
 
 static void FDecr(uint32_t step1)
@@ -172,6 +172,7 @@ static void do_fft_audiobuf(int ch)
 
 void FFTWND_Proc(void)
 {
+    uint32_t activeLayer;
     uint32_t ctr = 0;
     int i;
     SetColours();
@@ -197,7 +198,7 @@ void FFTWND_Proc(void)
         Sleep(10);
     }
 
-    uint32_t activeLayer;
+
     activeLayer = BSP_LCD_GetActiveLayer();
     while (1)
     {
@@ -320,7 +321,7 @@ void FFTWND_Proc(void)
         else //Spectrum
         {
 
-            BSP_LCD_SelectLayer(!activeLayer);// WK
+       //     BSP_LCD_SelectLayer(!activeLayer);// WK
 
             //Draw spectrum
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
@@ -387,7 +388,7 @@ void FFTWND_Proc(void)
                 }
 
             }
-             BSP_LCD_SelectLayer(!activeLayer);// WK
+            // BSP_LCD_SelectLayer(!activeLayer);// WK
              LCD_ShowActiveLayerOnly();
 
 
