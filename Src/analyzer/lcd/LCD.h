@@ -83,6 +83,9 @@ void LCD_HLine(LCDPoint p1, uint16_t lenght, LCDColor color);
 ///Draw line between given points with given color
 void LCD_Line(LCDPoint p1, LCDPoint p2, LCDColor c);
 
+///Draw 3-pixel wide line between given points with given color
+void LCD_Line3(LCDPoint a, LCDPoint b, LCDColor color);
+
 ///Turn on LCD and backlight
 void LCD_TurnOn(void);
 
