@@ -634,8 +634,16 @@ static void DrawVSWR(void)
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY, 0));
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(offset_sm)), LCD_GREEN);
+            if (CFG_GetParam(CFG_PARAM_THICK_LINES))
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY, 0)); // Non-smoothed remnains thin
+                LCD_Line3(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(offset_sm)), LCD_GREEN);
+            }
+            else
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY, 0));
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(offset_sm)), LCD_GREEN);
+            }
         }
         lastoffset = offset;
         lastoffset_sm = offset_sm;
@@ -778,7 +786,10 @@ static void DrawS11()
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x - 1, lasty), LCD_MakePoint(x, y), LCD_GREEN);
+            if (CFG_GetParam(CFG_PARAM_THICK_LINES))
+                LCD_Line3(LCD_MakePoint(x - 1, lasty), LCD_MakePoint(x, y), LCD_GREEN);
+            else
+                LCD_Line(LCD_MakePoint(x - 1, lasty), LCD_MakePoint(x, y), LCD_GREEN);
         }
         lasty = y;
     }
@@ -862,8 +873,16 @@ static void DrawRX()
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RGB(0, SM_INTENSITY, 0));
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(yofs_sm)), LCD_GREEN);
+            if (CFG_GetParam(CFG_PARAM_THICK_LINES))
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RGB(0, SM_INTENSITY, 0)); //Non smoothed R line is not thick
+                LCD_Line3(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(yofs_sm)), LCD_GREEN);
+            }
+            else
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RGB(0, SM_INTENSITY, 0));
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(yofs_sm)), LCD_GREEN);
+            }
         }
         lastoffset = yofs;
         lastoffset_sm = yofs_sm;
@@ -894,8 +913,16 @@ static void DrawRX()
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RGB(SM_INTENSITY, 0, 0));
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(yofs_sm)), LCD_RED);
+            if (CFG_GetParam(CFG_PARAM_THICK_LINES))
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RGB(SM_INTENSITY, 0, 0)); //Non smoothed X line is not thick
+                LCD_Line3(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(yofs_sm)), LCD_RED);
+            }
+            else
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RGB(SM_INTENSITY, 0, 0));
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(yofs_sm)), LCD_RED);
+            }
         }
         lastoffset = yofs;
         lastoffset_sm = yofs_sm;
@@ -926,6 +953,7 @@ static void DrawSmith(void)
     //Draw measured data
     if (isMeasured)
     {
+        SMITH_ResetStartPoint();
         uint32_t lastx = 0;
         uint32_t lasty = 0;
         for(i = 0; i <= WWIDTH; i++)

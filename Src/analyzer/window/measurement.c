@@ -88,6 +88,7 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
                      SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10);
 
     //Draw mini-scan points
+    SMITH_ResetStartPoint();
     uint32_t i;
     int x, y;
     for (i = 0; i < 21; i++)
