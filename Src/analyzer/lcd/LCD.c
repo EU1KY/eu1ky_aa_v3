@@ -168,6 +168,11 @@ void LCD_InvertPixel(LCDPoint p)
     LCD_SetPixel(p, (c ^ 0x00FFFFFFul) | 0xFF000000ul);
 }
 
+void LCD_InvertLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
+    BSP_LCD_InvertLine(x1, y1, x2, y2);
+}
+
 void LCD_SetPixel(LCDPoint p, LCDColor color)
 {
     if (p.x >= LCD_GetWidth() || p.y >= LCD_GetHeight())

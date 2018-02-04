@@ -153,6 +153,9 @@ static void DrawCursor()
         float complex g = OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0));
         uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
         uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
+        //LCD_Line(LCD_MakePoint(cx0, cy0), LCD_MakePoint(x, y), LCD_COLOR_RED);
+        LCD_InvertLine(cx0, cy0, x, y);
+        /*
         p = LCD_MakePoint(x, y);
         LCD_InvertPixel(p);
         p.x -=1;
@@ -164,6 +167,7 @@ static void DrawCursor()
         LCD_InvertPixel(p);
         p.y += 2;
         LCD_InvertPixel(p);
+        */
     }
     else
     {

@@ -993,6 +993,74 @@ void BSP_LCD_DrawLine3(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
   }
 }
 
+void BSP_LCD_InvertLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
+  int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0,
+  yinc1 = 0, yinc2 = 0, den = 0, num = 0, num_add = 0, num_pixels = 0,
+  curpixel = 0;
+
+  deltax = ABS(x2 - x1);        /* The difference between the x's */
+  deltay = ABS(y2 - y1);        /* The difference between the y's */
+  x = x1;                       /* Start x off at the first pixel */
+  y = y1;                       /* Start y off at the first pixel */
+
+  if (x2 >= x1)                 /* The x-values are increasing */
+  {
+    xinc1 = 1;
+    xinc2 = 1;
+  }
+  else                          /* The x-values are decreasing */
+  {
+    xinc1 = -1;
+    xinc2 = -1;
+  }
+
+  if (y2 >= y1)                 /* The y-values are increasing */
+  {
+    yinc1 = 1;
+    yinc2 = 1;
+  }
+  else                          /* The y-values are decreasing */
+  {
+    yinc1 = -1;
+    yinc2 = -1;
+  }
+
+  if (deltax >= deltay)         /* There is at least one x-value for every y-value */
+  {
+    xinc1 = 0;                  /* Don't change the x when numerator >= denominator */
+    yinc2 = 0;                  /* Don't change the y for every iteration */
+    den = deltax;
+    num = deltax / 2;
+    num_add = deltay;
+    num_pixels = deltax;         /* There are more x-values than y-values */
+  }
+  else                          /* There is at least one y-value for every x-value */
+  {
+    xinc2 = 0;                  /* Don't change the x for every iteration */
+    yinc1 = 0;                  /* Don't change the y when numerator >= denominator */
+    den = deltay;
+    num = deltay / 2;
+    num_add = deltax;
+    num_pixels = deltay;         /* There are more y-values than x-values */
+  }
+
+  for (curpixel = 0; curpixel <= num_pixels; curpixel++)
+  {
+    uint32_t color = BSP_LCD_ReadPixel(x, y);
+    BSP_LCD_DrawPixel(x, y, (color ^ 0x00FFFFFFul) | 0xFF000000ul);   /* Draw the current pixel */
+    num += num_add;                            /* Increase the numerator by the top of the fraction */
+    if (num >= den)                           /* Check if numerator >= denominator */
+    {
+      num -= den;                             /* Calculate the new numerator value */
+      x += xinc1;                             /* Change the x as appropriate */
+      y += yinc1;                             /* Change the y as appropriate */
+    }
+    x += xinc2;                               /* Change the x as appropriate */
+    y += yinc2;                               /* Change the y as appropriate */
+  }
+}
+
 /**
   * @brief  Draws a rectangle.
   * @param  Xpos: X position
