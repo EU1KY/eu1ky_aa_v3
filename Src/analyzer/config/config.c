@@ -379,7 +379,6 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
     CFG_SetParam(CFG_PARAM_TDR_VF, 66);
-    CFG_SetParam(CFG_PARAM_TDR_VF, 66);
     CFG_SetParam(CFG_PARAM_THICK_LINES, 0);
 
     //Load parameters from file on SD card

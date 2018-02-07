@@ -153,31 +153,16 @@ static void DrawCursor()
         float complex g = OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0));
         uint32_t x = (uint32_t)roundf(cx0 + crealf(g) * 100.);
         uint32_t y = (uint32_t)roundf(cy0 - cimagf(g) * 100.);
-        //LCD_Line(LCD_MakePoint(cx0, cy0), LCD_MakePoint(x, y), LCD_COLOR_RED);
         LCD_InvertLine(cx0, cy0, x, y);
-        /*
-        p = LCD_MakePoint(x, y);
-        LCD_InvertPixel(p);
-        p.x -=1;
-        LCD_InvertPixel(p);
-        p.x += 2;
-        LCD_InvertPixel(p);
-        p.x -= 1;
-        p.y -=1;
-        LCD_InvertPixel(p);
-        p.y += 2;
-        LCD_InvertPixel(p);
-        */
     }
     else
     {
         //Draw cursor line as inverted image
-        p = LCD_MakePoint(X0 + cursorPos, Y0);
-        while (p.y < Y0 + WHEIGHT)
-        {
-            LCD_InvertPixel(p);
-            p.y++;
-        }
+        LCD_InvertPixel(LCD_MakePoint(X0 + cursorPos - 1, Y0 - 3));
+        LCD_InvertPixel(LCD_MakePoint(X0 + cursorPos + 1, Y0 - 3));
+        LCD_InvertLine(X0 + cursorPos, Y0 - 3, X0 + cursorPos, Y0 + WHEIGHT + 2);
+        LCD_InvertPixel(LCD_MakePoint(X0 + cursorPos - 1, Y0 + WHEIGHT + 2));
+        LCD_InvertPixel(LCD_MakePoint(X0 + cursorPos + 1, Y0 + WHEIGHT + 2));
     }
 }
 
