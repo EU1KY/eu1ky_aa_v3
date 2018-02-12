@@ -5,6 +5,7 @@
 	<Project>
 		<Option title="F7Discovery" />
 		<Option makefile="makefile" />
+		<Option makefile_is_custom="1" />
 		<Option compiler="armelfgcc" />
 		<Option extended_obj_names="1" />
 		<Build>

@@ -139,7 +139,7 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .type = CFG_PARAM_T_S16,
         .dstring = "Si5351 XTAL frequency correction, Hz",
         .isvalid = isShowHiddenSi,
-        .repeatdelay = 2,// WK
+        .repeatdelay = 20,// WK
     },
     {
         .id = CFG_PARAM_SI5351_MAX_FREQ,
@@ -348,7 +348,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_SYNTH_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SI5351_XTAL_FREQ, 27000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0x00);
-    CFG_SetParam(CFG_PARAM_SI5351_CORR, 0);
+    CFG_SetParam(CFG_PARAM_SI5351_CORR, 0);// only WK !!!
     CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0ul);
     CFG_SetParam(CFG_PARAM_R0, 50);
     CFG_SetParam(CFG_PARAM_OSL_RLOAD, 50);
@@ -742,6 +742,7 @@ void CFG_ParamWnd(void)
 
     TEXTBOX_CTX_t ctx = {0};
     pctx = &ctx;
+    TEXTBOX_InitContext(pctx);
 
     TEXTBOX_Append(pctx, &hbPrevParam);
     TEXTBOX_Append(pctx, &hbNextParam);

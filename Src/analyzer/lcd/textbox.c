@@ -7,9 +7,15 @@
 
 extern void Sleep(uint32_t);
 
+static uint8_t TEXTBOX_repeats;
+static  void* TEXTBOX_previous;
+
+
 void TEXTBOX_InitContext(TEXTBOX_CTX_t* ctx)
 {
     ctx->start = 0;
+    TEXTBOX_repeats=0;// 5 times slow, then rapid
+    TEXTBOX_previous=0;
 }
 
 TEXTBOX_t* TEXTBOX_Find(TEXTBOX_CTX_t *ctx, uint32_t idx)
@@ -153,8 +159,12 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
 uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
 {
     LCDPoint coord;
-    if (!TOUCH_Poll(&coord))
+
+    if (!TOUCH_Poll(&coord)){// no touch
+        TEXTBOX_previous=0;
+        TEXTBOX_repeats=0;
         return 0;
+    }
     TEXTBOX_t* pbox = ctx->start;
     while (pbox)
     {
@@ -178,12 +188,25 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                     }
                     else
                         pbox->cb();
-                        Sleep(500);// WK
                 }
                 if (pbox->nowait)
                 {
-                    Sleep(pbox->nowait);
-                    return 0;
+                    if(TEXTBOX_repeats<5){      //  WK
+                        TEXTBOX_previous=pbox;
+                        TEXTBOX_repeats++;
+                        Sleep(400);
+                        return 0;
+                    }
+                    if(pbox==TEXTBOX_previous){
+                        if(TEXTBOX_repeats>=5){
+                            Sleep(pbox->nowait);
+                            return 0;
+                        }
+                    }
+                }
+
+                else {
+                    Sleep(400); // WK
                 }
                 //Invert text colors while touch is pressed
                 LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));

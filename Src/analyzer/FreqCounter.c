@@ -31,6 +31,8 @@ TIM_ClockConfigTypeDef Tim5Clockdef;
 void InitMeasFrq(void){
 TimeFlag=0;
 MX_TIM5_Init();
+UB_TIMER2_Init_FRQ(1000); //1000 Hz
+UB_TIMER2_Start();
 }
 
 static void Error_Handler(void)
@@ -204,7 +206,7 @@ HAL_TIM_IC_Start(&htim5,4);
 }
 */
 /**********************************************call back function****************************************************************/
-/*
+
 void UB_TIMER2_ISR_CallBack()// frequency 1 kHz
 {
     // Get the Input Capture value
@@ -216,7 +218,7 @@ void UB_TIMER2_ISR_CallBack()// frequency 1 kHz
 
 
 }
-/**************************************************************************************************************/
+// *************************************************************************************************************
 //--------------------------------------------------------------
 // File     : stm32_ub_tim2.c
 // Datum    : 17.01.2016
@@ -247,7 +249,7 @@ void UB_TIMER2_ISR_CallBack()// frequency 1 kHz
 //--------------------------------------------------------------
 
 //--------------------------------------------------------------
-/*
+
 TIM_HandleTypeDef TIM2_Handle;
 uint32_t tim2_enable_flag=0;
 
@@ -373,4 +375,4 @@ void TIM2_IRQHandler(void)
     UB_TIMER2_ISR_CallBack();
   }
 }
-*/
+

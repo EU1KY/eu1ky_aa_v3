@@ -256,8 +256,8 @@ void GENERATOR_Window_Proc(void)
         }
     }
     redrawWindowCompl = 1;
-    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
 GENERATOR_REDRAW:
+    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
     if(redrawWindowCompl == 1){
         redrawWindowCompl = 0;
         LCD_FillAll(BackGrColor);
@@ -296,6 +296,7 @@ GENERATOR_REDRAW:
                     if (fChanged)
                     {
                         ShowF();
+                        GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_GEN_F));
                     }
                     speedcnt++;
                     if (speedcnt < 10)

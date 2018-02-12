@@ -68,7 +68,7 @@ int main(void)
     SystemClock_Config();
     BSP_LED_Init(LED1);
     LCD_Init();
-
+    InitMeasFrq(); // WK
     LCD_DrawBitmap(LCD_MakePoint(90, 24), logo_bmp, logo_bmp_size);
 
     TOUCH_Init();

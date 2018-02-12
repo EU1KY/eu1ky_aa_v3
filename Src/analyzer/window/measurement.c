@@ -29,10 +29,10 @@
 extern void Sleep(uint32_t ms);
 
 //==============================================================================
-static uint32_t rqExit = 0;
-static uint32_t redrawWindow = 0;
-static uint32_t fChanged = 0;
-static uint32_t isMatch = 0;
+static uint8_t MeasRqExit = 0;
+static uint8_t MeasRedrawWindow = 0;
+static uint8_t fChanged = 0;
+static uint8_t isMatch = 0;
 static uint32_t meas_maxstep = 500000;
 static float vswr500[100];
 static float complex zFine500[100] = { 0 };
@@ -61,11 +61,26 @@ static void ShowF()
     }
     LCD_FillRect(LCD_MakePoint(80, 38), LCD_MakePoint(214, 72), BackGrColor);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 36, str);// WK
+    GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
 }
+
+ void MeasureFrequency(void){
+ char strfreq[32];
+
+    if(TimeFlag>=999) {//test, if timer interrupt is working
+        TimeFlag=0;
+        seconds++;
+        sprintf(strfreq, "Frequ: %u kHz ", (unsigned int)(Timer5Value));
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 280, 230, strfreq);
+        sprintf(strfreq, "Runtime: %d s", seconds);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 280, 250, strfreq);
+    }
+ }
 
 void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
 {
-    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 2), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), BackGrColor);
+    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 2), LCD_MakePoint(LCD_GetWidth()-3, LCD_GetHeight()-3), BackGrColor);
+    float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     if (isMatch)
     { //Draw LC match
         X0 = X0 - R - 20;
@@ -96,18 +111,11 @@ void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
                 FONT_Print(FONT_FRAN, TextColor, BackGrColor, X0, Y0, "%s, %s, %s", strxps, strxs, strxpl);
                 Y0 += FONT_GetHeight(FONT_FRAN) + 4;
             }
-        /*    char strfreq[32];
 
-            if(TimeFlag>=999) {//test, if timer interrupt is working
-                TimeFlag=0;
-                seconds++;
-            }
-            sprintf(strfreq, "F: %u kHz %d", (unsigned int)(Timer5Value),seconds);
-            FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, X0, Y0, strfreq);*/
         }
         return;
     }
-    float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
+
     LCDColor sc = LCD_RGB(96, 96, 96);
     SMITH_DrawGrid(X0, Y0, R, Color2, BackGrColor, SMITH_R50 | SMITH_Y50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
                                      SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10);
@@ -137,7 +145,7 @@ void InitScan500(void){
 int i;
     for(i=0;i<100;i++){
         zFine500[i]=9999.f+0.fi;
-        vswr500[i]=9999.0;
+        vswr500[i]=9999.f;
     }
 }
 
@@ -146,7 +154,7 @@ void Scan500(int i, int k)
 {
 DSP_RX  RX;
     int fq = (int)CFG_GetParam(CFG_PARAM_MEAS_F) + (5*i+k - 50) * 10000;
-    if (fq > 0)
+    if (fq >= 500000)// f >= 500 kHz
     {
         GEN_SetMeasurementFreq(fq);
         Sleep(2);// was 10
@@ -156,11 +164,12 @@ DSP_RX  RX;
     }
     else
     {
-        vswr500[5*i+k] = 9999.0;
+        vswr500[5*i+k] = 9999.f;
     }
     LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+20), LCD_MakePoint(SCAN_ORIGIN_X + i * 10, SCAN_ORIGIN_Y+20), LCD_GREEN);
 }
 
+static float MeasMagDif;
 //Display measured data
 static void MeasurementModeDraw(DSP_RX rx)
 {
@@ -168,18 +177,23 @@ float r= crealf(rx);
 float im= cimagf(rx);
 float VSWR = DSP_CalcVSWR(rx);
 char str[50] = "";
-    sprintf(str, "Magnitude diff %.2f dB     ", DSP_MeasuredDiffdB());
+    MeasMagDif=DSP_MeasuredDiffdB();
+    sprintf(str, "Magnitude diff %.2f dB     ", MeasMagDif);
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 215, 38, str);// WK
-
     FONT_ClearHalfLine(FONT_FRANBIG,BackGrColor, 62);//WK
-    if (fabsf(r) >= 999.5f)
-        sprintf(str, "R: %.0fk ", r / 1000.f);
-    else if (fabsf(r) >= 199.5f)
-        sprintf(str, "R: %.0f ", r);
-    else
-        sprintf(str, "R: %.1f ", r);
+    if(MeasMagDif>10.5f){//         test value //WK
+       sprintf(str, "R: oo !! ");
+    }
+    else {
+        if (fabsf(r) >= 999.5f)
+            sprintf(str, "R:%.2f k ", r / 1000.f);
+        else if (fabsf(r) >= 99.5f)
+            sprintf(str, "R: %.0f ", r);
+        else
+            sprintf(str, "R: %.1f ", r);
+    }
     if (fabsf(im) > 999.5f)
-        sprintf(&str[strlen(str)], "X: %.0fk", im / 1000.f);
+        sprintf(&str[strlen(str)], "X:%.1f k", im / 1000.f);
     else if (fabsf(im) >= 199.5f)
         sprintf(&str[strlen(str)], "X: %.0f", im);
     else
@@ -252,12 +266,13 @@ static void MeasurementModeGraph(DSP_RX in)
                 p1=p2;
             }
         }
+        else if (idx==0)  p1=LCD_MakePoint(SCAN_ORIGIN_X -2, SCAN_ORIGIN_Y -9);
     }
 }
 
 static void MEASUREMENT_Exit(void)
 {
-    rqExit = 1;
+    MeasRqExit = 1;
 }
 
 static void FDecr(uint32_t step)
@@ -292,7 +307,7 @@ static void FIncr(uint32_t step)
     uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
     if(MeasurementFreq > step && MeasurementFreq % step != 0)
     {
-        MeasurementFreq -= (MeasurementFreq % step);
+        MeasurementFreq += (MeasurementFreq % step);
         CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
         fChanged = 1;
     }
@@ -341,7 +356,7 @@ static void MEASUREMENT_FIncr_500k(void)
 static void MEASUREMENT_SmithMatch(void)
 {
     isMatch = !isMatch;
-    redrawWindow=1;
+    MeasRedrawWindow=1;
     while(TOUCH_IsPressed());// WK
     Sleep(10);
 }
@@ -377,7 +392,7 @@ static void MEASUREMENT_Screenshot(void)
         SCREENSHOT_Save(fname);
 }
 
-static const struct HitRect hitArr[] =// Set frequency...
+static const struct HitRect MeasHitArr[] =// Set frequency...
 {
     //        x0,  y0, width, height, callback
     HITRECT(   0, 236,  80,  35, MEASUREMENT_Exit),
@@ -416,6 +431,10 @@ void MEASUREMENT_Proc(void)
  DSP_RX rx, rx0;
  int Cycles=0;
     DrawFine=0;
+    MeasRqExit = 0;
+    MeasRedrawWindow = 0;
+    fChanged = 0;
+    isMatch = 0;
     //Load saved middle frequency value from BKUP registers 2, 3
     //to MeasurementFreq
     while(TOUCH_IsPressed());
@@ -428,13 +447,6 @@ void MEASUREMENT_Proc(void)
         CFG_Flush();
     }
     SetColours();
-    rqExit = 0;
-    fChanged = 0;
-    isMatch = 0;
-    redrawWindow = 1;
-    i=0;
-
-
     FONT_Write(FONT_FRANBIG, LCD_WHITE, BackGrColor, 120, 60, "Measurement mode");
     if (-1 == OSL_GetSelected())
     {
@@ -451,19 +463,20 @@ void MEASUREMENT_Proc(void)
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 182, 250, "Save snapshot ");
 
     Sleep(1000);
-//    while(TOUCH_IsPressed()); WK
 
-    LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y-9), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), BackGrColor); // Graph rectangle
-    LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
+ //   LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y-9), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), BackGrColor); // Graph rectangle
+ //   LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
     firstRun=0;
     InitScan500();
-MEASUREMENT_REDRAW:
-     i=k=0;
+    ShowHitRect(MeasHitArr);
+    ShowIncDec();
+//MEASUREMENT_REDRAW:
+    for(;;){
+        MeasRedrawWindow = 0;
         LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y-9), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), BackGrColor); // Graph rectangle
         LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
         FONT_Write(FONT_FRAN, TextColor, BackGrColor, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 35, "VSWR (1.0 ... 12.0), F +/- 500 KHz, step 10:");
         ShowF();
-
         if (-1 == OSL_GetSelected())
         {
             FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 380, 54, "No OSL");// WK
@@ -492,101 +505,92 @@ MEASUREMENT_REDRAW:
 
         DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
         rx = DSP_MeasuredZ();
-    //    if(firstRun==0){
-            firstRun=1;
-            DrawSmallSmith(380, 180, 80, rx);
-    //    }
+
+        DrawSmallSmith(380, 180, 80, rx);
         MeasurementModeDraw(rx);
-        ShowHitRect(hitArr);
-        ShowIncDec();
-
+        if(MeasMagDif>=10.5f){
+            Sleep(1000);
+        }
     //Main window cycle
-    for(;;)
-    {
-        Scan500(i++,k);
-        if(i>=20) {
-            i=0;
-            k=(k+2)%5;//0 2 4 1 3 0...
-            MeasurementModeDraw(rx);
-            if(fabsf(crealf(rx)) < 999.5f){
-                BSP_LCD_SelectLayer(!activeLayer);
-                DrawSmallSmith(380, 180, 80, rx);
-                BSP_LCD_SelectLayer(!activeLayer);// WK
-                LCD_ShowActiveLayerOnly();
+        i=k=0;
+        while(!MeasRedrawWindow)
+        {
+            Scan500(i++,k);
+            if(i>=20) {
+                i=0;
+                k=(k+2)%5;//0 2 4 1 3 0...
+                MeasurementModeDraw(rx);
+                if(MeasMagDif<10.5f){
+                    BSP_LCD_SelectLayer(!activeLayer);
+                    DrawSmallSmith(380, 180, 80, rx);
+                    BSP_LCD_SelectLayer(!activeLayer);// WK
+                    LCD_ShowActiveLayerOnly();
+                    MeasurementModeGraph(rx);
+                }
+                else Sleep(1000);// open - nothing connected
             }
-            MeasurementModeGraph(rx);
-            ShowHitRect(hitArr);
-        }
 
-        DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
-        rx0 = DSP_MeasuredZ();
-        delta = fabsf(crealf(rx0)-crealf(rx));
-        delta+=fabsf(cimagf(rx0)-cimagf(rx));
-        delta=delta/crealf(rx0);
-        if(delta>0.06){
-            redrawWindow = 1;
-            InitScan500();
-            rx=rx0;
-        }
+            DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+            rx0 = DSP_MeasuredZ();
+            delta = fabsf(crealf(rx0)-crealf(rx));
+            delta+=fabsf(cimagf(rx0)-cimagf(rx));
+            delta=delta/(crealf(rx0)+crealf(rx));
+            if(delta>0.4){// was 0.06
+                MeasRedrawWindow = 1;
+                InitScan500();
+                rx=rx0;
+            }
 
-        if (DSP_MeasuredMagVmv() < 1.)
-        {
-            FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 380, 38, "No signal  ");// WK
-        }
-        else
-        {
-            FONT_Write(FONT_FRAN, Color1, BackGrColor, 380, 38, "Signal OK  ");// WK
-        }
-
-        if(!isMatch)
-            FONT_Write(FONT_FRAN, TextColor, BackGrColor, 292, 66, "LC match      ");
-        else
-            FONT_Write(FONT_FRAN, TextColor, BackGrColor, 292, 66, "Smith diagram ");
-        uint32_t speedcnt = 0;
-        meas_maxstep = 500000;
-        LCDPoint pt;
-        while (TOUCH_Poll(&pt))
-        {
-            HitTest(hitArr, pt.x, pt.y);
-            if (rqExit)
+            if (DSP_MeasuredMagVmv() < 1.)
             {
+                FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 380, 38, "No signal  ");// WK
+            }
+            else
+            {
+                FONT_Write(FONT_FRAN, Color1, BackGrColor, 380, 38, "Signal OK  ");// WK
+            }
+
+            if(!isMatch)
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 292, 66, "LC match      ");
+            else {
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 292, 66, "Smith diagram ");
+                MeasureFrequency();
+            }
+            uint32_t speedcnt = 0;
+            meas_maxstep = 500000;
+            LCDPoint pt;
+            while (TOUCH_Poll(&pt))
+            {
+                if(HitTest(MeasHitArr, pt.x, pt.y)==1){ //any button pressed?
+                    if (fChanged)
+                    {
+                        MeasRedrawWindow = 1;
+                        ShowF();
+                    }
+                    if (MeasRqExit+MeasRedrawWindow) break;
+                }
+                speedcnt++;
+                if (speedcnt < 20)
+                    Sleep(100);
+                else
+                    Sleep(30);
+                if (speedcnt > 50)
+                    meas_maxstep = 2000000;
+            }
+            if (MeasRqExit){
                 GEN_SetMeasurementFreq(0);
-               // while(TOUCH_IsPressed());
                 return;
             }
-            if (redrawWindow)
-            {
-                redrawWindow = 0;
-                goto MEASUREMENT_REDRAW;
-            }
+            speedcnt = 0;
+            meas_maxstep = 500000;
             if (fChanged)
             {
-                redrawWindow = 1;
-                ShowF();
+                MeasRedrawWindow = 1;
+                InitScan500();
+                CFG_Flush();
+                fChanged = 0;
             }
-            speedcnt++;
-            if (speedcnt < 20)
-                Sleep(100);
-            else
-                Sleep(30);
-            if (speedcnt > 50)
-                meas_maxstep = 2000000;
+            Sleep(5);
         }
-        speedcnt = 0;
-        meas_maxstep = 500000;
-
-        if (fChanged)
-        {
-            redrawWindow = 1;
-            InitScan500();
-            CFG_Flush();
-            fChanged = 0;
-        }
-        if (redrawWindow)
-            {
-                redrawWindow = 0;
-                goto MEASUREMENT_REDRAW;
-            }
-        Sleep(5);
     }
 }

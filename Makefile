@@ -1,6 +1,7 @@
 # This makefile to build firmware from command line in Windows
 # Before running make, ensure that path to arm-none-eabi-gcc is added to the system path, e.g. like this:
 # set PATH=d:\EmBitz\share\em_armgcc\bin\;%PATH%
+# set PATH=c:\Programme(x68)\EmBitz\share\em_armgcc\bin\;%PATH%
 
 CC      = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
