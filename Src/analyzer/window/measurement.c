@@ -42,6 +42,7 @@ static void ShowF()
 {
     char str[50];
     sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
+    LCD_WaitForRedraw();
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
 }
 
