@@ -42,7 +42,6 @@ static void ShowF()
 {
     char str[50];
     sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
-    LCD_WaitForRedraw();
     FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 0, 2, str);
 }
 
@@ -108,61 +107,37 @@ static void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
 }
 
 //Scan VSWR in +/- 500 kHz range around measurement frequency with 100 kHz step, to draw a small graph below the measurement
-static void Scan500(void)
+static int Scan500(void)
 {
-    static int32_t scan500_progress = 0;
-    int32_t fq = (int)CFG_GetParam(CFG_PARAM_MEAS_F) + (scan500_progress - 10) * 50000;
+    static int i = 0;
+    int fq = (int)CFG_GetParam(CFG_PARAM_MEAS_F) + (i - 10) * 50000;
     if (fq > 0)
     {
         GEN_SetMeasurementFreq(fq);
         Sleep(10);
         DSP_Measure(fq, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
-        z500[scan500_progress] = DSP_MeasuredZ();
-        vswr500[scan500_progress] = DSP_CalcVSWR(z500[scan500_progress]);
+        z500[i] = DSP_MeasuredZ();
+        vswr500[i] = DSP_CalcVSWR(z500[i]);
     }
     else
     {
-        vswr500[scan500_progress] = 9999.0;
+        vswr500[i] = 9999.0;
     }
-
-    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + scan500_progress * 10, SCAN_ORIGIN_Y), LCD_GREEN);
-    scan500_progress++;
-    if (scan500_progress == 21)
+    BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + i * 10, SCAN_ORIGIN_Y), LCD_GREEN);
+    BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + i * 10, SCAN_ORIGIN_Y), LCD_GREEN);
+    i++;
+    if (i == 21)
     {
-        scan500_progress = 0;
+        i = 0;
+        BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
         LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y), LCD_BLUE);
+        BSP_LCD_SelectLayer(!BSP_LCD_GetActiveLayer());
+        LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y), LCD_BLUE);
+        return 1;
     }
-}
-
-//Draw a small (100x20 pixels) VSWR graph for data collected by Scan500()
-static void MeasurementModeGraph(DSP_RX in)
-{
-    int idx = 0;
-    float prev = 3.0;
-    LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
-    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+100, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+100, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));  // Measurement frequency line
-    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+50, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+50, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));
-    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+150, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+150, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));
-    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y + 11), LCD_MakePoint(SCAN_ORIGIN_X+200, SCAN_ORIGIN_Y + 11), LCD_RGB(48, 48, 48));   // VSWR 2.0 line
-    for (idx = 0; idx <= 20; idx++)
-    {
-        float vswr;
-        if (idx == 10)
-            vswr = DSP_CalcVSWR(in); //VSWR at measurement frequency
-        else
-            vswr = vswr500[idx];
-
-        if (vswr > 3.0 || isnan(vswr) || isinf(vswr) || vswr < 1.0) //Graph limit is VSWR 3.0
-            vswr = 3.0;                                             //Including uninitialized values
-
-        if (idx > 0)
-        {
-            LCD_Line( LCD_MakePoint(SCAN_ORIGIN_X + (idx - 1) * 10, SCAN_ORIGIN_Y + 21 - ((int)(prev * 10) - 10)),
-                      LCD_MakePoint(SCAN_ORIGIN_X + idx * 10, SCAN_ORIGIN_Y + 21 - ((int)(vswr * 10) - 10)),
-                      LCD_YELLOW);
-        }
-        prev = vswr;
-    }
+    return 0;
 }
 
 //Display measured data
@@ -224,8 +199,37 @@ static void MeasurementModeDraw(DSP_RX rx)
     }
 
     DrawSmallSmith(380, 180, 80, rx);
-    MeasurementModeGraph(rx);
+}
 
+//Draw a small (100x20 pixels) VSWR graph for data collected by Scan500()
+static void MeasurementModeGraph(DSP_RX in)
+{
+    int idx = 0;
+    float prev = 3.0;
+    LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), LCD_RGB(0, 0, 48)); // Graph rectangle
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+100, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+100, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));  // Measurement frequency line
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+50, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+50, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X+150, SCAN_ORIGIN_Y+1), LCD_MakePoint(SCAN_ORIGIN_X+150, SCAN_ORIGIN_Y+21), LCD_RGB(48, 48, 48));
+    LCD_Line(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y + 11), LCD_MakePoint(SCAN_ORIGIN_X+200, SCAN_ORIGIN_Y + 11), LCD_RGB(48, 48, 48));   // VSWR 2.0 line
+    for (idx = 0; idx <= 20; idx++)
+    {
+        float vswr;
+        if (idx == 10)
+            vswr = DSP_CalcVSWR(in); //VSWR at measurement frequency
+        else
+            vswr = vswr500[idx];
+
+        if (vswr > 3.0 || isnan(vswr) || isinf(vswr) || vswr < 1.0) //Graph limit is VSWR 3.0
+            vswr = 3.0;                                             //Including uninitialized values
+
+        if (idx > 0)
+        {
+            LCD_Line( LCD_MakePoint(SCAN_ORIGIN_X + (idx - 1) * 10, SCAN_ORIGIN_Y + 21 - ((int)(prev * 10) - 10)),
+                      LCD_MakePoint(SCAN_ORIGIN_X + idx * 10, SCAN_ORIGIN_Y + 21 - ((int)(vswr * 10) - 10)),
+                      LCD_YELLOW);
+        }
+        prev = vswr;
+    }
 }
 
 static void MEASUREMENT_Exit(void)
@@ -450,7 +454,7 @@ MEASUREMENT_REDRAW:
     //Main window cycle
     for(;;)
     {
-        Scan500();
+        int scanres = Scan500();
         GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
         Sleep(10);
         DSP_Measure(CFG_GetParam(CFG_PARAM_MEAS_F), 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
@@ -461,6 +465,13 @@ MEASUREMENT_REDRAW:
 
         ShowF();
         MeasurementModeDraw(rx);
+        if (scanres)
+        {
+            BSP_LCD_SelectLayer(activeLayer);
+            MeasurementModeGraph(rx);
+            BSP_LCD_SelectLayer(!activeLayer);
+            MeasurementModeGraph(rx);
+        }
 
         if (DSP_MeasuredMagVmv() < 1.)
         {
