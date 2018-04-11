@@ -230,22 +230,22 @@ void OSL_CalErrCorr(void)
     LCD_FillAll(LCD_BLACK);
     while (TOUCH_IsPressed());
 
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 80, 0, "HW Error Correction Calibration");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 70, 0, "HW Error Correction Calibration");
     FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, 50, "Set jumper to HW calibration position and hit Start button");
 
     TEXTBOX_InitContext(&osl_ctx);
 
     TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = _hit_ex };
     TEXTBOX_Append(&osl_ctx, &hbEx);
 
     //Reusing hbScanShort
     hbScanShort = (TEXTBOX_t){.x0 = 100, .y0 = 120, .text = " Start HW calibration ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_RED, .bgcolor = LCD_RGB(64, 64, 64), .cb = _hit_err_scan };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(128, 0, 0), .cb = _hit_err_scan };
     hbScanShortIdx = TEXTBOX_Append(&osl_ctx, &hbScanShort);
 
     hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1,
-                                 .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+                                 .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK };
     hbScanProgressId = TEXTBOX_Append(&osl_ctx, &hbScanProgress);
 
     TEXTBOX_DrawContext(&osl_ctx);
