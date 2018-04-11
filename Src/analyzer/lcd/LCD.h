@@ -36,13 +36,21 @@ typedef uint32_t LCDColor;
 enum
 {
     LCD_BLACK = LCD_RGB(0, 0, 0),
+    LCD_DGRAY = LCD_RGB(64, 64, 64),
     LCD_GRAY = LCD_RGB(127, 127, 127),
+    LCD_LGRAY = LCD_RGB(192, 192, 192),
     LCD_RED = LCD_RGB(255, 0, 0),
+    LCD_DRED = LCD_RGB(127, 0, 0),
     LCD_GREEN = LCD_RGB(0, 255, 0),
+    LCD_DGREEN = LCD_RGB(0, 127, 0),
     LCD_BLUE = LCD_RGB(0, 0, 255),
+    LCD_DBLUE = LCD_RGB(0, 0, 127),
     LCD_YELLOW = LCD_RGB(255, 255, 0),
+    LCD_DYELLOW = LCD_RGB(127, 127, 0),
     LCD_PURPLE = LCD_RGB(255, 0, 255),
+    LCD_DPURPLE = LCD_RGB(127, 0, 127),
     LCD_CYAN = LCD_RGB(0, 255, 255),
+    LCD_DCYAN = LCD_RGB(0, 127, 127),
     LCD_WHITE = LCD_RGB(255, 255, 255)
 };
 
@@ -55,6 +63,9 @@ LCDPoint LCD_MakePoint(int x, int y);
 ///Make LCDColor from R, G and B components with function. See also
 ///LCD_RGB macro that does the same at compile time.
 LCDColor LCD_MakeRGB(uint8_t r, uint8_t g, uint8_t b);
+
+///Lighten a LCDColor by a factor of k (or darken if k < 1.0)
+LCDColor LCD_TintColor(LCDColor color, float k);
 
 ///Sets pixel at given point to given color
 void LCD_SetPixel(LCDPoint p, LCDColor color);
@@ -85,6 +96,13 @@ void LCD_Line(LCDPoint p1, LCDPoint p2, LCDColor c);
 
 ///Draw 3-pixel wide line between given points with given color
 void LCD_Line3(LCDPoint a, LCDPoint b, LCDColor color);
+
+///Draw a polyline connecting the given array of points with given color
+void LCD_PolyLine(LCDPoint* points, uint16_t pointCount, LCDColor c);
+
+///Draw a polygon consisting of the given array of points filled with the
+///given color
+void LCD_FillPolygon(LCDPoint* points, uint16_t pointCount, LCDColor c);
 
 ///Turn on LCD and backlight
 void LCD_TurnOn(void);

@@ -82,31 +82,31 @@ static void KeybHitCancelCb(void)
 //should be properly filled during the compile time
 static const TEXTBOX_t tb_keybd[] = {
     (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(0), .text = "1", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[1] },
     (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(0), .text = "2", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[2] },
     (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(0), .text = "3", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[3] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[3] },
     (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(1), .text = "4", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[4] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[4] },
     (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(1), .text = "5", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[5] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[5] },
     (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(1), .text = "6", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[6] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[6] },
     (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(2), .text = "7", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[7] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[7] },
     (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(2), .text = "8", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[8] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[8] },
     (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(2), .text = "9", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[9] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[9] },
     (TEXTBOX_t){ .x0 = KBDX(1), .y0 = KBDY(3), .text = "0", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[10] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = (void(*)(void))KeybHitCb, .cbparam = 1, .next = (void*)&tb_keybd[10] },
     (TEXTBOX_t){ .x0 = KBDX(2), .y0 = KBDY(3), .text = "<-", .font = FONT_FRANBIG, .width = KEYW, .height = KEYH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(200,0,0), .cb = KeybHitBackspaceCb, .next = (void*)&tb_keybd[11] },
-    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(4) + 4, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
-                 .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = KeybHitCancelCb, .next = (void*)&tb_keybd[12] },
-    (TEXTBOX_t){ .x0 = KBDX(0) + 110, .y0 = KBDY(4) + 4, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
-                 .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = KeybHitOKCb },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(200,0,0), .cb = KeybHitBackspaceCb, .next = (void*)&tb_keybd[11] },
+    (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(4) + 4, .text = "Cancel", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON, .center = 1, .width = 90, .height = 32,
+                 .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = KeybHitCancelCb, .next = (void*)&tb_keybd[12] },
+    (TEXTBOX_t){ .x0 = KBDX(0) + 110, .y0 = KBDY(4) + 4, .text = "OK", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON, .center = 1, .width = 90, .height = 32,
+                 .fgcolor = LCD_WHITE, .bgcolor = LCD_DGREEN, .cb = KeybHitOKCb },
 
 };
 #define KBDNUMKEYS (sizeof(tb_keybd) / sizeof(TEXTBOX_t))
@@ -121,7 +121,7 @@ uint32_t NumKeypad(uint32_t initial, uint32_t min_value, uint32_t max_value, con
     result = initial;
     edited = 0;
 
-    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, KBDX0, 0, header_text);
+    FONT_Write(FONT_FRAN, LCD_LGRAY, LCD_BLACK, KBDX0, 0, header_text);
     sprintf(txtbuf, "%u", initial);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, KBDX0, 17, txtbuf);
 

@@ -711,35 +711,35 @@ void CFG_ParamWnd(void)
     LCD_FillAll(LCD_BLACK);
     while (TOUCH_IsPressed());
 
-    FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 100, 0, "Configuration editor");
+    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 120, 0, "Configuration editor");
 
-    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 34, .text = " < Prev param ", .font = FONT_FRANBIG,
-                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev
+    TEXTBOX_t hbPrevParam = {.x0 = 10, .y0 = 50, .text = " < Prev param ", .font = FONT_FRANBIG,
+                             .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DCYAN, .cb = _hit_prev
                             };
-    TEXTBOX_t hbNextParam = {.x0 = 300, .y0 = 34, .text = " Next param > ", .font = FONT_FRANBIG,
-                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next
+    TEXTBOX_t hbNextParam = {.x0 = 301, .y0 = 50, .text = " Next param > ", .font = FONT_FRANBIG,
+                             .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DCYAN, .cb = _hit_next
                             };
-    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
-                      .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex
+    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Cancel ", .font = FONT_FRANBIG,
+                      .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = _hit_ex
                      };
     TEXTBOX_t hbSave = {.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG,
-                        .fgcolor = LCD_BLUE, .bgcolor = LCD_GREEN, .cb = _hit_save
+                        .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_DGREEN, .cb = _hit_save
                        };
 
-    TEXTBOX_t hbParamName = {.x0 = 10, .y0 = 70, .text = "    ", .font = FONT_FRANBIG,
-                             .fgcolor = LCD_GREEN, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
+    TEXTBOX_t hbParamName = {.x0 = 10, .y0 = 86, .text = "    ", .font = FONT_FRANBIG,
+                             .fgcolor = LCD_CYAN, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
                             };
-    TEXTBOX_t hbParamDescr = {.x0 = 10, .y0 = 110, .text = "    ", .font = FONT_FRAN,
-                              .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
+    TEXTBOX_t hbParamDescr = {.x0 = 10, .y0 = 121, .text = "    ", .font = FONT_FRAN,
+                              .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
                              };
-    TEXTBOX_t hbValue = {.x0 = 80, .y0 = 130, .text = "    ", .font = FONT_FRANBIG,
+    TEXTBOX_t hbValue = {.x0 = 80, .y0 = 156, .text = "    ", .font = FONT_FRANBIG,
                          .fgcolor = LCD_BLUE, .bgcolor = LCD_BLACK, .cb = 0, .nowait = 1
                         };
-    TEXTBOX_t hbPrevValue = {.x0 = 10, .y0 = 130, .text = "  <  ", .font = FONT_FRANBIG,
-                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_prev_value
+    TEXTBOX_t hbPrevValue = {.x0 = 10, .y0 = 156, .text = "  <  ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
+                             .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = _hit_prev_value
                             };
-    TEXTBOX_t hbNextValue = {.x0 = 400, .y0 = 130, .text = "  >  ", .font = FONT_FRANBIG,
-                             .fgcolor = LCD_BLACK, .bgcolor = LCD_RGB(128,128,128), .cb = _hit_next_value
+    TEXTBOX_t hbNextValue = {.x0 = 428, .y0 = 156, .text = "  >  ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
+                             .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = _hit_next_value
                             };
 
     TEXTBOX_CTX_t ctx = {0};

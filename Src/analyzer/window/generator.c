@@ -176,8 +176,8 @@ GENERATOR_REDRAW:
             LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
         }
 
-        FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-        FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 75, 250, "  Set frequency...  ");
+        FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DYELLOW, 0, 250, "    Exit    ");
+        FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DBLUE, 75, 250, "  Set frequency...  ");
         ShowF();
     }
 

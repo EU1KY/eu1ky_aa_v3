@@ -34,6 +34,7 @@
 extern void Sleep(uint32_t);
 
 static TEXTBOX_CTX_t main_ctx;
+static TEXTBOX_t hbTitle;
 static TEXTBOX_t hbHwCal;
 static TEXTBOX_t hbOslCal;
 static TEXTBOX_t hbConfig;
@@ -46,8 +47,8 @@ static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
 static TEXTBOX_t hbTDR;
 
-#define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
-#define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
+#define M_BGCOLOR LCD_RGB(0,0,127)    //Menu item background color
+#define M_FGCOLOR LCD_RGB(255,255,255) //Menu item foreground color
 
 #define COL1 10  //Column 1 x coordinate
 #define COL2 250 //Column 2 x coordinate
@@ -307,53 +308,66 @@ void MainWnd(void)
 
     //Create menu items and append to textbox context
 
+    hbTitle = (TEXTBOX_t) {.x0 = COL1, .y0 = 0, .text = " Main menu ", .font = FONT_FRANBIG,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+    TEXTBOX_Append(&main_ctx, &hbTitle);
+
     //HW calibration menu
-    hbHwCal = (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =    " HW Calibration  ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr };
+    hbHwCal = (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =    " HW Calibration  ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbHwCal);
 
     //OSL calibration menu
-    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " OSL Calibration ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd };
+    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 100, .text =  " OSL Calibration ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbOslCal);
 
     //Device configuration menu
-    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 120, .text = " Configuration  ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
+    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 150, .text = " Configuration  ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbConfig);
 
     //USB access
-    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 180, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
+    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 200, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbUSBD);
 
     //Panoramic scan window
     hbPan = (TEXTBOX_t){.x0 = COL2, .y0 =   0, .text =    " Panoramic scan ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc };
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbPan);
 
     //Measurement window
     hbMeas = (TEXTBOX_t){.x0 = COL2, .y0 =  50, .text =   " Measurement    ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Proc };
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbMeas);
 
     //Generator window
     hbGen  = (TEXTBOX_t){.x0 = COL2, .y0 = 100, .text =   " Generator      ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc };
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbGen);
 
     //DSP window
     hbDsp  = (TEXTBOX_t){.x0 = COL2, .y0 = 150, .text =   " DSP            ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc };
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbDsp);
 
     //TDR window
     hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Time Domain ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbTDR);
 
     hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+                            .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
     //Draw context
     TEXTBOX_DrawContext(&main_ctx);

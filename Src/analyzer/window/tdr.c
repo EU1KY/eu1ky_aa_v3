@@ -260,9 +260,9 @@ void TDR_Proc(void)
     LCD_ShowActiveLayerOnly();
 
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, "EU1KY AA v." AAVERSION " Time Domain Reflectometer mode");
-    FONT_Write(FONT_FRAN, LCD_GREEN, LCD_RGB(0, 0, 64), 0, 250, "    Exit    ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 400, 250, "  Scan  ");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_RGB(0, 64, 0), 190, 250, "  Save snapshot  ");
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DYELLOW, 0, 250, "    Exit    ");
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DCYAN, 400, 250, "  Scan  ");
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DBLUE, 190, 250, "  Save snapshot  ");
 
     TDR_DrawGrid();
     if (TDR_isScanned)
