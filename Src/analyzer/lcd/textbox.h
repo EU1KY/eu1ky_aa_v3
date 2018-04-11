@@ -11,11 +11,18 @@ typedef enum
     TEXTBOX_TYPE_HITRECT,  //Invisible hit rectangle
 } TEXTBOX_TYPE_t;
 
+typedef enum
+{
+    TEXTBOX_BORDER_NONE,    //Plain rectangle with no border
+    TEXTBOX_BORDER_SOLID,   //Rectangle with border
+    TEXTBOX_BORDER_BUTTON   //"Button style": Rounded border with raised effect
+} TEXTBOX_BORDER_t;
+
 #pragma pack(push,1)
 typedef struct
 {
     uint8_t type   : 3;  //TEXTBOX_TYPE_t
-    uint8_t border : 1;  //Set to 1 to draw border
+    uint8_t border : 3;  //TEXTBOX_BORDER_t
     uint8_t cbparam : 1; //Set to 1 to use callback with parameter
     uint8_t center : 1;  //Set to 1 to center text in the box with predefined width and height
     uint8_t nowait;      //Set to nonzero to bypass waiting for touch release and to return 0 from hit test func

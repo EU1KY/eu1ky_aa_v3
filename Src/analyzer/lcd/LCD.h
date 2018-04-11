@@ -56,6 +56,9 @@ LCDPoint LCD_MakePoint(int x, int y);
 ///LCD_RGB macro that does the same at compile time.
 LCDColor LCD_MakeRGB(uint8_t r, uint8_t g, uint8_t b);
 
+///Lighten a LCDColor by a factor of k (or darken if k < 1.0)
+LCDColor LCD_TintColor(LCDColor color, float k);
+
 ///Sets pixel at given point to given color
 void LCD_SetPixel(LCDPoint p, LCDColor color);
 
@@ -82,6 +85,13 @@ void LCD_HLine(LCDPoint p1, uint16_t lenght, LCDColor color);
 
 ///Draw line between given points with given color
 void LCD_Line(LCDPoint p1, LCDPoint p2, LCDColor c);
+
+///Draw a polyline connecting the given array of points with given color
+void LCD_PolyLine(LCDPoint* points, uint16_t pointCount, LCDColor c);
+
+///Draw a polygon consisting of the given array of points filled with the
+///given color
+void LCD_FillPolygon(LCDPoint* points, uint16_t pointCount, LCDColor c);
 
 ///Turn on LCD and backlight
 void LCD_TurnOn(void);

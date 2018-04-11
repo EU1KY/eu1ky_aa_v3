@@ -105,46 +105,80 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
     {
         if (TEXTBOX_TYPE_TEXT == pbox->type)
         {
-            if (0 != pbox->width)
+
+            int w = pbox->width;
+            int h = pbox->height;
+
+            // Calculate width and height if not given
+            if (0 == w)
             {
-                LCD_FillRect(LCD_MakePoint(pbox->x0, pbox->y0),
-                             LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
-                             pbox->bgcolor);
-            }
-            else
-            {
+                w = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                h = FONT_GetHeight(pbox->font);
+
                 if (IS_IN_RAM(pbox))
                 {
-                    pbox->width = FONT_GetStrPixelWidth(pbox->font, pbox->text);
-                    pbox->height = FONT_GetHeight(pbox->font);
+                    pbox->width = w;
+                    pbox->height = h;
                 }
             }
+
+            // Calculate our corners
+            int x0 = pbox->x0;
+            int y0 = pbox->y0;
+            int x1 = x0 + w;
+            int y1 = y0 + h;
+
+            // Draw the box in the appropriate border style
+            if (pbox->border == TEXTBOX_BORDER_NONE ||
+                pbox->border == TEXTBOX_BORDER_SOLID)
+            {
+                LCD_FillRect(LCD_MakePoint(x0, y0), LCD_MakePoint(x1, y1), pbox->bgcolor);
+
+                if (pbox->border == TEXTBOX_BORDER_SOLID)
+                {
+                    LCD_Rectangle(LCD_MakePoint(x0, y0), LCD_MakePoint(x1, y1),
+                                  pbox->fgcolor);
+                }
+            }
+            else if (pbox->border == TEXTBOX_BORDER_BUTTON)
+            {
+                LCDPoint outline[9];
+                int r = h <= 20 ? 2 : 3; // Rounded corner radius
+
+                outline[0] = LCD_MakePoint(x0 + r, y1);
+                outline[1] = LCD_MakePoint(x0, y1 - r);
+                outline[2] = LCD_MakePoint(x0, y0 + r);
+                outline[3] = LCD_MakePoint(x0 + r, y0);
+                outline[4] = LCD_MakePoint(x1 - r, y0);
+                outline[5] = LCD_MakePoint(x1, y0 + r);
+                outline[6] = LCD_MakePoint(x1, y1 - r);
+                outline[7] = LCD_MakePoint(x1 - r, y1);
+                outline[8] = LCD_MakePoint(x0 + r, y1);
+
+                LCD_FillPolygon(outline, 9, pbox->bgcolor);
+                LCD_PolyLine(outline, 6, LCD_TintColor(pbox->bgcolor, 1.5));
+                LCD_PolyLine(outline + 5, 4, LCD_TintColor(pbox->bgcolor, 0.6));
+            }
+
+            // Draw the text
             if (pbox->center && pbox->width && pbox->height)
             {
-                int h = FONT_GetHeight(pbox->font);
-                int w = FONT_GetStrPixelWidth(pbox->font, pbox->text);
-                int x = (int)pbox->x0 + (int)pbox->width / 2  - w / 2;
-                int y = (int)pbox->y0 + (int)pbox->height / 2  - h / 2;
-                FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, x, y, pbox->text);
+                h = FONT_GetHeight(pbox->font);
+                w = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                x0 += (int)pbox->width / 2 - w / 2;
+                y0 += (int)pbox->height / 2 - h / 2;
             }
-            else
-                FONT_Write(pbox->font, pbox->fgcolor, pbox->bgcolor, pbox->x0, pbox->y0, pbox->text);
-            if (pbox->border)
-            {
-                LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
-                              LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
-                              pbox->fgcolor);
-            }
+            FONT_Write(pbox->font, pbox->fgcolor, 0, x0, y0, pbox->text);
         }
         else if (TEXTBOX_TYPE_BMP == pbox->type)
         {
             LCD_DrawBitmap(LCD_MakePoint(pbox->x0, pbox->y0), pbox->bmp, pbox->bmpsize);
-            if (pbox->border)
+            if (pbox->border == TEXTBOX_BORDER_SOLID)
             {
                 LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
                               LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
                               pbox->fgcolor);
-            }
+            } //TODO else if (pbox->border == TEXTBOX_BORDER_BUTTON)
         }
         pbox = pbox->next;
     }

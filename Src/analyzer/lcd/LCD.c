@@ -146,6 +146,36 @@ LCDColor LCD_MakeRGB(uint8_t r, uint8_t g, uint8_t b)
     return LCD_RGB(r, g, b);
 }
 
+// Algorithm from https://stackoverflow.com/questions/141855/programmatically-lighten-a-color/141943#141943
+LCDColor LCD_TintColor(LCDColor color, float k)
+{
+    float threshold = 255.999;
+
+    uint8_t ri = color >> 16;
+    uint8_t gi = color >> 8;
+    uint8_t bi = color;
+
+    float r = ri * k;
+    float g = gi * k;
+    float b = bi * k;
+    float maxi = fmaxf(r, fmaxf(g, b));
+
+    if (maxi <= threshold)
+    {
+        return LCD_RGB(r, g, b);
+    }
+
+    float total = r + g + b;
+    if (total >= threshold * 3.0)
+    {
+        return LCD_RGB(threshold, threshold, threshold);
+    }
+
+    float x = (3.0 * threshold - total) / (3.0 * maxi - total);
+    float grey = threshold - x * maxi;
+    return LCD_RGB(grey + r * x, grey + g * x, grey + b * x);
+}
+
 LCDPoint LCD_MakePoint(int x, int y)
 {
     if (x < 0) x = 0;
@@ -180,6 +210,52 @@ void LCD_Rectangle(LCDPoint a, LCDPoint b, LCDColor c)
     c |= 0xFF000000ul;
     BSP_LCD_SetTextColor(c);
     BSP_LCD_DrawRect(a.x, a.y, b.x - a.x + 1, b.y - a.y + 1);
+}
+
+void LCD_PolyLine(LCDPoint* points, uint16_t pointCount, LCDColor color)
+{
+    if (pointCount < 2)
+        return;
+
+    LCDPoint lcd_points[pointCount];
+
+    for (int i = 0; i < pointCount; i++)
+    {
+        lcd_points[i].x = points[i].x;
+        lcd_points[i].y = points[i].y;
+        if (lcd_points[i].x >= LCD_GetWidth())
+            lcd_points[i].x = LCD_GetWidth() - 1;
+        if (lcd_points[i].y >= LCD_GetHeight())
+            lcd_points[i].y = LCD_GetHeight() - 1;
+    }
+
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+
+    for (int i = 1; i < pointCount; i++)
+    {
+        BSP_LCD_DrawLine(lcd_points[i-1].x, lcd_points[i-1].y,
+                         lcd_points[i].x, lcd_points[i].y);
+    }
+}
+
+void LCD_FillPolygon(LCDPoint* points, uint16_t pointCount, LCDColor color)
+{
+    Point lcd_points[pointCount];
+
+    for (int i = 0; i < pointCount; i++)
+    {
+        lcd_points[i].X = points[i].x;
+        lcd_points[i].Y = points[i].y;
+        if (lcd_points[i].X >= LCD_GetWidth())
+            lcd_points[i].X = LCD_GetWidth() - 1;
+        if (lcd_points[i].Y >= LCD_GetHeight())
+            lcd_points[i].Y = LCD_GetHeight() - 1;
+    }
+
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+    BSP_LCD_FillPolygon(lcd_points, pointCount);
 }
 
 void LCD_Line(LCDPoint a, LCDPoint b, LCDColor color)
