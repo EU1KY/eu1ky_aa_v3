@@ -235,13 +235,13 @@ void OSL_CalErrCorr(void)
 
     TEXTBOX_InitContext(&osl_ctx);
 
-    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG,
+    TEXTBOX_t hbEx = {.x0 = 10, .y0 = 220, .text = " Exit ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = _hit_ex };
     TEXTBOX_Append(&osl_ctx, &hbEx);
 
     //Reusing hbScanShort
     hbScanShort = (TEXTBOX_t){.x0 = 100, .y0 = 120, .text = " Start HW calibration ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DRED, .cb = _hit_err_scan };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(192, 0, 0), .cb = _hit_err_scan };
     hbScanShortIdx = TEXTBOX_Append(&osl_ctx, &hbScanShort);
 
     hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1,
