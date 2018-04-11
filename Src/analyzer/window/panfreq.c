@@ -114,9 +114,9 @@ static const TEXTBOX_t tb_pan[] = {
                  .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0, 0, 80), .cb = (void(*)(void))BandHitCb, .cbparam = 1, .next = (void*)&tb_pan[26] },
 
     (TEXTBOX_t){ .x0 = 370, .y0 =238, .text = "OK", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON, .center = 1, .width = 90, .height = 32,
-                 .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = OKHitCb, .next = (void*)&tb_pan[27] },
+                 .fgcolor = LCD_WHITE, .bgcolor = LCD_DGREEN, .cb = OKHitCb, .next = (void*)&tb_pan[27] },
     (TEXTBOX_t){ .x0 = 20, .y0 = 238, .text = "Cancel", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON, .center = 1, .width = 90, .height = 32,
-                 .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = CancelHitCb, .next = (void*)&tb_pan[28] },
+                 .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = CancelHitCb, .next = (void*)&tb_pan[28] },
 
     (TEXTBOX_t){ .x0 = 5, .y0 = 5, .text = "-10", .font = FONT_FRAN, .width = 46, .height = 36, .center = 1,
                  .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(96,96,96), .cb = (void(*)(void))M10HitCb, .cbparam = 1, .next = (void*)&tb_pan[29] },
