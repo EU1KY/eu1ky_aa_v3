@@ -54,6 +54,7 @@ static void progress_cb(uint32_t new_percent)
 
 static void _hb_scan_short(void)
 {
+    hbScanProgress.y0 = 50;
     progressval = 100;
     progress_cb(0);
 
@@ -64,7 +65,10 @@ static void _hb_scan_short(void)
     shortScanned = 1;
     hbScanShort.bgcolor = LCD_RGB(0, 128, 0);
     if (shortScanned && openScanned && loadScanned)
+    {
         hbSave.bgcolor = LCD_RGB(0, 128, 0);
+        hbSave.fgcolor = LCD_WHITE;
+    }
     progresstxt[0] = '\0';
     TEXTBOX_SetText(&osl_ctx, hbScanProgressId, progresstxt);
     TEXTBOX_DrawContext(&osl_ctx);
@@ -72,6 +76,7 @@ static void _hb_scan_short(void)
 
 static void _hb_scan_open(void)
 {
+    hbScanProgress.y0 = 150;
     progressval = 100;
     progress_cb(0);
 
@@ -82,7 +87,10 @@ static void _hb_scan_open(void)
     openScanned = 1;
     hbScanOpen.bgcolor = LCD_RGB(0, 128, 0);
     if (shortScanned && openScanned && loadScanned)
+    {
         hbSave.bgcolor = LCD_RGB(0, 128, 0);
+        hbSave.fgcolor = LCD_WHITE;
+    }
     progresstxt[0] = '\0';
     TEXTBOX_SetText(&osl_ctx, hbScanProgressId, progresstxt);
     TEXTBOX_DrawContext(&osl_ctx);
@@ -90,6 +98,7 @@ static void _hb_scan_open(void)
 
 static void _hb_scan_load(void)
 {
+    hbScanProgress.y0 = 100;
     progressval = 100;
     progress_cb(0);
 
@@ -100,7 +109,10 @@ static void _hb_scan_load(void)
     loadScanned = 1;
     hbScanLoad.bgcolor = LCD_RGB(0, 128, 0);
     if (shortScanned && openScanned && loadScanned)
+    {
         hbSave.bgcolor = LCD_RGB(0, 128, 0);
+        hbSave.fgcolor = LCD_WHITE;
+    }
     progresstxt[0] = '\0';
     TEXTBOX_SetText(&osl_ctx, hbScanProgressId, progresstxt);
     TEXTBOX_DrawContext(&osl_ctx);
@@ -134,27 +146,35 @@ void OSL_CalWnd(void)
 
     TEXTBOX_InitContext(&osl_ctx);
 
-    static char shortvalue[50];
-    sprintf(shortvalue, " Scan short: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_RSHORT));
-    static char loadvalue[50];
-    sprintf(loadvalue, " Scan load: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_RLOAD));
-    static char openvalue[50];
+    static char shortstr[50];
+    sprintf(shortstr, " Short: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_RSHORT));
+    int scan_x = FONT_GetStrPixelWidth(FONT_FRANBIG, shortstr);
+    static char loadstr[50];
+    sprintf(loadstr, " Load: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_RLOAD));
+    scan_x = FONT_GetStrPixelWidth(FONT_FRANBIG, loadstr) > scan_x ? FONT_GetStrPixelWidth(FONT_FRANBIG, loadstr) : scan_x;
+    static char openstr[50];
     if (CFG_GetParam(CFG_PARAM_OSL_ROPEN) < 10000)
-        sprintf(openvalue, " Scan open: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_ROPEN));
+        sprintf(openstr, " Open: %d Ohm ", (int)CFG_GetParam(CFG_PARAM_OSL_ROPEN));
     else
-        strcpy(openvalue, " Scan open: infinite ");
+        strcpy(openstr, " Open: infinite ");
+    scan_x = FONT_GetStrPixelWidth(FONT_FRANBIG, openstr) > scan_x ? FONT_GetStrPixelWidth(FONT_FRANBIG, openstr) : scan_x;
+    scan_x += 20;
 
-    hbEx = (TEXTBOX_t){.x0 = 10, .y0 = 220, .text = " Cancel and exit ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = _hit_ex };
-    hbScanShort = (TEXTBOX_t){.x0 = 10, .y0 = 50, .text = shortvalue, .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_RGB(64,64,64), .cb = _hb_scan_short };
-    hbScanLoad = (TEXTBOX_t){.x0 = 10, .y0 = 100, .text = loadvalue, .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_RGB(64,64,64), .cb = _hb_scan_load };
-    hbScanOpen = (TEXTBOX_t){.x0 = 10, .y0 = 150, .text = openvalue, .font = FONT_FRANBIG,
-                            .fgcolor = LCD_BLUE, .bgcolor = LCD_RGB(64,64,64), .cb = _hb_scan_open };
-    hbSave = (TEXTBOX_t){.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG,
+    FONT_Print(FONT_FRANBIG, LCD_LGRAY, LCD_BLACK, 10, 50, shortstr, (int)CFG_GetParam(CFG_PARAM_OSL_RSHORT));
+    FONT_Print(FONT_FRANBIG, LCD_LGRAY, LCD_BLACK, 10, 100, loadstr, (int)CFG_GetParam(CFG_PARAM_OSL_RLOAD));
+    FONT_Print(FONT_FRANBIG, LCD_LGRAY, LCD_BLACK, 10, 150, openstr, (int)CFG_GetParam(CFG_PARAM_OSL_ROPEN));
+
+    hbEx = (TEXTBOX_t){.x0 = 10, .y0 = 220, .text = " Cancel ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = _hit_ex };
+    hbScanShort = (TEXTBOX_t){.x0 = scan_x, .y0 = 50, .text = " Scan ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0,0,128), .cb = _hb_scan_short };
+    hbScanLoad = (TEXTBOX_t){.x0 = scan_x, .y0 = 100, .text = " Scan ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0,0,128), .cb = _hb_scan_load };
+    hbScanOpen = (TEXTBOX_t){.x0 = scan_x, .y0 = 150, .text = " Scan ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0,0,128), .cb = _hb_scan_open };
+    hbSave = (TEXTBOX_t){.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
                             .fgcolor = LCD_RGB(128,128,128), .bgcolor = LCD_RGB(64,64,64), .cb = _hit_save };
-    hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK };
+    hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1, .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK };
 
     TEXTBOX_Append(&osl_ctx, &hbEx);
     TEXTBOX_Append(&osl_ctx, &hbScanShort);
