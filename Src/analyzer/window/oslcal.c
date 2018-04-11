@@ -58,15 +58,15 @@ static void _hb_scan_short(void)
     progressval = 100;
     progress_cb(0);
 
-    hbScanShort.bgcolor = LCD_RGB(128, 128, 0);
+    hbScanShort.bgcolor = LCD_DYELLOW;
     TEXTBOX_DrawContext(&osl_ctx);
 
     OSL_ScanShort(progress_cb);
     shortScanned = 1;
-    hbScanShort.bgcolor = LCD_RGB(0, 128, 0);
+    hbScanShort.bgcolor = LCD_DGREEN;
     if (shortScanned && openScanned && loadScanned)
     {
-        hbSave.bgcolor = LCD_RGB(0, 128, 0);
+        hbSave.bgcolor = LCD_DGREEN;
         hbSave.fgcolor = LCD_WHITE;
     }
     progresstxt[0] = '\0';
@@ -80,15 +80,15 @@ static void _hb_scan_open(void)
     progressval = 100;
     progress_cb(0);
 
-    hbScanOpen.bgcolor = LCD_RGB(128, 128, 0);
+    hbScanOpen.bgcolor = LCD_DYELLOW;
     TEXTBOX_DrawContext(&osl_ctx);
 
     OSL_ScanOpen(progress_cb);
     openScanned = 1;
-    hbScanOpen.bgcolor = LCD_RGB(0, 128, 0);
+    hbScanOpen.bgcolor = LCD_DGREEN;
     if (shortScanned && openScanned && loadScanned)
     {
-        hbSave.bgcolor = LCD_RGB(0, 128, 0);
+        hbSave.bgcolor = LCD_DGREEN;
         hbSave.fgcolor = LCD_WHITE;
     }
     progresstxt[0] = '\0';
@@ -102,15 +102,15 @@ static void _hb_scan_load(void)
     progressval = 100;
     progress_cb(0);
 
-    hbScanLoad.bgcolor = LCD_RGB(128, 128, 0);
+    hbScanLoad.bgcolor = LCD_DYELLOW;
     TEXTBOX_DrawContext(&osl_ctx);
 
     OSL_ScanLoad(progress_cb);
     loadScanned = 1;
-    hbScanLoad.bgcolor = LCD_RGB(0, 128, 0);
+    hbScanLoad.bgcolor = LCD_DGREEN;
     if (shortScanned && openScanned && loadScanned)
     {
-        hbSave.bgcolor = LCD_RGB(0, 128, 0);
+        hbSave.bgcolor = LCD_DGREEN;
         hbSave.fgcolor = LCD_WHITE;
     }
     progresstxt[0] = '\0';
@@ -167,13 +167,13 @@ void OSL_CalWnd(void)
     hbEx = (TEXTBOX_t){.x0 = 10, .y0 = 220, .text = " Cancel ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_DYELLOW, .cb = _hit_ex };
     hbScanShort = (TEXTBOX_t){.x0 = scan_x, .y0 = 50, .text = " Scan ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0,0,128), .cb = _hb_scan_short };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = _hb_scan_short };
     hbScanLoad = (TEXTBOX_t){.x0 = scan_x, .y0 = 100, .text = " Scan ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0,0,128), .cb = _hb_scan_load };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = _hb_scan_load };
     hbScanOpen = (TEXTBOX_t){.x0 = scan_x, .y0 = 150, .text = " Scan ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0,0,128), .cb = _hb_scan_open };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DBLUE, .cb = _hb_scan_open };
     hbSave = (TEXTBOX_t){.x0 = 300, .y0 = 220, .text = " Save and exit ", .font = FONT_FRANBIG, .border = TEXTBOX_BORDER_BUTTON,
-                            .fgcolor = LCD_RGB(128,128,128), .bgcolor = LCD_RGB(64,64,64), .cb = _hit_save };
+                            .fgcolor = LCD_GRAY, .bgcolor = LCD_DGRAY, .cb = _hit_save };
     hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1, .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK };
 
     TEXTBOX_Append(&osl_ctx, &hbEx);
@@ -205,12 +205,12 @@ static void _hit_err_scan(void)
     progressval = 100;
     progress_cb(0);
 
-    hbScanShort.bgcolor = LCD_RGB(128, 128, 0);
+    hbScanShort.bgcolor = LCD_DYELLOW;
     TEXTBOX_DrawContext(&osl_ctx);
 
     OSL_ScanErrCorr(progress_cb);
 
-    hbScanShort.bgcolor = LCD_RGB(0, 128, 0);
+    hbScanShort.bgcolor = LCD_DGREEN;
     TEXTBOX_SetText(&osl_ctx, hbScanShortIdx, "  Success  ");
 
     progresstxt[0] = '\0';
@@ -241,7 +241,7 @@ void OSL_CalErrCorr(void)
 
     //Reusing hbScanShort
     hbScanShort = (TEXTBOX_t){.x0 = 100, .y0 = 120, .text = " Start HW calibration ", .font = FONT_FRANBIG,
-                            .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(128, 0, 0), .cb = _hit_err_scan };
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_DRED, .cb = _hit_err_scan };
     hbScanShortIdx = TEXTBOX_Append(&osl_ctx, &hbScanShort);
 
     hbScanProgress = (TEXTBOX_t){.x0 = 350, .y0 = 50, .text = progresstxt, .font = FONT_FRANBIG, .nowait = 1,
