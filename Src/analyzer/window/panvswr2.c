@@ -236,26 +236,26 @@ static void DrawAutoText(void)
 {
     static const char* atxt = "  Auto (fast, 1/8 pts)  ";
     if (0 == autofast)
-        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 255), LCD_MakeRGB(64, 64, 64), 250, Y0 + WHEIGHT + 16 + 16,  atxt);
+        FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DGRAY, 250, Y0 + WHEIGHT + 16 + 16,  atxt);
     else
-        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 255), LCD_MakeRGB(0, 128, 0), 250, Y0 + WHEIGHT + 16 + 16,  atxt);
+        FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DGREEN, 250, Y0 + WHEIGHT + 16 + 16,  atxt);
 }
 
 static void DrawSaveText(void)
 {
     static const char* txt = "  Save snapshot  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_BLUE, LCD_YELLOW, 120,
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DBLUE, 120,
                Y0 + WHEIGHT + 16 + 16, txt);
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DYELLOW, 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DCYAN, 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
 }
 
 static void DrawSavingText(void)
 {
     static const char* txt = "  Saving snapshot...  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLUE, 120,
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DGRAY, 120,
                Y0 + WHEIGHT + 16 + 16, txt);
     Sleep(20);
 }
@@ -264,10 +264,10 @@ static void DrawSavedText(void)
 {
     static const char* txt = "  Snapshot saved  ";
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, Y0 + WHEIGHT + 16 + 16);
-    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 120,
+    FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DGREEN, 120,
                Y0 + WHEIGHT + 16 + 16, txt);
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-    FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DYELLOW, 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DCYAN, 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
     DrawAutoText();
 }
 
@@ -976,8 +976,8 @@ static void RedrawWindow()
     }
     else
     {
-        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+        FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DYELLOW, 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+        FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DCYAN, 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
         DrawAutoText();
     }
 }
@@ -1095,8 +1095,8 @@ void PANVSWR2_Proc(void)
         else
             RedrawWindow();
 
-        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
-        FONT_Print(FONT_FRAN, LCD_MakeRGB(255, 255, 0), LCD_MakeRGB(0, 0, 128), 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
+        FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DYELLOW, 5, Y0 + WHEIGHT + 16 + 16, "  Exit  ");
+        FONT_Print(FONT_FRAN, LCD_WHITE, LCD_DCYAN, 400, Y0 + WHEIGHT + 16 + 16, "  Scan  ");
         DrawAutoText();
     }
 
