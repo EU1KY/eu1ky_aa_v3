@@ -82,10 +82,10 @@ static void calc_lo(float R0, float complex ZL, MATCH_S *pResult)
 uint32_t MATCH_Calc(float complex ZL, MATCH_S *pResult)
 {
     float vswr = DSP_CalcVSWR(ZL);
-    if (vswr <= 1.1f || vswr >= 50.f)
-        return 0; //Don't calculate for low and too high VSWR
-
     float R0 = (float)CFG_GetParam(CFG_PARAM_R0);
+
+    if ((vswr <= 1.1f) || (crealf(ZL) < 0.5) || ((cimagf(ZL) / crealf(ZL)) > 100.f))
+        return 0; //Don't calculate for low VSWR, too low R, or for Q > 100
 
     if ((crealf(ZL) > (0.91f * R0)) && (crealf(ZL) < (1.1f * R0)))
     {//Only one solution is enough: just a serial reactance, this gives SWR < 1.1 if R is within the range 0.91 .. 1.1 of R0

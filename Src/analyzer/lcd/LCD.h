@@ -94,6 +94,9 @@ void LCD_HLine(LCDPoint p1, uint16_t lenght, LCDColor color);
 ///Draw line between given points with given color
 void LCD_Line(LCDPoint p1, LCDPoint p2, LCDColor c);
 
+///Draw 3-pixel wide line between given points with given color
+void LCD_Line3(LCDPoint a, LCDPoint b, LCDColor color);
+
 ///Draw a polyline connecting the given array of points with given color
 void LCD_PolyLine(LCDPoint* points, uint16_t pointCount, LCDColor c);
 
@@ -116,6 +119,8 @@ void LCD_BacklightOff(void);
 
 ///Invert color of display pixel
 void LCD_InvertPixel(LCDPoint p);
+
+void LCD_InvertLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 
 void LCD_InvertRect(LCDPoint p1, LCDPoint p2);
 

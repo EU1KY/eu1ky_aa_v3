@@ -110,7 +110,7 @@ static void TDR_Scan(void)
     float max = -9999999.f;
     for (i = 0; i < NUMTDRSAMPLES*2; i++)
     {
-        time_domain[i] * KBD_td_factor; //Normalization to compensate windowing
+        time_domain[i] *= KBD_td_factor; //Normalization to compensate windowing
         float d = fabs(time_domain[i]);
         if (d > max)
         {

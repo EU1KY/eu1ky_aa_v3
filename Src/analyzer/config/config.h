@@ -63,6 +63,7 @@ typedef enum
     CFG_PARAM_SI5351_MAX_FREQ,       //Maximum frequency that Si5351 can output, Hz (160 MHz by default, but some samples can reliably provide 200 MHz)
     CFG_PARAM_SI5351_CAPS,           //Si5351a crystal capacitors setting
     CFG_PARAM_TDR_VF,                //Velocity factor for TDR, % (1..100)
+    CFG_PARAM_THICK_LINES,           //Enable thick lines on graphs and Smith chart
 
     //---------------------
     CFG_NUM_PARAMS

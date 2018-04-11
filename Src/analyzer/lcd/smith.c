@@ -195,7 +195,10 @@ void SMITH_DrawG(float complex G, LCDColor color)
     }
     else
     {
-        LCD_Line(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
+        if (CFG_GetParam(CFG_PARAM_THICK_LINES))
+            LCD_Line3(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
+        else
+            LCD_Line(LCD_MakePoint(centerx + lastxoffset, centery + lastyoffset), LCD_MakePoint(centerx + xoffset, centery + yoffset), color);
     }
     lastxoffset = xoffset;
     lastyoffset = yoffset;

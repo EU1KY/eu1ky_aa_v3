@@ -315,6 +315,16 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .repeatdelay = 100,
     },
     {
+        .id = CFG_PARAM_THICK_LINES,
+        .idstring = "THICK LINES",
+        .dstring = "Draw thick lines on graphs",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 2,
+        .values = CFG_IARR(0, 1),
+        .isvalid = isShowHidden,
+        .strvalues = CFG_SARR("No", "Yes"),
+    },
+    {
         .id = CFG_PARAM_SHOW_HIDDEN,
         .idstring = "SHOW_HIDDEN",
         .type = CFG_PARAM_T_U32,
@@ -369,6 +379,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
     CFG_SetParam(CFG_PARAM_TDR_VF, 66);
+    CFG_SetParam(CFG_PARAM_THICK_LINES, 0);
 
     //Load parameters from file on SD card
     FRESULT res;

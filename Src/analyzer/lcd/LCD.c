@@ -198,6 +198,11 @@ void LCD_InvertPixel(LCDPoint p)
     LCD_SetPixel(p, (c ^ 0x00FFFFFFul) | 0xFF000000ul);
 }
 
+void LCD_InvertLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
+    BSP_LCD_InvertLine(x1, y1, x2, y2);
+}
+
 void LCD_SetPixel(LCDPoint p, LCDColor color)
 {
     if (p.x >= LCD_GetWidth() || p.y >= LCD_GetHeight())
@@ -272,6 +277,21 @@ void LCD_Line(LCDPoint a, LCDPoint b, LCDColor color)
     BSP_LCD_SetTextColor(color);
     BSP_LCD_DrawLine(a.x, a.y, b.x, b.y);
 } //LCD_Line
+
+void LCD_Line3(LCDPoint a, LCDPoint b, LCDColor color)
+{
+    if (a.x >= LCD_GetWidth())
+        a.x = LCD_GetWidth() - 1;
+    if (b.x >= LCD_GetWidth())
+        b.x = LCD_GetWidth() - 1;
+    if (a.y >= LCD_GetHeight())
+        a.y = LCD_GetHeight() - 1;
+    if (b.y >= LCD_GetHeight())
+        b.y = LCD_GetHeight() - 1;
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+    BSP_LCD_DrawLine3(a.x, a.y, b.x, b.y);
+} //LCD_Line3
 
 void LCD_VLine(LCDPoint a, uint16_t lenght, LCDColor color)
 {
