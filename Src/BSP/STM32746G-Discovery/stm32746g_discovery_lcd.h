@@ -132,6 +132,7 @@ typedef enum
   * @brief  LCD FB_StartAddress
   */
 #define LCD_FB_START_ADDRESS       ((uint32_t)0xC0000000)
+#define LCD_FB_SDRAM_BANK_SIZE     ((uint32_t)0x00200000)
 
 /**
   * @brief  LCD color

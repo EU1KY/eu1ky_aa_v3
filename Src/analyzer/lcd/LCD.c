@@ -63,8 +63,9 @@ void LCD_Init(void)
     BSP_LCD_Init();
 
     // Initialize LCD
-    BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
-    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4));
+    // Framebuffers must be in separate SDRAM banks to prevent LTDC data starvation
+    BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);                         // In SDRAM Bank 0, lonely
+    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS + LCD_FB_SDRAM_BANK_SIZE); // In SDRAM Bank 1, lonely
 
     // Enable LCD
     BSP_LCD_DisplayOn();

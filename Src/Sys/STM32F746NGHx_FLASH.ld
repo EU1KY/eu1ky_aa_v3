@@ -36,7 +36,7 @@ ENTRY(Reset_Handler)
 /* _estack = 0x2004FFFF; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x8000; /* required amount of heap */
-_SDRAM_HEAP_SIZE = 0x200000; /* required amount of SDRAM heap (2 MiB) */
+_SDRAM_HEAP_SIZE = 0x180000; /* required amount of SDRAM heap. Must be agreed with definition in sdram_heap.c */
 _Min_Stack_Size = 0x8000;  /* required amount of stack */
 
 /* Specify the memory areas */
@@ -44,7 +44,9 @@ MEMORY
 {
 FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 1024K
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K     /* DTCM is at the first 64K only, the rest is accessed via AHB */
-SDRAM (rw)     : ORIGIN = 0xC00FF000, LENGTH = 0x701000 /* SDRAM part available to user, behind LCD framebuffers */
+SDRAM (rw)     : ORIGIN = 0xC0400000, LENGTH = 0x00400000  /* SDRAM part available to user - SDRAM banks 2, 3. */
+                                                           /* LCD framebuffers are lonely in separate banks 0 and 1. */
+                                                           /* Do not reuse banks 0 and 1 to prevent LTDC data starvation! */
 }
 
 /* Define output sections */
