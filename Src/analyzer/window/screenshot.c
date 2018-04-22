@@ -16,6 +16,7 @@
 #include <complex.h>
 #include <string.h>
 
+#include "config.h"
 #include "LCD.h"
 #include "touch.h"
 #include "ff.h"
@@ -25,6 +26,7 @@
 #include "stm32746g_discovery_lcd.h"
 #include "keyboard.h"
 #include "lodepng.h"
+#include "mainwnd.h"
 
 extern void Sleep(uint32_t);
 
@@ -32,7 +34,6 @@ static const TCHAR *SNDIR = "/aa/snapshot";
 static uint32_t oldest = 0xFFFFFFFFul;
 static uint32_t numfiles = 0;
 
-#define SCREENSHOT_FILE_SIZE 391734
 uint8_t __attribute__((section (".user_sdram"))) __attribute__((used)) bmpFileBuffer[SCREENSHOT_FILE_SIZE];
 
 static const uint8_t bmp_hdr[] =
@@ -53,6 +54,72 @@ static const uint8_t bmp_hdr[] =
     0x00, 0x00, 0x00, 0x00, // colours
     0x00, 0x00, 0x00, 0x00  //important colours
 };
+static const char *g_logo_fpath1 = "/aa/logo.bmp";
+
+static const char *g_logo_fpath2 = "/aa/logo.png";
+
+int32_t ShowLogo(void){
+
+uint32_t br = 0;
+unsigned w,h, result1;
+int i, type=0;
+FRESULT res;
+FIL fo = { 0 };
+FILINFO finfo;
+DIR dir = { 0 };
+FILINFO fno = { 0 };
+uint8_t* OutBuf=0;
+
+    res = f_open(&fo, g_logo_fpath1, FA_READ);
+    if (FR_OK == res) {
+            type=1;//bmp
+    }
+
+    else
+    {
+        res = f_open(&fo, g_logo_fpath2, FA_READ);
+        if(res==FR_OK){
+            type=2;// png
+        }
+        else{
+
+        Sleep(1000);
+        }
+    }
+    if(type==0) {
+        return -1;
+    }
+    if(type==1){
+        res = f_read(&fo, bmpFileBuffer, SCREENSHOT_FILE_SIZE, &br);
+        f_close(&fo);
+        if (FR_OK != res)
+            return -1;// no logo file found
+        if (br != SCREENSHOT_FILE_SIZE || FR_OK != res)
+            return -1;
+        LCD_DrawBitmap(LCD_MakePoint(0,0), bmpFileBuffer, SCREENSHOT_FILE_SIZE);
+        return 0;
+    }
+    else{
+        res = f_read(&fo, bmpFileBuffer, fo.fsize, &br);
+        if(res!=0){
+            f_close(&fo);
+            return -1;
+        }
+        else{
+            result1=lodepng_decode24(&OutBuf, &w, &h, bmpFileBuffer, fo.fsize);
+            f_close(&fo);
+            if(result1==0){
+               PixPict((480-w)/2,(272-h)/2,&OutBuf[0]);
+               lodepng_free(OutBuf);
+            }
+            else {
+                return -1;
+            }
+        }
+    }
+    return 0;
+ }
+
 
 
 //This is the prototype of the function that draws a screenshot from a file on SD card,
@@ -65,6 +132,10 @@ void SCREENSHOT_Show(const char* fname)
     char path[255];
     while(TOUCH_IsPressed());
     sprintf(path, "%s/%s.bmp", SNDIR, fname);
+
+    FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 0, 0, path);// TEST WK
+    Sleep(500);
+
     FIL fo = { 0 };
     FRESULT fr = f_open(&fo, path, FA_READ);
     if (FR_OK != fr)
@@ -81,12 +152,70 @@ void SCREENSHOT_Show(const char* fname)
     while (TOUCH_IsPressed())
         Sleep(50);
 }
+extern int  Page;
+extern uint16_t Pointer;
+extern TCHAR  fileNames[13][13];
+static DWORD  FileLength[12];
+
+int16_t SCREENSHOT_SelectFileNames(int fileNoMin)
+{
+    f_mkdir(SNDIR);
+
+    //Scan dir for snapshot files
+    DIR dir = { 0 };
+    FILINFO fno = { 0 };
+    FRESULT fr = f_opendir(&dir, SNDIR);
+    int i,j, fileNoMax;
+    fileNoMax=0;
+
+    if (fr == FR_OK)
+    {
+        for (j=0;j<fileNoMin+12;)//*Page;)
+        {
+            fr = f_readdir(&dir, &fno); //Iterate through the directory
+            if (fr != FR_OK || !fno.fname[0])
+                break; //Nothing to do
+            if (_FS_RPATH && fno.fname[0] == '.')
+                continue; //bypass hidden files
+            if (fno.fattrib & AM_DIR)
+                continue; //bypass subdirs
+
+            const char *pdot = strchr(fno.fname, (int)'.');
+            if (0 == pdot)
+                continue;
+            if (0 != strcasecmp(pdot, ".bmp") && 0 != strcasecmp(pdot, ".png"))
+                continue; //Bypass files that are not bmp or png
+            if(j>=fileNoMin){// only show and store the last 12 files
+                strcpy((char*) &fileNames[j%12][0], fno.fname);
+                FileLength[j%12]=fno.fsize;
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 32+16*(j%12), fno.fname);
+                fileNoMax++;
+            }
+            j++;
+            Pointer++;
+
+        }
+        f_closedir(&dir);
+    }
+    else
+    {
+        char error1[64];
+        sprintf(error1, "error %s %d", SNDIR, fr);
+        FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 0, 0, error1);
+        return -1;
+        //CRASHF("Failed to open directory %s  %d", path, fr);
+    }
+
+
+    return fileNoMax;
+}
 
 char* SCREENSHOT_SelectFileName(void)
 {
     static char fname[64];
     char path[128];
     uint32_t dfnum = 0;
+    uint32_t retVal;
 
     f_mkdir(SNDIR);
 
@@ -145,7 +274,8 @@ char* SCREENSHOT_SelectFileName(void)
     dfnum = fmax + 1;
     sprintf(fname, "%08u", dfnum);
 
-    KeyboardWindow(fname, 8, "Select screenshot file name");
+    if(KeyboardWindow(fname, 8, "Enter the file name")==0)
+        fname[0]='\0';
     return fname;
 }
 
@@ -273,4 +403,102 @@ void SCREENSHOT_SavePNG(const char *fname)
     lodepng_free(png);
     _Change_B_R((uint32_t*)image);
     LCD_Pop();
+}
+
+extern unsigned lodepng_decode32(unsigned char** out, unsigned* w, unsigned* h,
+                          const unsigned char* in, size_t insize);
+
+static unsigned char* inBuf;
+static unsigned char InBuf[8000];
+
+void SCREENSHOT_ShowPicture(uint16_t Pointer1)
+{
+char path[255];
+char FileName[13];
+char error1[64];
+int8_t i;
+unsigned w,h,result1;
+uint8_t* OutBuf=0; //&bmpFileBuffer[0];
+
+    while(TOUCH_IsPressed());
+    strcpy(FileName,(char*) &fileNames[Pointer1][0]);// *********************************
+    sprintf(path, "%s/%s", SNDIR, (char*) &fileNames[Pointer1][0]);
+
+    FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 200, 0, path);
+    Sleep(1500);
+
+    FIL fo = { 0 };
+
+    FRESULT fr = f_open(&fo, path, FA_READ);
+
+    if (FR_OK != fr)
+        return;
+    uint32_t br = 0;
+    const char *pdot = strchr(path, (int)'.');
+
+    if (0 == strcasecmp(pdot, ".bmp"))
+    {
+        fr = f_read(&fo, bmpFileBuffer, SCREENSHOT_FILE_SIZE, &br);
+        f_close(&fo);
+
+    if (br != SCREENSHOT_FILE_SIZE || FR_OK != fr)
+        return;
+    LCD_DrawBitmap(LCD_MakePoint(0,0), bmpFileBuffer, SCREENSHOT_FILE_SIZE);
+    }
+
+    else if(0 == strcasecmp(pdot, ".png")){
+        fr = f_read(&fo, bmpFileBuffer, fo.fsize, &br);
+        if(fr!=0){
+            sprintf(error1, "error3  %d", fr);
+            FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 400, 0, error1);
+        }
+        else{
+
+            result1=lodepng_decode24(&OutBuf, &w, &h, bmpFileBuffer, fo.fsize);
+            f_close(&fo);
+
+            if(result1==0){
+               PixPict(0,0,&OutBuf[0]);
+               lodepng_free(OutBuf);
+            }
+            else {
+
+                sprintf(error1, "error4  %d", result1);
+                FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 400, 0, error1);
+            }
+        }
+
+    }
+    LCD_FillRect(LCD_MakePoint(0, 267),LCD_MakePoint(479, 271), LCD_COLOR_BLACK);
+    while (!TOUCH_IsPressed())
+        Sleep(50);
+    LCD_FillAll(LCD_BLACK);
+  //  while (TOUCH_IsPressed())
+        Sleep(50);
+}
+
+void SCREENSHOT_DeleteFile(uint16_t Pointer1){
+static char path[32];
+static LCDPoint pt;
+char FileName[13];
+
+    while(TOUCH_IsPressed());
+    strcpy(FileName,(char*) &fileNames[Pointer1][0]);// *********************************
+    sprintf(path, "%s/%s", SNDIR, (char*) &fileNames[Pointer1][0]);
+
+
+     FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 200, 0, "delete ?? : ");
+     FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 280, 0, &path[0]);
+
+     while (!TOUCH_IsPressed()) Sleep(50);
+     if (TOUCH_Poll(&pt))
+        {
+            if ((pt.y >230)&&(pt.x>380))
+            {
+                 f_unlink(path);
+
+            }
+
+        }
+    LCD_FillRect(LCD_MakePoint(200, 0),LCD_MakePoint(479,30), LCD_COLOR_BLACK);
 }

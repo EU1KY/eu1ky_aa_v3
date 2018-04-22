@@ -36,7 +36,7 @@ extern float rfft_output[NSAMPLES];
 extern const float complex *prfft;
 extern float windowfunc[NSAMPLES];
 
-static void ShowF(void)
+static void ShowF1(void)
 {
     char str[50];
     sprintf(str, "F: %u kHz        ", (unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000));
@@ -208,7 +208,7 @@ void FFTWND_Proc(void)
             HitTest(hitArr, pt.x, pt.y);
             if (fChanged1)
             {
-                ShowF();
+                ShowF1();
                 Sleep(70);
                 continue;
             }
@@ -244,7 +244,7 @@ void FFTWND_Proc(void)
                 LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
                 LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
             }
-            ShowF();
+            ShowF1();
         }
 
         uint32_t tmstart = HAL_GetTick();

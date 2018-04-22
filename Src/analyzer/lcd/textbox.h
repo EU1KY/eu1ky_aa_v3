@@ -34,6 +34,7 @@ typedef struct
     uint32_t fgcolor;  //Foreground color for TEXTBOX_TYPE_TEXT type
     uint32_t bgcolor;  //Background color for TEXTBOX_TYPE_TEXT type
     void (*cb)(void);  //Callback function to be called when textbox is tapped
+ //   uint16_t val;            // Callback value  WK
     uint16_t width;    //Filled automatically for TEXTBOX_TYPE_TEXT type
     uint16_t height;   //Filled automatically for TEXTBOX_TYPE_TEXT type
     void *next;        //Filled automatically in TEXTBOX_Append

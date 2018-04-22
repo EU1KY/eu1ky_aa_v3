@@ -40,7 +40,7 @@ static void P001HitCb(void);// WK
 static void BSPrevHitCb(void);
 static void BSNextHitCb(void);
 
-static uint32_t rqExit = 0;
+static uint32_t PanrqExit = 0;
 static uint8_t rqDel = 0;
 static uint8_t CurPos;
 static uint32_t _f1;
@@ -120,9 +120,9 @@ static const TEXTBOX_t tb_pan[] = {
     (TEXTBOX_t){ .x0 = BANDKEYX(4), .y0 = BANDKEYY(2), .text = "70cm", .font = FONT_FRAN, .width = BANDKEYW, .height = BANDKEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(0, 0, 100), .cb = (void(*)(void))BandHitCb, .cbparam = 1, .next = (void*)&tb_pan[27] },
 
-    (TEXTBOX_t){ .x0 = 386, .y0 =2, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
+    (TEXTBOX_t){ .x0 = 386, .y0 =2, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 38,
                  .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = OKHitCb, .next = (void*)&tb_pan[28] },
-    (TEXTBOX_t){ .x0 = 6, .y0 = 2, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
+    (TEXTBOX_t){ .x0 = 6, .y0 = 2, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 38,
                  .fgcolor = LCD_BLACK, .bgcolor = LCD_YELLOW, .cb = CancelHitCb, .next = (void*)&tb_pan[29] },
 
     (TEXTBOX_t){ .x0 = 5, .y0 = 234, .text = "-10 M", .font = FONT_FRAN, .width = 46, .height = 36, .center = 1,
@@ -192,7 +192,7 @@ static void Show_F(void)
 
 static void BSPrevHitCb(void)
 {
-    if (_bs == BS200)
+    if (_bs == BS2)// ** WK **
     {
         _bs = BS80M;
         if (!IsValidRange())
@@ -206,7 +206,7 @@ static void BSPrevHitCb(void)
 static void BSNextHitCb(void)
 {
     if (_bs == BS80M)
-        _bs = BS200;
+        _bs = BS2;// ** WK **
     else
     {
         _bs += 1;
@@ -296,7 +296,7 @@ static void P001HitCb(void)// WK
 
 static void OKHitCb(void)
 {
-    rqExit = 1;
+    PanrqExit = 1;
     if (IsValidRange())
         update_allowed = true;
 }
@@ -304,7 +304,7 @@ static void OKHitCb(void)
 static void CancelHitCb(void)
 {
     rqDel = 1;// WK
-    rqExit = 1;
+    PanrqExit = 1;
 }
 
 static void LeftHitCb(void) // WK
@@ -435,7 +435,7 @@ bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
 {
     LCD_Push(); //Store current LCD bitmap
     LCD_FillAll(LCD_BLACK);
-    rqExit = 0;
+    PanrqExit = 0;
     rqDel = 0;// WK
     CurPos=3;
     _f1 = *pFkhz;
@@ -459,7 +459,7 @@ bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
         {
             Sleep(50);
         }
-        if (rqExit)
+        if (PanrqExit)
         {
             if (update_allowed && (_f1 != *pFkhz || _bs != *pBs))
             {

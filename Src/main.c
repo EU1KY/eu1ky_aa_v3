@@ -17,6 +17,7 @@
 #include "gen.h"
 #include "keyboard.h"
 #include "bitmaps/bitmaps.h"
+#include "screenshot.h"
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -60,6 +61,7 @@ void Sleep(uint32_t nms)
 __attribute__((aligned(32))) FATFS SDFatFs;  // File system object for SD card logical drive
 char SDPath[4];        // SD card logical drive path
 
+
 int main(void)
 {
     MPU_Config();
@@ -68,10 +70,9 @@ int main(void)
     SystemClock_Config();
     BSP_LED_Init(LED1);
     LCD_Init();
-    InitMeasFrq(); // WK
-    LCD_DrawBitmap(LCD_MakePoint(90, 24), logo_bmp, logo_bmp_size);
 
-    TOUCH_Init();
+    InitMeasFrq(); // WK
+
     SPI2_Init();
 
     Sleep(300);
@@ -82,6 +83,10 @@ int main(void)
     if (f_mount(&SDFatFs, (TCHAR const*)SDPath, 0) != FR_OK)
         CRASH("f_mount failed");
 
+    if (ShowLogo()==-1)// no logo.bmp or logo.png file found:
+        LCD_DrawBitmap(LCD_MakePoint(90, 24), logo_bmp, logo_bmp_size);// show original logo
+    Sleep (3000);
+    TOUCH_Init();
     CFG_Init(); //Load configuration
 
     GEN_Init(); //Initialize frequency synthesizer (only after CFG_Init())

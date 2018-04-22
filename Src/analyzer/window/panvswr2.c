@@ -28,6 +28,8 @@
 #include "panvswr2.h"
 #include "panfreq.h"
 #include "smith.h"
+#include "textbox.h"
+#include "generator.h"
 
 #define X0 51
 #define Y0 18
@@ -58,20 +60,19 @@
 #define SMOOTHOFS_HI (SMOOTHWINDOW_HI/2)
 #define SM_INTENSITY 64
 extern uint8_t rqDel;
-
-void Sleep(uint32_t nms);
+extern void ShowF(void);
 
 typedef enum
 {
     GRAPH_VSWR, GRAPH_RX, GRAPH_SMITH, GRAPH_S11
 } GRAPHTYPE;
 
-typedef struct
+/*typedef struct
 {
     uint32_t flo;
     uint32_t fhi;
 } HAM_BANDS;
-
+*/
 static const HAM_BANDS hamBands[] =
 {
     {1800ul,  2000ul},
@@ -96,10 +97,10 @@ static const int32_t smithradius = 100;
 static const char *modstr = "EU1KY AA v." AAVERSION " ";
 
 static uint32_t modstrw = 0;
-
-const char* BSSTR[] = {"200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz", "80 MHz"};
-const char* BSSTR_HALF[] = {"100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz", "40 MHz"};
-const uint32_t BSVALUES[] = {200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000, 80000};
+// ** WK ** :
+const char* BSSTR[] = {"2 kHz","5 kHz","10  kHz","25 kHz","50 kHz","100 kHz","200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz", "80 MHz"};
+const char* BSSTR_HALF[] = {"1 kHz","2,5 kHz","5 kHz","12,5 kHz","25 kHz","50 kHz","100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz", "40 MHz"};
+const uint32_t BSVALUES[] = {2,5,10,25,50,100,200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000, 80000};
 
 static uint32_t f1 = 14000; //Scan range start frequency, in kHz
 static BANDSPAN span = BS800;
@@ -112,14 +113,61 @@ static GRAPHTYPE grType = GRAPH_VSWR;
 static uint32_t isSaved = 0;
 static uint32_t cursorChangeCount = 0;
 static uint32_t autofast = 0;
+static int loglog=0;// scale for SWR
 extern volatile uint32_t autosleep_timer;
 
 static void DrawRX();
 static void DrawSmith();
 static float complex SmoothRX(int idx, int useHighSmooth);
+static TEXTBOX_t SWR_ctx;
+void SWR_Exit(void);
+static void SWR_2(void);
+void SWR_Mute(void);
+static void SWR_3(void);
+void SWR_SetFrequency(void);
 
-static uint32_t fr[5]  = {0,0,27800,3670,0};//Multi SWR frequencies in kHz
-static uint32_t bw[5]  = {200,800,200,400,200};//Multi SWR bandwidth in kHz
+#define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
+#define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
+
+static const TEXTBOX_t tb_menuSWR[] = {
+    (TEXTBOX_t){.x0 = 70, .y0 = 210, .text =    "Frequency", .font = FONT_FRANBIG,.width = 120, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_SetFrequency , .cbparam = 1, .next = (void*)&tb_menuSWR[1] },
+   (TEXTBOX_t){.x0 = 280, .y0 = 210, .text =  "SWR_2", .font = FONT_FRANBIG,.width = 100, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_2 , .cbparam = 1, .next = (void*)&tb_menuSWR[2] },
+    (TEXTBOX_t){.x0 = 380, .y0 = 210, .text =  "SWR_3", .font = FONT_FRANBIG,.width = 96, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_3 , .cbparam = 1, .next = (void*)&tb_menuSWR[3] },
+    (TEXTBOX_t){.x0 = 190, .y0 = 210, .text =  "Mute", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_Mute , .cbparam = 1, .next = (void*)&tb_menuSWR[4] },
+    (TEXTBOX_t){ .x0 = 0, .y0 = 210, .text = "Exit", .font = FONT_FRANBIG, .width = 70, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
+};
+
+static uint32_t fr[5]  = {0,0,27800,3670,7150};//Multi SWR frequencies in kHz
+static uint32_t bw[5]  = {200,800,200,400,100};//Multi SWR bandwidth in kHz
+
+unsigned long GetUpper(int i){
+return 1000*hamBands[i].fhi;
+}
+unsigned long GetLower(int i){
+return 1000*hamBands[i].flo;
+}
+
+int GetBandNr(unsigned long freq){
+int i, found=0;
+    for(i=0;i<=12;i++){
+        if(GetLower(i)>=freq){
+            found=1;
+            i--;
+            break;
+        }
+    }
+    if(found==1){
+        if(GetUpper(i)>=freq)
+            return i;
+    }
+    if((GetLower(12)<=freq)&&(GetUpper(12)>=freq)) return 12;
+    return -1;// not in a Ham band
+}
 
 static void WK_InvertPixel(LCDPoint p){
 LCDColor    c;
@@ -513,29 +561,59 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
 
     if (drawSwr == 1)
     {
-        //Draw SWR grid and labels
-        static const float swrs[]  = { 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10., 13., 16., 20.};
-        static const char labels[] = { 1,  0,   0,   0,    0,   1,  1,   0,  1,  1,  1,  0,  1,  0,  0,   1,   1,   1,   1 };
-        static const int nswrs = sizeof(swrs) / sizeof(float);
-        for (i = 0; i < nswrs; i++)
-        {
-            int yofs = swroffset(swrs[i]);
-            if (labels[i])
+        if(loglog==0){
+            //Draw SWR grid and labels
+            static const float swrs[]  = { 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10., 13., 16., 20.};
+            static const char labels[] = { 1,  0,   0,   0,    0,   1,  1,   0,  1,  1,  1,  0,  1,  0,  0,   1,   1,   1,   1 };
+            static const int nswrs = sizeof(swrs) / sizeof(float);
+            for (i = 0; i < nswrs; i++)
             {
-                char s[10];
-                if((int)(10*swrs[i])%10==0){// WK
-                   if(swrs[i]>9.0)
-                    sprintf(s, "%d", (int)swrs[i]);
-                   else
-                    sprintf(s, " % d", (int)swrs[i]);
+                int yofs = swroffset(swrs[i]);
+                if (labels[i])
+                {
+                    char s[10];
+                    if((int)(10*swrs[i])%10==0){// WK
+                       if(swrs[i]>9.0)
+                        sprintf(s, "%d", (int)swrs[i]);
+                       else
+                        sprintf(s, " % d", (int)swrs[i]);
+                    }
+                    else
+                        sprintf(s, "%.1f", swrs[i]);
+                   // FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 15, WY(yofs) - 2, s);
+                    FONT_Write(FONT_FRAN, TextColor, BackGrColor, X0 - 21, WY(yofs) - 12, s);
                 }
-                else
-                    sprintf(s, "%.1f", swrs[i]);
-               // FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 15, WY(yofs) - 2, s);
-                FONT_Write(FONT_FRAN, TextColor, BackGrColor, X0 - 21, WY(yofs) - 12, s);
+                LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
             }
-            LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
         }
+        else{
+            static const float swrsl[]  = { 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10., 13., 16., 20.};
+            static const char labelsl[] = { 1,  1,   1,   0,    0,   1,  1,   0,  1,  0,  1,  0,  0,  0,  0,   1,   0,   0,   1 };
+            static const int nswrsl = sizeof(swrsl) / sizeof(float);
+            for (i = 0; i < nswrsl; i++)
+            {
+                int yofs = swroffset(14*log10f(swrsl[i])+1);
+                if (labelsl[i])
+                {
+                    char s[10];
+                    if((int)(10*swrsl[i])%10==0){// WK
+                       if(swrsl[i]>9.0)
+                        sprintf(s, "%d", (int)swrsl[i]);
+                       else
+                        sprintf(s, " % d", (int)swrsl[i]);
+                    }
+                    else
+                        sprintf(s, "%.1f", swrsl[i]);
+                   // FONT_Write(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, X0 - 15, WY(yofs) - 2, s);
+                    FONT_Write(FONT_FRAN, TextColor, BackGrColor, X0 - 21, WY(yofs) - 12, s);
+                }
+                LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
+            }
+        }
+        LCD_FillRect((LCDPoint){0 ,0},(LCDPoint){X0 -22,60},TextColor);
+        FONT_Write(FONT_FRAN, BackGrColor, TextColor, 1, 5, "Log");
+        if(loglog==1)
+            FONT_Write(FONT_FRAN, BackGrColor, TextColor, 1, 35, "Log");
     }
     LCD_FillRect((LCDPoint){X0 ,Y0+WHEIGHT+1},(LCDPoint){X0 + WWIDTH+2,Y0+WHEIGHT+3},BackGrColor);
 }
@@ -722,23 +800,36 @@ static void DrawVSWR(void)
     int lastoffset = 0;
     int lastoffset_sm = 0;
     int i;
+    float swr_float, swr_float_sm;//** WK **
+    int offset_log, offset_log_sm;
+    int offset;// = swroffset(swr_float);
+    int offset_sm;
     for(i = 0; i <= WWIDTH; i++)
     {
-        int offset = swroffset(DSP_CalcVSWR(values[i]));
-        int offset_sm = swroffset(DSP_CalcVSWR(SmoothRX(i,  f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0)));
+        swr_float=DSP_CalcVSWR(values[i]);
+        swr_float_sm = DSP_CalcVSWR(SmoothRX(i,  f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0));
+        offset_log=14*log10f(swr_float)+1;
+        if(loglog==1){
+            offset=swroffset(offset_log);
+            offset_sm=swroffset(14*log10f(swr_float_sm)+1);
+        }
+        else{
+            offset=swroffset(swr_float);
+            offset_sm=swroffset(swr_float_sm);
+        }
         int x = X0 + i;
-        if(WY(offset)>MinSWR) {
-            MinSWR=WY(offset);
+        if(WY(offset_sm)>MinSWR) {//offset
+            MinSWR=WY(offset_sm);
             MinIndex=i;
         }
         if(i == 0)
         {
-            LCD_SetPixel(LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY, 0));
+           // LCD_SetPixel(LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY, 0));
             LCD_SetPixel(LCD_MakePoint(x, WY(offset_sm)), CurvColor);// LCD_GREEN WK
         }
         else
         {
-            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY,0));
+         //   LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(offset)), LCD_RGB(0, SM_INTENSITY,0));
             LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(offset_sm)), CurvColor);// LCD_GREEN
             if(FatLines){
                 LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)-1), LCD_MakePoint(x, WY(offset_sm)-1), CurvColor);
@@ -1133,6 +1224,9 @@ static void save_snapshot(void)
     DrawSavingText();
 
     fname = SCREENSHOT_SelectFileName();
+
+    if(strlen(fname)==0) return;
+
     SCREENSHOT_DeleteOldest();
     if (CFG_GetParam(CFG_PARAM_SCREENSHOT_FORMAT))
         SCREENSHOT_SavePNG(fname);
@@ -1352,6 +1446,186 @@ if (PanFreqWindow(&f1, &span))
     return f1;
 }
 
+static bool  rqExitSWR;
+static uint8_t SWRLimit;
+
+void SWR_Exit(void){
+rqExitSWR=true;
+}
+
+void SWR_Mute(void){
+    if(AUDIO!=0)
+    AUDIO=0;
+    else AUDIO=1;
+}
+
+static void SWR_2(void){
+    if(SWRLimit==3) LCD_Rectangle((LCDPoint){380, 210}, (LCDPoint){476, 244}, 0xffffff00);//yellow
+    if(SWRLimit==2) {
+        SWRLimit=1;
+        LCD_Rectangle((LCDPoint){280, 210}, (LCDPoint){380, 244}, 0xffffff00);
+    }
+    else {
+        SWRLimit=2;
+        LCD_Rectangle((LCDPoint){280, 210}, (LCDPoint){380, 244}, 0xffff0000);
+    }
+    while(TOUCH_IsPressed());
+    Sleep(50);
+}
+
+static void SWR_3(void){
+    if(SWRLimit==2) LCD_Rectangle((LCDPoint){280, 210}, (LCDPoint){380, 244}, 0xffffff00);
+    if(SWRLimit==3){
+        SWRLimit=1;
+        LCD_Rectangle((LCDPoint){380, 210}, (LCDPoint){476, 244}, 0xffffff00);
+    }
+    else {
+        SWRLimit=3;
+        LCD_Rectangle((LCDPoint){380, 210}, (LCDPoint){476, 244}, 0xffff0000);// red
+    }
+    while(TOUCH_IsPressed());
+    Sleep(50);
+}
+
+static void ShowFr(void)
+{
+    char str[20];
+    uint8_t i,j;
+    unsigned int freq=(unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000);
+    sprintf(str, "F: %u kHz  ", freq);
+    if(freq>999){// WK
+        for(i=3;i<10;i++){
+            if(str[i]==' ') break;// search space before "kHz"
+        }
+        for(j=i+3;j>i-4;j--){
+           str[j+1]=str[j];
+        }
+        str[i-3]='.';
+        str[i+5]=0;
+    }
+    LCD_FillRect(LCD_MakePoint(0, 60), LCD_MakePoint(200,115), BackGrColor);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 60, str);// WK
+}
+
+static uint32_t fxs = 3600000ul; //Scan range start frequency, in Hz
+static uint32_t fxkHzs;//Scan range start frequency, in kHz
+static BANDSPAN *pBss;
+
+void SWR_SetFrequency(void)
+{
+//    while(TOUCH_IsPressed()); WK
+    fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
+    fxkHzs=fxs/1000;
+    if (PanFreqWindow(&fxkHzs, (BANDSPAN*)&pBss))
+        {
+            //Span or frequency has been changed
+            CFG_SetParam(CFG_PARAM_MEAS_F, fxkHzs*1000);
+        }
+    CFG_Flush();
+  //  redrawWindow = 1;
+    Sleep(200);
+    ShowFr();
+}
+
+static void setup_GPIO(void)
+{
+GPIO_InitTypeDef gpioInitStructure;
+
+  __HAL_RCC_GPIOI_CLK_ENABLE();
+  gpioInitStructure.Pin = GPIO_PIN_2;
+  gpioInitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+  gpioInitStructure.Pull = GPIO_NOPULL;
+  gpioInitStructure.Speed = GPIO_SPEED_MEDIUM;
+  HAL_GPIO_Init(GPIOI, &gpioInitStructure);
+
+}
+
+static uint32_t freqChg;
+
+uint8_t AUDIO=1;
+
+void Tune_SWR_Proc(void){
+
+GPIO_PinState OUTGpio;
+char str[20];
+float vswrf, vswrf_old, vswLogf, SwrDiff;
+uint32_t width, vswLog=0;
+uint32_t color1, vswr10, vsw_old, k=0;
+TEXTBOX_CTX_t SWR1_ctx;
+    AUDIO=0;
+    SWRLimit=1;
+    setup_GPIO();
+    freqChg=0;
+    rqExitSWR=false;
+    SetColours();
+    LCD_FillAll(BackGrColor);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 10, "Tune SWR ");
+    Sleep(1000);
+    while(TOUCH_IsPressed());
+    fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
+    fxkHzs=fxs/1000;
+    ShowFr();
+    TEXTBOX_InitContext(&SWR1_ctx);
+
+//HW calibration menu
+    TEXTBOX_Append(&SWR1_ctx, (TEXTBOX_t*)tb_menuSWR);
+    TEXTBOX_DrawContext(&SWR1_ctx);
+for(;;)
+    {
+        Sleep(0); //for autosleep to work
+        if (TEXTBOX_HitTest(&SWR1_ctx))
+        {
+            if (rqExitSWR)
+            {
+                AUDIO=0;
+                UB_TIMER2_Init_FRQ(1000);
+                rqExitSWR=false;
+                return;
+            }
+            if(freqChg==1){
+               ShowFr();
+               freqChg=0;
+            }
+            Sleep(50);
+        }
+        k++;
+        if(k>=5){
+            k=0;
+            DSP_Measure(fxkHzs*1000, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+            vswrf = DSP_CalcVSWR(DSP_MeasuredZ());
+            SwrDiff=vswrf_old-vswrf;
+            if(SwrDiff<0)SwrDiff=-SwrDiff;
+            if(SwrDiff>0.03*vswrf){// Difference more than 3 %
+                vswrf_old=vswrf;
+                vswr10=10.0*vswrf;
+                if(SWRLimit==2){
+                    if(vswr10>20) AUDIO=1;
+                    else AUDIO=0;
+                }
+                if(SWRLimit==3){
+                    if(vswr10>30) AUDIO=1;
+                    else AUDIO=0;
+                }
+                vswLogf= 200.0*log10f(10.0*log10f(vswrf)+5.0);
+                UB_TIMER2_Init_FRQ((uint32_t)(6.0*vswLogf-250.0)); //100...1000 Hz
+                UB_TIMER2_Start();
+                sprintf(str, "SWR: %.2f  ", vswrf);
+                LCD_FillRect(LCD_MakePoint(200, 60), LCD_MakePoint(470,115), BackGrColor);
+                FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 60, str);
+                width=(uint32_t)(3*vswLogf-400.0);
+                if(width>479) width=479;
+                if(vswrf<2.0) color1=0xff00ff00;
+                else if(vswrf<3) color1=0xffffff00;
+                else color1=0xffff0000;
+                LCD_FillRect(LCD_MakePoint(0, 116), LCD_MakePoint(width,160), TextColor);
+                LCD_FillRect(LCD_MakePoint(0, 161), LCD_MakePoint(width,205), color1);
+                LCD_FillRect(LCD_MakePoint(width+1, 116), LCD_MakePoint(479,205), BackGrColor);
+            }
+        }
+        Sleep(5);
+    }
+}
+
 void MultiSWR_Proc(void){// WK
 int redrawRequired = 0;
 uint8_t touch;
@@ -1457,7 +1731,13 @@ uint32_t activeLayer;
         BSP_LCD_SelectLayer(activeLayer);
         if (TOUCH_Poll(&pt))
         {
-            if (pt.y < 80)
+            if((grType == GRAPH_VSWR)&&(pt.x<50)&&(pt.y<100)){
+                if(loglog==0) loglog=1;
+                else loglog=0;
+                redrawRequired = 1;
+            }
+
+            if ((pt.y < 80)&&(pt.x>60))
             {
                 // Top
                 if (PanFreqWindow(&f1, &span))

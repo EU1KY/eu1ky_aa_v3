@@ -10,6 +10,7 @@ extern "C" {
 void GEN_Init(void);
 void GEN_SetMeasurementFreq(uint32_t fhz);
 uint32_t GEN_GetLastFreq(void);
+void GEN_SetLOFreq(uint32_t frqu1);// ** WK **
 
 #ifdef __cplusplus
 }

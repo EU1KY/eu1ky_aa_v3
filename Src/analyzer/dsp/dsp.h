@@ -36,6 +36,7 @@ float complex DSP_MeasuredMagPhaseI(void);
 float DSP_CalcVSWR(DSP_RX Z);
 uint32_t DSP_GetIF(void);
 void DSP_Sample(void);
+void DSP_Sample16(void);
 
 #define NSAMPLES 512                //Must be order of 2
 #define NDUMMY 32                   //Dummy samples are needed to minimize influence of filter settling after invoking the SAI

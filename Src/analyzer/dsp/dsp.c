@@ -102,7 +102,7 @@ static float complex DSP_FFT(int channel)
     float re = crealf(prfft[FFTBIN]);
     float im = cimagf(prfft[FFTBIN]);
     phase = atan2f(im, re);
-    return magnitude + phase * I;
+    return magnitude - phase * I;// was magnitude + phase * I;
 }
 
 
@@ -215,6 +215,17 @@ void DSP_Sample(void)
         CRASHF("HAL_SAI_Receive failed, err %d", res);
     }
 }
+
+void DSP_Sample16(void)
+{
+    extern SAI_HandleTypeDef haudio_in_sai;
+    HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (2 + 10) * 2, HAL_MAX_DELAY);
+    if (HAL_OK != res)
+    {
+        CRASHF("HAL_SAI_Receive failed, err %d", res);
+    }
+}
+
 
 //Set frequency, run measurement sampling and calculate phase, magnitude ratio
 //and Z from sampled data, applying hardware error correction and OSL correction

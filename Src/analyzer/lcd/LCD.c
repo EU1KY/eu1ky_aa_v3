@@ -12,6 +12,7 @@
 #include "libnsbmp.h"
 #include "crash.h"
 #include <math.h>
+#include "font.h"
 //==============================================================================
 //                  Module's static functions
 //==============================================================================
@@ -436,3 +437,60 @@ void LCD_Pop(void)
         return;
     BSP_LCD_CopyToActiveLayer(&scrBufferStack[--lcd_scr_stack_num][0]);
 }
+
+void PixPict(unsigned int x0, unsigned int y0, char* bmp){// x0/y0 upper left corner
+
+uint32_t col,l=0;
+uint16_t sp,z;
+    for(z=y0;z<272-y0;z++){// center the picture
+        for(sp=x0;sp<480-x0;sp++){
+            col=(bmp[l++])<<16;
+            col+=(bmp[l++])<<8;
+            col+=bmp[l++];
+           // col*=42;//improve brigthness
+            LCD_SetPixel(LCD_MakePoint(sp, z), col);
+        }
+    }
+}
+
+// test utilities WK:
+
+void test(unsigned char x){
+char errorX[32];
+sprintf(errorX, "value: %X   ", x);
+FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 400, 0, errorX);
+Sleep(2000);
+}
+void test1(unsigned char x){
+char errorX[32];
+sprintf(errorX, "val: %d   ", x);
+FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 400, 0, errorX);
+Sleep(2000);
+}
+void test32(uint32_t x){
+char errorX[32];
+sprintf(errorX, "Dat: %u   ", x);
+FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 400, 0, errorX);
+Sleep(2000);
+}
+void testStr(char* x){
+char errorX[32];
+sprintf(errorX, "Dat: %s   ", x);
+FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 200, 0, errorX);
+Sleep(2000);
+}
+
+void testMon(uint8_t*adr){
+uint8_t* ad=adr;
+uint16_t k;
+char line[80];
+for(k=0;k<8;k++){
+    sprintf(line, "%X %X %X %X %X %X %X %X ", ad[0+8*k], ad[1+8*k], ad[2+8*k], ad[3+8*k], ad[4+8*k], ad[5+8*k], ad[6+8*k], ad[7+8*k]);
+    FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 0, k*16, line);
+    }
+while (!TOUCH_IsPressed())
+        Sleep(50);
+while (TOUCH_IsPressed())
+        Sleep(50);
+}
+

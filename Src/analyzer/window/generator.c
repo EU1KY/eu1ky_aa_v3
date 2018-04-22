@@ -17,6 +17,8 @@
 #include "main.h"
 #include "num_keypad.h"
 #include "panfreq.h"
+#include "generator.h"
+
 extern uint32_t BackGrColor;
 extern uint32_t TextColor;
 

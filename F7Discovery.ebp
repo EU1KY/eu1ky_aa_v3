@@ -9,6 +9,99 @@
 		<Option compiler="armelfgcc" />
 		<Option extended_obj_names="1" />
 		<Build>
+			<Target title="Release">
+				<Option output="bin\Release\F7Discovery.elf" />
+				<Option object_output="obj\Release\" />
+				<Option type="0" />
+				<Option create_hex="1" />
+				<Option compiler="armgcc_eb" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Option projectAssemblerOptionsRelation="1" />
+				<Option projectLinkerOptionsRelation="1" />
+				<Option projectIncludeDirsRelation="1" />
+				<Option projectLibDirsRelation="1" />
+				<Device>
+					<Add option="$device=cortex-m7" />
+				</Device>
+				<Compiler>
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-fgcse" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-Os" />
+					<Add option="-g" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv5-sp-d16" />
+					<Add symbol="STM32F746xx" />
+					<Add symbol="STM32F746G_DISCO" />
+					<Add symbol="STM32F746NGHx" />
+					<Add symbol="STM32F7" />
+					<Add symbol="STM32" />
+					<Add symbol="USE_HAL_DRIVER" />
+					<Add symbol="ARM_MATH_CM7" />
+					<Add symbol="__FPU_PRESENT" />
+					<Add symbol="USE_USB_HS" />
+					<Add symbol="LODEPNG_NO_COMPILE_DISK" />
+					<Add symbol="LODEPNG_NO_COMPILE_ERROR_TEXT" />
+					<Add symbol="LODEPNG_NO_COMPILE_ALLOCATORS" />
+					<Add symbol="LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS" />
+					<Add symbol="LODEPNG_NO_COMPILE_DECODER" />
+					<Add directory="Src\BSP\Components\ampire480272" />
+					<Add directory="Src\BSP\Components\ampire640480" />
+					<Add directory="Src\BSP\Components\Common" />
+					<Add directory="Src\BSP\Components\exc7200" />
+					<Add directory="Src\BSP\Components\ft5336" />
+					<Add directory="Src\BSP\Components\mfxstm32l152" />
+					<Add directory="Src\BSP\Components\n25q128a" />
+					<Add directory="Src\BSP\Components\n25q512a" />
+					<Add directory="Src\BSP\Components\ov9655" />
+					<Add directory="Src\BSP\Components\rk043fn48h" />
+					<Add directory="Src\BSP\Components\s5k5cag" />
+					<Add directory="Src\BSP\Components\stmpe811" />
+					<Add directory="Src\BSP\Components\ts3510" />
+					<Add directory="Src\BSP\Components\wm8994" />
+					<Add directory="Src\BSP\STM32746G-Discovery" />
+					<Add directory="Src\CMSIS\Device\ST\STM32F7xx\Include" />
+					<Add directory="Src\CMSIS\Include" />
+					<Add directory="Src\Inc" />
+					<Add directory="Src\STM32F7xx_HAL_Driver\Inc" />
+					<Add directory="Src\Utilities\Fonts" />
+					<Add directory="Src\STM32F7xx_HAL_Driver\Inc\Legacy" />
+					<Add directory="Src\fatfs" />
+					<Add directory="Src\fatfs\drivers" />
+					<Add directory="Src\config" />
+					<Add directory="Src\gen" />
+					<Add directory="Src\dsp" />
+					<Add directory="Src\USBD" />
+					<Add directory="Src\uartcomm" />
+				</Compiler>
+				<Assembler>
+					<Add option="-Wa,--gdwarf-2" />
+					<Add option="-mthumb" />
+				</Assembler>
+				<Linker>
+					<Add option="-u _printf_float" />
+					<Add option="-eb_lib=n" />
+					<Add option="-eb_start_files" />
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-flto" />
+					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
+					<Add option="-mcpu=cortex-m7" />
+					<Add option="-mthumb" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-mfpu=fpv5-sp-d16" />
+					<Add library="m" />
+				</Linker>
+				<ExtraCommands>
+					<Add before="${PROJ_DIR}gen_timestamp.bat" />
+					<Add after="arm-none-eabi-size ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME}" />
+					<Add after="arm-none-eabi-objcopy.exe -O binary ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME} ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}.bin" />
+					<Mode before="1" />
+					<Mode after="2" />
+				</ExtraCommands>
+			</Target>
 			<Target title="Debug">
 				<Option output="bin\Debug\F7Discovery.elf" />
 				<Option object_output="obj\Debug\" />
@@ -90,99 +183,6 @@
 					<Add option="-eb_lib=n" />
 					<Add option="-eb_start_files" />
 					<Add option="-Wl,--gc-sections" />
-					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
-					<Add option="-mcpu=cortex-m7" />
-					<Add option="-mthumb" />
-					<Add option="-mfloat-abi=hard" />
-					<Add option="-mfpu=fpv5-sp-d16" />
-					<Add library="m" />
-				</Linker>
-				<ExtraCommands>
-					<Add before="${PROJ_DIR}gen_timestamp.bat" />
-					<Add after="arm-none-eabi-size ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME}" />
-					<Add after="arm-none-eabi-objcopy.exe -O binary ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_FILENAME} ${TARGET_OUTPUT_DIR}${TARGET_OUTPUT_BASENAME}.bin" />
-					<Mode before="1" />
-					<Mode after="2" />
-				</ExtraCommands>
-			</Target>
-			<Target title="Release">
-				<Option output="bin\Release\F7Discovery.elf" />
-				<Option object_output="obj\Release\" />
-				<Option type="0" />
-				<Option create_hex="1" />
-				<Option compiler="armgcc_eb" />
-				<Option projectCompilerOptionsRelation="1" />
-				<Option projectAssemblerOptionsRelation="1" />
-				<Option projectLinkerOptionsRelation="1" />
-				<Option projectIncludeDirsRelation="1" />
-				<Option projectLibDirsRelation="1" />
-				<Device>
-					<Add option="$device=cortex-m7" />
-				</Device>
-				<Compiler>
-					<Add option="-mfloat-abi=hard" />
-					<Add option="-fgcse" />
-					<Add option="-fexpensive-optimizations" />
-					<Add option="-fomit-frame-pointer" />
-					<Add option="-fdata-sections" />
-					<Add option="-ffunction-sections" />
-					<Add option="-Os" />
-					<Add option="-g" />
-					<Add option="-mthumb" />
-					<Add option="-mfpu=fpv5-sp-d16" />
-					<Add symbol="STM32F746xx" />
-					<Add symbol="STM32F746G_DISCO" />
-					<Add symbol="STM32F746NGHx" />
-					<Add symbol="STM32F7" />
-					<Add symbol="STM32" />
-					<Add symbol="USE_HAL_DRIVER" />
-					<Add symbol="ARM_MATH_CM7" />
-					<Add symbol="__FPU_PRESENT" />
-					<Add symbol="USE_USB_HS" />
-					<Add symbol="LODEPNG_NO_COMPILE_DISK" />
-					<Add symbol="LODEPNG_NO_COMPILE_ERROR_TEXT" />
-					<Add symbol="LODEPNG_NO_COMPILE_ALLOCATORS" />
-					<Add symbol="LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS" />
-					<Add symbol="LODEPNG_NO_COMPILE_DECODER" />
-					<Add directory="Src\BSP\Components\ampire480272" />
-					<Add directory="Src\BSP\Components\ampire640480" />
-					<Add directory="Src\BSP\Components\Common" />
-					<Add directory="Src\BSP\Components\exc7200" />
-					<Add directory="Src\BSP\Components\ft5336" />
-					<Add directory="Src\BSP\Components\mfxstm32l152" />
-					<Add directory="Src\BSP\Components\n25q128a" />
-					<Add directory="Src\BSP\Components\n25q512a" />
-					<Add directory="Src\BSP\Components\ov9655" />
-					<Add directory="Src\BSP\Components\rk043fn48h" />
-					<Add directory="Src\BSP\Components\s5k5cag" />
-					<Add directory="Src\BSP\Components\stmpe811" />
-					<Add directory="Src\BSP\Components\ts3510" />
-					<Add directory="Src\BSP\Components\wm8994" />
-					<Add directory="Src\BSP\STM32746G-Discovery" />
-					<Add directory="Src\CMSIS\Device\ST\STM32F7xx\Include" />
-					<Add directory="Src\CMSIS\Include" />
-					<Add directory="Src\Inc" />
-					<Add directory="Src\STM32F7xx_HAL_Driver\Inc" />
-					<Add directory="Src\Utilities\Fonts" />
-					<Add directory="Src\STM32F7xx_HAL_Driver\Inc\Legacy" />
-					<Add directory="Src\fatfs" />
-					<Add directory="Src\fatfs\drivers" />
-					<Add directory="Src\config" />
-					<Add directory="Src\gen" />
-					<Add directory="Src\dsp" />
-					<Add directory="Src\USBD" />
-					<Add directory="Src\uartcomm" />
-				</Compiler>
-				<Assembler>
-					<Add option="-Wa,--gdwarf-2" />
-					<Add option="-mthumb" />
-				</Assembler>
-				<Linker>
-					<Add option="-u _printf_float" />
-					<Add option="-eb_lib=n" />
-					<Add option="-eb_start_files" />
-					<Add option="-Wl,--gc-sections" />
-					<Add option="-flto" />
 					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
 					<Add option="-mcpu=cortex-m7" />
 					<Add option="-mthumb" />
@@ -357,6 +357,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\analyzer\window\screenshot.h" />
+		<Unit filename="Src\analyzer\window\spectr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\analyzer\window\spectr.h" />
 		<Unit filename="Src\analyzer\window\tdr.c">
 			<Option compilerVar="CC" />
 		</Unit>

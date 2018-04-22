@@ -133,6 +133,9 @@ static void TDR_Screenshot (void)
 {
     char* fname = 0;
     fname = SCREENSHOT_SelectFileName();
+
+     if(strlen(fname)==0) return;
+
     SCREENSHOT_DeleteOldest();
     if (CFG_GetParam(CFG_PARAM_SCREENSHOT_FORMAT))
         SCREENSHOT_SavePNG(fname);

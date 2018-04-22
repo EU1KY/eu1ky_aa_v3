@@ -9,5 +9,7 @@
 #define _MAINWND_H_
 
 void MainWnd(void);
-
+static TCHAR    fileNames[13][13];
+static uint16_t  Pointer;
+static int   Page;
 #endif

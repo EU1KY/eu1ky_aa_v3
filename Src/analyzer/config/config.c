@@ -297,12 +297,23 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .dstring = "Touchstone S1P file type saved with screenshot. Default is S MA R 50.",
     },
     {
+        .id = CFG_PARAM_BAND_FMIN,
+        .idstring = "BAND_FMIN",
+        .type = CFG_PARAM_T_U32,
+        .nvalues = 5,// ** WK **
+        .values = CFG_IARR(100000ul, 200000ul, 300000ul, 400000ul, 500000ul),// ** WK **
+        .strvalues = CFG_SARR("100 kHz", "200 kHz*", "300 kHz*", "400 kHz*", "500 kHz*"),// ** WK **
+        .isvalid = isShowHidden,
+        .dstring = "Lower frequency band limit. If changed, full recalibration is required.",
+        .resetRequired = 1
+    },
+    {
         .id = CFG_PARAM_BAND_FMAX,
         .idstring = "BAND_FMAX",
         .type = CFG_PARAM_T_U32,
-        .nvalues = 4,
-        .values = CFG_IARR(150000000ul, 200000000ul, 300000000ul, 450000000ul),
-        .strvalues = CFG_SARR("150 MHz", "200 MHz*", "300 MHz*", "450 MHz*"),
+        .nvalues = 10,// ** WK **
+        .values = CFG_IARR(150000000ul, 200000000ul, 300000000ul, 450000000ul, 479000000ul, 500000000ul, 550000000ul, 590000000ul, 599000000ul, 600000000ul),// ** WK **
+        .strvalues = CFG_SARR("150 MHz", "200 MHz*", "300 MHz*", "450 MHz*", "479 MHz*", "500 MHz*", "550 MHz*","590 MHz*","599 MHz*","600 MHz*"),// ** WK **
         .isvalid = isShowHidden,
         .dstring = "Upper frequency band limit. If changed, full recalibration is required.",
         .resetRequired = 1
@@ -375,7 +386,8 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_S1P_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SHOW_HIDDEN, 0);
     CFG_SetParam(CFG_PARAM_SCREENSHOT_FORMAT, 0);
-    CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
+    CFG_SetParam(CFG_PARAM_BAND_FMIN, 100000ul);
+    CFG_SetParam(CFG_PARAM_BAND_FMAX, 450000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
     CFG_SetParam(CFG_PARAM_TDR_VF, 66);

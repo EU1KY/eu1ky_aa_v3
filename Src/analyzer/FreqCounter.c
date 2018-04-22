@@ -1,10 +1,14 @@
 //#define __GNUC__
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include "stm32f7xx_hal.h"
 #include "stm32746g_discovery.h"
 #include "stm32f7xx_hal_def.h"
 #include "stm32f7xx_hal_tim.h"
+#include "panvswr2.h"
 
 #define preScaler 8;
 
@@ -206,17 +210,22 @@ HAL_TIM_IC_Start(&htim5,4);
 }
 */
 /**********************************************call back function****************************************************************/
+extern uint8_t AUDIO;
 
-void UB_TIMER2_ISR_CallBack()// frequency 1 kHz
+void UB_TIMER2_ISR_CallBack()// frequency 1 kHz || AUDIO: 200 Hz ..2000Hz
 {
-    // Get the Input Capture value
-    Timer5Value = TIM5->CNT;//Timer3Value
-    TIM5->CNT=0;
-    //* Frequency computation: for this example TIMx (TIM5) is clocked by
-    //2xAPB1Clk
-    TimeFlag += 1;
+    if(AUDIO==1){
+         HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_2);
+    }
+    else{
+        // Get the Input Capture value
+        Timer5Value = TIM5->CNT;//Timer3Value
+        TIM5->CNT=0;
+        //* Frequency computation: for this example TIMx (TIM5) is clocked by
+        //2xAPB1Clk
+        TimeFlag += 1;
 
-
+    }
 }
 // *************************************************************************************************************
 //--------------------------------------------------------------

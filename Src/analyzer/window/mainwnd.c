@@ -30,6 +30,8 @@
 #include "aauart.h"
 #include "build_timestamp.h"
 #include "tdr.h"
+#include "screenshot.h"
+#include "spectr.h"
 
 extern void Sleep(uint32_t);
 
@@ -38,6 +40,7 @@ static TEXTBOX_t hbHwCal;
 static TEXTBOX_t hbOslCal;
 static TEXTBOX_t hbConfig;
 static TEXTBOX_t hbPan;
+static TEXTBOX_t hbPict;
 static TEXTBOX_t hbMeas;
 static TEXTBOX_t hbGen;
 static TEXTBOX_t hbRemote;
@@ -47,21 +50,25 @@ static TEXTBOX_t hbTimestamp;
 static TEXTBOX_t hbTDR;
 static TEXTBOX_t hbMulti;
 static TEXTBOX_t hbExitCal;
+static TEXTBOX_t hbFrq;
 
 
 static TEXTBOX_CTX_t menu1_ctx;
+static TEXTBOX_CTX_t menu2_ctx;
 static void Menu1(void);
+static void Menu2(void);
 static void Colours(void);
 
 #define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
 
 #define COL1 10  //Column 1 x coordinate
-#define COL2 250 //Column 2 x coordinate
+#define COL2 230 //Column 2 x coordinate
 
 static USBD_HandleTypeDef USBD_Device;
 extern char SDPath[4];
 extern FATFS SDFatFs;
+static FILINFO fno;
 
 static void USBD_Proc()
 {
@@ -304,6 +311,142 @@ static void PROTOCOL_Handler(void)
     AAUART_PutString(ERR);
 }
 
+static TCHAR    fileNames[13][13];
+static uint16_t  Pointer;
+static uint8_t EndFlag;
+
+static int16_t rqExitR, newLoad, Index;
+static int Page;
+
+#define TBX0 190
+#define Fieldw1 70
+#define TBX1 300
+#define Fieldw2 60
+#define FieldH 36
+#define TBY 90
+
+void(Delete(void)){
+
+    SCREENSHOT_DeleteFile(Pointer%12);
+
+     newLoad=1;
+}
+
+void(Show(void)){
+
+    SCREENSHOT_ShowPicture(Pointer%12);
+    newLoad=1;
+}
+
+void(Next()){
+uint16_t idx=Pointer%12;
+
+    LCD_Rectangle(LCD_MakePoint(0,idx*16+31), LCD_MakePoint(100,idx*16+16+32),BackGrColor);
+    Pointer++;
+    idx=Pointer%12;
+    LCD_Rectangle(LCD_MakePoint(0,idx*16+31), LCD_MakePoint(100,idx*16+16+32),CurvColor);
+}
+
+void(NextPage()){
+uint16_t idx=Pointer%12;
+    LCD_Rectangle(LCD_MakePoint(0,idx*16+31), LCD_MakePoint(100,idx*16+16+32),BackGrColor);
+    newLoad=1;
+    if(EndFlag==1 ){
+        EndFlag=0;
+        Page=1;
+        Index=0;
+    }
+    else     {
+        Index+=12;
+        Page+=1;
+    }
+    Pointer=0;
+}
+
+void(Prev()){
+uint16_t idx=Pointer%12;
+
+    LCD_Rectangle(LCD_MakePoint(0,idx*16+31), LCD_MakePoint(100,idx*16+16+32),BackGrColor);
+    if(Pointer>0)
+        Pointer--;
+    idx=Pointer%12;
+    LCD_Rectangle(LCD_MakePoint(0,idx*16+31), LCD_MakePoint(100,idx*16+16+32),CurvColor);
+}
+
+void Exit(void){
+    rqExitR=1;
+}
+
+static const TEXTBOX_t tb_reload[] = {
+    (TEXTBOX_t){ .x0 = TBX0, .y0 = TBY, .text = "Up", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Prev, .cbparam = 1, .next = (void*)&tb_reload[1] },
+    (TEXTBOX_t){ .x0 = TBX0, .y0 = TBY+FieldH+1, .text = "Down", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Next, .cbparam = 1,  .next = (void*)&tb_reload[2] },
+    (TEXTBOX_t){ .x0 = TBX0+200, .y0 = 234, .text = "Delete", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RED, .cb = (void(*)(void))Delete, .cbparam = 1,  .next = (void*)&tb_reload[3] },
+    (TEXTBOX_t){ .x0 = TBX0+140, .y0 = TBY+18, .text = "Show", .font = FONT_FRANBIG, .width = Fieldw2, .height = FieldH, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_GREEN, .cb = (void(*)(void))Show, .cbparam = 1,  .next = (void*)&tb_reload[4] },
+    (TEXTBOX_t){ .x0 = 2, .y0 = 234, .text = " Exit ", .font = FONT_FRANBIG, .width = 100, .height = FieldH, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Exit, .cbparam = 1, .next =(void*)&tb_reload[5] },
+    (TEXTBOX_t){ .x0 = 80, .y0 = 234, .text = " Next Page", .font = FONT_FRANBIG, .width = 150, .height = FieldH, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))NextPage, .cbparam = 1,},
+
+};
+
+void Reload_Proc(void){// WK
+TEXTBOX_CTX_t fctx;
+char str[16];
+
+    SetColours();
+    rqExitR=0;
+    Index=0;
+    Page=1;
+    Pointer=0;
+    LCD_FillAll(BackGrColor);
+    TEXTBOX_InitContext(&fctx);
+    TEXTBOX_Append(&fctx, (TEXTBOX_t*)tb_reload); //Append the very first element of the list in the flash.
+                                                      //It is enough since all the .next fields are filled at compile time.
+    TEXTBOX_DrawContext(&fctx);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 0, "View Pictures");// WK
+    newLoad=0;
+    EndFlag=0;
+
+     if(SCREENSHOT_SelectFileNames(0)<11) EndFlag=1;
+     LCD_Rectangle(LCD_MakePoint(0,31), LCD_MakePoint(100,16+32),CurvColor);
+     sprintf(str,"Page: %d",Page);
+     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 250, 235, str);
+     for(;;)
+        {
+        if (TEXTBOX_HitTest(&fctx))
+            {
+                Sleep(50);
+            }
+        if (rqExitR)
+            {
+                LCD_FillAll(BackGrColor);
+                break;
+            }
+        Sleep(10);
+        if(newLoad==1)
+            {
+            newLoad=0;
+
+            LCD_FillRect(LCD_MakePoint(0,31), LCD_MakePoint(100,234),BackGrColor);
+
+            TEXTBOX_InitContext(&fctx);
+            TEXTBOX_Append(&fctx, (TEXTBOX_t*)tb_reload); //Append the very first element of the list in the flash.
+            TEXTBOX_DrawContext(&fctx);
+            FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 0, "View Pictures");// WK
+
+            if(11>SCREENSHOT_SelectFileNames(12*(Page-1))) EndFlag=1;
+            LCD_Rectangle(LCD_MakePoint(0,Pointer*16+31), LCD_MakePoint(100,(Pointer%12)*16+16+32),CurvColor);
+            sprintf(str,"Page: %d",Page);
+            FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 250, 235, str);
+            }
+        }
+
+}
+
 // ================================================================================================
 // Main window procedure (never returns)
 void MainWnd(void)
@@ -323,59 +466,59 @@ uint8_t i;
 
     //Create menu items and append to textbox context
 
-    //HW calibration menu
-    hbHwCal = (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =    " Calibration  ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Menu1 };
-    TEXTBOX_Append(&main_ctx, &hbHwCal);
-
-    //OSL calibration menu
-    hbOslCal = (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =  " Colours ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Colours };
-    TEXTBOX_Append(&main_ctx, &hbOslCal);
-
-    //Device configuration menu
-    hbConfig = (TEXTBOX_t){.x0 = COL1, .y0 = 100, .text = " Configuration  ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd };
-    TEXTBOX_Append(&main_ctx, &hbConfig);
-
-    //USB access
-    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 150, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
-    TEXTBOX_Append(&main_ctx, &hbUSBD);
-
-    //MultiScan  WK
-    hbMulti = (TEXTBOX_t){.x0 = COL1, .y0 = 200, .text =   " Multi SWR ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MultiSWR_Proc };
-    TEXTBOX_Append(&main_ctx, &hbMulti);
-
     //Panoramic scan window
-    hbPan = (TEXTBOX_t){.x0 = COL2, .y0 =   0, .text =    " Panoramic scan ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc };
+    hbPan = (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text =    " Panoramic scan ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc };
     TEXTBOX_Append(&main_ctx, &hbPan);
 
     //Measurement window
-    hbMeas = (TEXTBOX_t){.x0 = COL2, .y0 =  50, .text =   " Measurement    ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Proc };
+    hbMeas = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =   " Measurement ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Proc };
     TEXTBOX_Append(&main_ctx, &hbMeas);
 
     //Generator window
-    hbGen  = (TEXTBOX_t){.x0 = COL2, .y0 = 100, .text =   " Generator      ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc };
+    hbGen = (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =" Generator ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc };
     TEXTBOX_Append(&main_ctx, &hbGen);
 
-    //DSP window
-    hbDsp  = (TEXTBOX_t){.x0 = COL2, .y0 = 150, .text =   " DSP            ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc };
-    TEXTBOX_Append(&main_ctx, &hbDsp);
-
     //TDR window
-    hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Time Domain ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
+    hbTDR = (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =" Time Domain ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc };
     TEXTBOX_Append(&main_ctx, &hbTDR);
 
-    hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
+    //MultiScan  WK
+     hbMulti = (TEXTBOX_t){.x0 = COL1, .y0 = 210, .text =   " Multi SWR ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MultiSWR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbMulti);
+     //Find Frequency  WK
+   /* hbFrq = (TEXTBOX_t){.x0 = COL2, .y0 = 60, .text =" Find Frequency ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SPECTR_FindFreq };
+    TEXTBOX_Append(&main_ctx, &hbFrq);*/
+    //Find Frequency  WK
+    hbFrq = (TEXTBOX_t){.x0 = COL2, .y0 = 110, .text =" Tune SWR//Sound", .font = FONT_FRANBIG, .width = 230, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Tune_SWR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbFrq);
+    //Reload Pictures WK
+    hbPict     = (TEXTBOX_t){.x0 = COL2, .y0 = 160, .text =   " View Pictures ", .font = FONT_FRANBIG, .width = 230, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Reload_Proc };
+    TEXTBOX_Append(&main_ctx, &hbPict);
+
+    //Setup
+    hbHwCal = (TEXTBOX_t){.x0 = COL2, .y0 =   10, .text =    " Setup ", .font = FONT_FRANBIG, .width = 230, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Menu1 };
+    TEXTBOX_Append(&main_ctx, &hbHwCal);
+
+     //USB access
+    hbUSBD= (TEXTBOX_t){.x0 = COL2, .y0 = 210, .text = " USB HS cardrdr ", .font = FONT_FRANBIG, .width = 230, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
+    TEXTBOX_Append(&main_ctx, &hbUSBD);
+
+    /*hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", mod. DH1AKF, Build: " BUILD_TIMESTAMP ". Owner PE1PWF", .font = FONT_FRAN,
+                            .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = Wait_proc  };*/
+    hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", mod. DH1AKF, Build: " BUILD_TIMESTAMP "  ", .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = Wait_proc  };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
+
     //Draw context
     TEXTBOX_DrawContext(&main_ctx);
 
@@ -479,16 +622,19 @@ static void Colours(void){
     }
 }
 static const TEXTBOX_t tb_menu1[] = {
-    (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =    " HW Calibration  ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr , .cbparam = 1, .next = (void*)&tb_menu1[1] },
-    (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =  " OSL Calibration ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd , .cbparam = 1, .next = (void*)&tb_menu1[2] },
-    (TEXTBOX_t){ .x0 = 0, .y0 = 200, .text = "  Exit   ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1, .cbparam = 1,},
+    (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =    " Calibration  ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Menu2 , .cbparam = 1, .next = (void*)&tb_menu1[1] },
+   (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =  " Colours ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Colours , .cbparam = 1, .next = (void*)&tb_menu1[2] },
+    (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " DSP ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc , .cbparam = 1, .next = (void*)&tb_menu1[3] },
+    (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text =  " Configuration ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd , .cbparam = 1, .next = (void*)&tb_menu1[4] },
+    (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = "  Exit   ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
 };
 
 static void Menu1(void){
-
     while(TOUCH_IsPressed());
     rqExit1=false;
 //    BSP_LCD_SelectLayer(1);
@@ -510,9 +656,55 @@ static void Menu1(void){
             LCD_FillAll(LCD_BLACK);
             TEXTBOX_DrawContext(&menu1_ctx);
             //LCD_ShowActiveLayerOnly();
-            if (rqExit1)
+            if (rqExitR)
             {
-                rqExit1=false;
+                rqExitR=false;
+                return;
+            }
+            Sleep(50);
+        }
+        Sleep(0);
+    }
+}
+
+static const TEXTBOX_t tb_menu2[] = {
+    (TEXTBOX_t){.x0 = COL1, .y0 = 100, .text =    " HW Calibration, only at first run !!!  ", .font = FONT_FRANBIG,.width = 440, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr , .cbparam = 1, .next = (void*)&tb_menu2[1] },
+    (TEXTBOX_t){.x0 = COL1, .y0 =25, .text =  " OSL Calibration, use calibration kit !!! ", .font = FONT_FRANBIG,.width = 440, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd , .cbparam = 1, .next = (void*)&tb_menu2[2] },
+//    (TEXTBOX_t){.x0 = COL1, .y0 = 50, .text =  " DSP ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+//                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc , .cbparam = 1, .next = (void*)&tb_menu2[3] },
+//    (TEXTBOX_t){.x0 = COL1, .y0 = 0, .text =  " Configuration ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
+//                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd , .cbparam = 1, .next = (void*)&tb_menu2[4] },
+    (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = "  Exit   ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
+                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
+};
+
+static void Menu2(void){
+    while(TOUCH_IsPressed());
+    rqExit1=false;
+//    BSP_LCD_SelectLayer(1);
+    LCD_FillAll(LCD_BLACK);
+//    LCD_ShowActiveLayerOnly();
+    //Initialize textbox context
+    TEXTBOX_InitContext(&menu2_ctx);
+//HW calibration menu
+    TEXTBOX_Append(&menu2_ctx, (TEXTBOX_t*)tb_menu2);
+    TEXTBOX_DrawContext(&menu2_ctx);
+
+ for(;;)
+    {
+        Sleep(0); //for autosleep to work
+        if (TEXTBOX_HitTest(&menu2_ctx))
+        {
+            Sleep(0);
+            //BSP_LCD_SelectLayer(1);
+            LCD_FillAll(LCD_BLACK);
+            TEXTBOX_DrawContext(&menu2_ctx);
+            //LCD_ShowActiveLayerOnly();
+            if (rqExitR)
+            {
+                rqExitR=false;
                 return;
             }
             Sleep(50);

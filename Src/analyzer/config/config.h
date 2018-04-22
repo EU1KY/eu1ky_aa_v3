@@ -6,8 +6,12 @@
 #include "LCD.h"
 #define AAVERSION "3.0d" //Must be 4 characters
 
-#define BAND_FMIN 500000ul    //BAND_FMIN must be multiple 100000
-#define MAX_BAND_FREQ  450000000ul
+//#define BAND_FMIN 500000ul    //BAND_FMIN must be multiple 100000
+// ** WK **:
+#define BAND_FMIN 100000ul    //BAND_FMIN must be multiple 100000
+
+//#define MAX_BAND_FREQ  450000000ul
+#define MAX_BAND_FREQ  600000000ul
 
 #if (BAND_FMIN % 100000) != 0
     #error "Incorrect band limit settings"
@@ -60,6 +64,7 @@ typedef enum
     CFG_PARAM_S1P_TYPE,              //Type of Touchstone S1P file saved with panoramic screenshot
     CFG_PARAM_SHOW_HIDDEN,           //Show hidden options in configuration menu
     CFG_PARAM_SCREENSHOT_FORMAT,     //If 0, use BMP format for screenshots, otherwise use PNG
+    CFG_PARAM_BAND_FMIN,             //Minimum frequency of the device's working band, Hz
     CFG_PARAM_BAND_FMAX,             //Maximum frequency of the device's working band, Hz
     CFG_PARAM_SI5351_MAX_FREQ,       //Maximum frequency that Si5351 can output, Hz (160 MHz by default, but some samples can reliably provide 200 MHz)
     CFG_PARAM_SI5351_CAPS,           //Si5351a crystal capacitors setting

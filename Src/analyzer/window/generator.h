@@ -9,5 +9,6 @@
 #define GENERATOR_H_
 
 void GENERATOR_Window_Proc(void);
+static void ShowF(void);
 
 #endif
