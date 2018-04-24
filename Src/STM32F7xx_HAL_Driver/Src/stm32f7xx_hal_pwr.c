@@ -470,17 +470,20 @@ void HAL_PWR_EnterSTOPMode(uint32_t Regulator, uint8_t STOPEntry)
 
   /* Set SLEEPDEEP bit of Cortex System Control Register */
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+  __fakeread = SCB->SCR;
 
   /* Select Stop mode entry --------------------------------------------------*/
   if(STOPEntry == PWR_STOPENTRY_WFI)
   {
     /* Request Wait For Interrupt */
+    __DSB();
     __WFI();
   }
   else
   {
     /* Request Wait For Event */
     __SEV();
+    __DSB();
     __WFE();
     __WFE();
   }
@@ -505,12 +508,14 @@ void HAL_PWR_EnterSTANDBYMode(void)
 
   /* Set SLEEPDEEP bit of Cortex System Control Register */
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+  __fakeread = SCB->SCR;
 
   /* This option is used to ensure that store operations are completed */
 #if defined ( __CC_ARM)
   __force_stores();
 #endif
   /* Request Wait For Interrupt */
+  __DSB();
   __WFI();
 }
 
