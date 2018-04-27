@@ -223,17 +223,15 @@ SRC :=   Src/analyzer/config/config.c \
         Src/USBD/usbd_msc_scsi.c \
         Src/USBD/usbd_storage.c
 
-ASRC := Src/CMSIS/DSP_Lib/Source/TransformFunctions/arm_bitreversal2.S
-
-ASRC2 := Src/Sys/startup_stm32f746xx.s
-
-OBJS := $(SRC:%.c=obj/release/%.c.o)
-OBJS += $(ASRC:%.S=obj/release/%.S.o)
-OBJS += $(ASRC2:%.s=obj/release/%.s.o)
+OBJS = $(SRC:%.c=obj/release/%.c.o) obj/release/Src/CMSIS/DSP_Lib/Source/TransformFunctions/arm_bitreversal2.o obj/release/Src/Sys/startup_stm32f746xx.o
 
 DEPS = $(OBJS:.o=.d)
 
-all: gen bin/Release/F7Discovery.elf
+.PHONY: all
+
+all: 
+	@$(MAKE) -s gen
+	@$(MAKE) -s bin/Release/F7Discovery.elf
 
 clean:
 	@if exist "Src/Inc/build_timestamp.h" del "Src\Inc\build_timestamp.h"
@@ -246,21 +244,25 @@ gen: Src\Inc\build_timestamp.h
 
 bin/Release/F7Discovery.elf : $(OBJS)
 	@if not exist "bin/Release" mkdir "bin/Release"
-	$(CC) $(OBJS) -o bin/Release/F7Discovery.elf $(LDFLAGS)
+	@echo Linking...
+	@$(CC) $(OBJS) -o bin/Release/F7Discovery.elf $(LDFLAGS)
 	@$(OBJCOPY) -O ihex $@ $@.hex
 	@$(OBJCOPY) -O binary $@ $@.bin
 	@$(SIZE) bin\Release\F7Discovery.elf
 
 obj/release/%.c.o : %.c
 	@if not exist "$(@D)" mkdir "$(@D)"
-	$(CC) $(CFLAGS) $(INCLUDE) $(DEFINE) -c $< -o $@
+	@echo $<
+	@$(CC) $(CFLAGS) $(INCLUDE) $(DEFINE) -c $< -o $@
 
-obj/release/%.S.o : %.S
+obj/release/Src/CMSIS/DSP_Lib/Source/TransformFunctions/arm_bitreversal2.o : Src/CMSIS/DSP_Lib/Source/TransformFunctions/arm_bitreversal2.S
 	@if not exist "$(@D)" mkdir "$(@D)"
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo $<
+	@$(CC) $(CFLAGS) -c $< -o $@
 
-obj/release/%.s.o : %.s
+obj/release/Src/Sys/startup_stm32f746xx.o : Src/Sys/startup_stm32f746xx.s
 	@if not exist "$(@D)" mkdir "$(@D)"
-	$(CC) $(ASFLAGS) -MMD -c $< -o $@
+	@echo $<
+	@$(CC) $(ASFLAGS) -MMD -c $< -o $@
 
 -include $(DEPS)
