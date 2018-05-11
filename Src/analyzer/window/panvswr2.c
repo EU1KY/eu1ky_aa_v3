@@ -940,13 +940,9 @@ static void DrawSmith(void)
     if (isMeasured)
     {
         SMITH_ResetStartPoint();
-        uint32_t lastx = 0;
-        uint32_t lasty = 0;
         for(i = 0; i <= WWIDTH; i++)
         {
             float complex g = OSL_GFromZ(values[i], r0f);
-            lastx = (uint32_t)roundf(cx0 + crealf(g) * smithradius);
-            lasty = (uint32_t)roundf(cy0 - cimagf(g) * smithradius);
             SMITH_DrawG(g, SMITH_LINE_FG);
         }
         //Mark the end of sweep range with red cross
