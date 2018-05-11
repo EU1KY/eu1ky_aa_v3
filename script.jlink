@@ -1,0 +1,11 @@
+power On
+exec
+if SWD
+speed 1000
+device = STM32F746NG
+r
+h
+loadbin bin\release\F7Discovery.bin,0x08000000
+r
+g
+q

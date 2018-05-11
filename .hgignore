@@ -1,0 +1,17 @@
+# use glob syntax.
+syntax: glob
+
+bin/*
+obj/*
+*.orig
+Thumbs.db
+*.emDepend
+*.emLayout
+*.emTemp
+*.depend
+*.elay
+*_build_log.html
+*.cscope_file_list
+*.ebTemp
+cscope.out
+Src\Inc\build_timestamp.h

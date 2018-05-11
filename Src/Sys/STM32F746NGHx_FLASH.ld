@@ -1,0 +1,191 @@
+/*
+*****************************************************************************
+**
+
+**  File        : LinkerScript.ld
+**
+**  Abstract    : Linker script for STM32F746NGHx Device with
+**                1024KByte FLASH, 320KByte RAM
+**
+**                Set heap size, stack size and stack location according
+**                to application requirements.
+**
+**                Set memory bank area and size if external memory is used.
+**
+**  Target      : STMicroelectronics STM32
+**
+**
+**  Distribution: The file is distributed as is, without any warranty
+**                of any kind.
+**
+**  (c)Copyright Ac6.
+**  You may use this file as-is or modify it according to the needs of your
+**  project. Distribution of this file (unmodified or modified) is not
+**  permitted. Ac6 permit registered System Workbench for MCU users the
+**  rights to distribute the assembled, compiled & linked contents of this
+**  file as part of an application binary file, provided that it is built
+**  using the System Workbench for MCU toolchain.
+**
+*****************************************************************************
+*/
+
+/* Entry Point */
+ENTRY(Reset_Handler)
+
+/* Highest address of the user mode stack */
+/* _estack = 0x2004FFFF; */   /* end of RAM */
+/* Generate a link error if heap and stack don't fit into RAM */
+_Min_Heap_Size = 0x8000; /* required amount of heap */
+_SDRAM_HEAP_SIZE = 0x180000; /* required amount of SDRAM heap. Must be agreed with definition in sdram_heap.c */
+_Min_Stack_Size = 0x8000;  /* required amount of stack */
+
+/* Specify the memory areas */
+MEMORY
+{
+FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 1024K
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 320K     /* DTCM is at the first 64K only, the rest is accessed via AHB */
+SDRAM (rw)     : ORIGIN = 0xC0400000, LENGTH = 0x00400000  /* SDRAM part available to user - SDRAM banks 2, 3. */
+                                                           /* LCD framebuffers are lonely in separate banks 0 and 1. */
+                                                           /* Do not reuse banks 0 and 1 to prevent LTDC data starvation! */
+}
+
+/* Define output sections */
+SECTIONS
+{
+  /* The startup code goes first into FLASH */
+  .isr_vector :
+  {
+    . = ALIGN(4);
+    KEEP(*(.isr_vector)) /* Startup code */
+    . = ALIGN(4);
+  } >FLASH
+
+  /* The program code and other data goes into FLASH */
+  .text :
+  {
+    . = ALIGN(4);
+    *(.text)           /* .text sections (code) */
+    *(.text*)          /* .text* sections (code) */
+    *(.glue_7)         /* glue arm to thumb code */
+    *(.glue_7t)        /* glue thumb to arm code */
+    *(.eh_frame)
+
+    KEEP (*(.init))
+    KEEP (*(.fini))
+
+    . = ALIGN(4);
+    _etext = .;        /* define a global symbols at end of code */
+  } >FLASH
+
+  /* Constant data goes into FLASH */
+  .rodata :
+  {
+    . = ALIGN(4);
+    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    . = ALIGN(4);
+  } >FLASH
+
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+  .ARM : {
+    __exidx_start = .;
+    *(.ARM.exidx*)
+    __exidx_end = .;
+  } >FLASH
+
+  .preinit_array     :
+  {
+    PROVIDE_HIDDEN (__preinit_array_start = .);
+    KEEP (*(.preinit_array*))
+    PROVIDE_HIDDEN (__preinit_array_end = .);
+  } >FLASH
+  .init_array :
+  {
+    PROVIDE_HIDDEN (__init_array_start = .);
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array*))
+    PROVIDE_HIDDEN (__init_array_end = .);
+  } >FLASH
+  .fini_array :
+  {
+    PROVIDE_HIDDEN (__fini_array_start = .);
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array*))
+    PROVIDE_HIDDEN (__fini_array_end = .);
+  } >FLASH
+
+  /* _user_stack section, the first in RAM to force placing in DTCM */
+  ._user_stack :
+  {
+    . = ALIGN(8);
+    __stack_start__ = .;
+    . = . + _Min_Stack_Size;
+    __stack_end__ = .;
+    PROVIDE (_estack = .);
+  } > RAM
+
+  /* used by the startup to initialize data */
+  _sidata = LOADADDR(.data);
+
+  /* Initialized data sections goes into RAM, load LMA copy after code */
+  .data :
+  {
+    . = ALIGN(4);
+    _sdata = .;        /* create a global symbol at data start */
+    *(.data)           /* .data sections */
+    *(.data*)          /* .data* sections */
+
+    . = ALIGN(4);
+    _edata = .;        /* define a global symbol at data end */
+  } >RAM AT> FLASH
+
+
+  /* Uninitialized data section */
+  . = ALIGN(4);
+  .bss :
+  {
+    /* This is used by the startup in order to initialize the .bss secion */
+    _sbss = .;         /* define a global symbol at bss start */
+    __bss_start__ = _sbss;
+    *(.bss)
+    *(.bss*)
+    *(COMMON)
+
+    . = ALIGN(4);
+    _ebss = .;         /* define a global symbol at bss end */
+    __bss_end__ = _ebss;
+    . = ALIGN(8);
+    __heap_start__ = .;
+    . = . + _Min_Heap_Size;
+    __heap_end__ = .;
+    . = ALIGN(8);
+  } >RAM
+
+  /* User SDRAM section, right after the LCD framebuffer */
+  .user_sdram (NOLOAD):
+  {
+    KEEP(*(.user_sdram))
+    __user_sdram_end__ = .;
+  } >SDRAM
+
+  ._sdram_heap (NOLOAD):
+  {
+    . = ALIGN(128);
+    __sdram_heap_start__ = .;
+    . = . + _SDRAM_HEAP_SIZE;
+    __sdram_heap_end__ = .;
+    . = ALIGN(8);
+  } >SDRAM
+
+  /* Remove information from the standard libraries */
+  /DISCARD/ :
+  {
+    libc.a ( * )
+    libm.a ( * )
+    libgcc.a ( * )
+  }
+
+  .ARM.attributes 0 : { *(.ARM.attributes) }
+}
+
+
