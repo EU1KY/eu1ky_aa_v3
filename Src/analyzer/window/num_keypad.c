@@ -44,7 +44,7 @@ static void KeybHitCb(const TEXTBOX_t* tb)
     if (val > UINT32_MAX/10)
         return;
     val = val * 10 + digit;
-    sprintf(txtbuf, "%u", val);
+    sprintf(txtbuf, "%lu", val);
     uint32_t color = LCD_GREEN;
     if (val < minvalue || val > maxvalue)
         color = LCD_RED;
@@ -56,7 +56,7 @@ static void KeybHitBackspaceCb(void)
 {
     uint32_t val = strtoul(txtbuf, 0, 10);
     val /= 10;
-    sprintf(txtbuf, "%u", val);
+    sprintf(txtbuf, "%lu", val);
     uint32_t color = LCD_GREEN;
     if (val < minvalue || val > maxvalue)
         color = LCD_RED;
@@ -122,7 +122,7 @@ uint32_t NumKeypad(uint32_t initial, uint32_t min_value, uint32_t max_value, con
     edited = 0;
 
     FONT_Write(FONT_FRAN, LCD_LGRAY, LCD_BLACK, KBDX0, 0, header_text);
-    sprintf(txtbuf, "%u", initial);
+    sprintf(txtbuf, "%lu", initial);
     FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, KBDX0, 17, txtbuf);
 
     TEXTBOX_CTX_t keybd_ctx;
