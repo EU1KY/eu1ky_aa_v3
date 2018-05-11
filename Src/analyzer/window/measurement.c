@@ -421,7 +421,6 @@ MEASUREMENT_REDRAW:
         FONT_Write(FONT_FRAN, LCD_WHITE, LCD_DBLUE, 184, 250, "  Save snapshot  ");
 
         ShowF();
-        DSP_RX rx;
 
         if (-1 == OSL_GetSelected())
         {

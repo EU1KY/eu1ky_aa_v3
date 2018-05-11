@@ -41,7 +41,6 @@ static TEXTBOX_t hbConfig;
 static TEXTBOX_t hbPan;
 static TEXTBOX_t hbMeas;
 static TEXTBOX_t hbGen;
-static TEXTBOX_t hbRemote;
 static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;

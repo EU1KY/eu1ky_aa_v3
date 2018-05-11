@@ -32,7 +32,6 @@ static TEXTBOX_t hbScanProgress;
 static uint32_t hbScanProgressId;
 static TEXTBOX_t hbSave;
 static TEXTBOX_CTX_t osl_ctx = {0};
-static int percents = 0;
 extern volatile uint32_t autosleep_timer;
 
 static void _hit_ex(void)

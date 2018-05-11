@@ -175,9 +175,6 @@ static void adf4350_SendR0(uint32_t integ, uint32_t frac, SPI2_Slave_t slave)
 */
 void adf4350_Init(void)
 {
-    uint32_t tmp;
-    uint32_t dw;
-
     //Si5351 CLK2 is used as 27 MHz clock for both ADF4350 synthesizers
     //Note that Si5351 frequency precision should be calibrated separately
     si5351_Init();
