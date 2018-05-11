@@ -142,7 +142,7 @@ char* SCREENSHOT_SelectFileName(void)
 
     oldest = fmin;
     dfnum = fmax + 1;
-    sprintf(fname, "%08u", dfnum);
+    sprintf(fname, "%08lu", dfnum);
 
     KeyboardWindow(fname, 8, "Select screenshot file name");
     return fname;
@@ -153,11 +153,11 @@ void SCREENSHOT_DeleteOldest(void)
     char path[128];
     if (0xFFFFFFFFul != oldest && numfiles >= 100)
     {
-        sprintf(path, "%s/%08d.s1p", SNDIR, oldest);
+        sprintf(path, "%s/%08lu.s1p", SNDIR, oldest);
         f_unlink(path);
-        sprintf(path, "%s/%08d.bmp", SNDIR, oldest);
+        sprintf(path, "%s/%08lu.bmp", SNDIR, oldest);
         f_unlink(path);
-        sprintf(path, "%s/%08d.png", SNDIR, oldest);
+        sprintf(path, "%s/%08lu.png", SNDIR, oldest);
         f_unlink(path);
         numfiles = 0;
         oldest = 0xFFFFFFFFul;
@@ -253,7 +253,7 @@ void SCREENSHOT_SavePNG(const char *fname)
     BSP_LCD_DisplayOff();
     uint32_t error = lodepng_encode32(&png, &pngsize, image, LCD_GetWidth(), LCD_GetHeight());
     if (error)
-        CRASHF("lodepng_encode failed: %u ", error);
+        CRASHF("lodepng_encode failed: %lu ", error);
 
     f_mkdir(SNDIR);
     sprintf(path, "%s/%s.png", SNDIR, fname);

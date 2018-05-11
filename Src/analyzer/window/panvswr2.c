@@ -359,7 +359,7 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
     {
         fstart = f1;
         if (drawSwr == 1)
-            sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %d)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+            sprintf(buf, "VSWR graph: %d kHz + %s   (Z0 = %lu)", (int)fstart, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
         else
             sprintf(buf, " graph: %d kHz + %s", (int)fstart, BSSTR[span]);
     }
@@ -367,7 +367,7 @@ static void DrawGrid(int drawSwr)  // drawSwr: 0 - R/X, 1 - VSWR, 2 - S11
     {
         fstart = f1 - BSVALUES[span] / 2;
         if (drawSwr == 1)
-            sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %d)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
+            sprintf(buf, "VSWR graph: %d kHz +/- %s   (Z0 = %lu)", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
         else
             sprintf(buf, " graph: %d kHz +/- %s", (int)f1, BSSTR_HALF[span]);
     }
@@ -922,9 +922,9 @@ static void DrawSmith(void)
     LCD_FillAll(LCD_BLACK);
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 1, 0, modstr);
     if (0 == CFG_GetParam(CFG_PARAM_PAN_CENTER_F))
-        sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
+        sprintf(buf, "Smith chart: %d kHz + %s, red pt. is end. Z0 = %lu.", (int)f1, BSSTR[span], CFG_GetParam(CFG_PARAM_R0));
     else
-        sprintf(buf, "Smith chart: %d kHz +/- %s, red pt. is end. Z0 = %d.", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
+        sprintf(buf, "Smith chart: %d kHz +/- %s, red pt. is end. Z0 = %lu.", (int)f1, BSSTR_HALF[span], CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRAN, LCD_BLUE, LCD_BLACK, modstrw + 10, 0, buf);
 
     SMITH_DrawGrid(cx0, cy0, smithradius, WGRIDCOLOR, SMITH_CIRCLE_BG, SMITH_R50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 | SMITH_R500 |

@@ -164,7 +164,7 @@ static void MeasurementModeDraw(DSP_RX rx)
 
     float VSWR = DSP_CalcVSWR(rx);
     FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 92);
-    sprintf(str, "VSWR: %.1f (Z0 %d)", VSWR, CFG_GetParam(CFG_PARAM_R0));
+    sprintf(str, "VSWR: %.1f (Z0 %lu)", VSWR, CFG_GetParam(CFG_PARAM_R0));
     FONT_Write(FONT_FRANBIG, LCD_CYAN, LCD_BLACK, 0, 92, str);
 
     float XX = cimagf(rx);
