@@ -55,9 +55,7 @@
 					<Add directory="Src\BSP\Components\mfxstm32l152" />
 					<Add directory="Src\BSP\Components\n25q128a" />
 					<Add directory="Src\BSP\Components\n25q512a" />
-					<Add directory="Src\BSP\Components\ov9655" />
 					<Add directory="Src\BSP\Components\rk043fn48h" />
-					<Add directory="Src\BSP\Components\s5k5cag" />
 					<Add directory="Src\BSP\Components\stmpe811" />
 					<Add directory="Src\BSP\Components\ts3510" />
 					<Add directory="Src\BSP\Components\wm8994" />
@@ -151,9 +149,7 @@
 					<Add directory="Src\BSP\Components\mfxstm32l152" />
 					<Add directory="Src\BSP\Components\n25q128a" />
 					<Add directory="Src\BSP\Components\n25q512a" />
-					<Add directory="Src\BSP\Components\ov9655" />
 					<Add directory="Src\BSP\Components\rk043fn48h" />
-					<Add directory="Src\BSP\Components\s5k5cag" />
 					<Add directory="Src\BSP\Components\stmpe811" />
 					<Add directory="Src\BSP\Components\ts3510" />
 					<Add directory="Src\BSP\Components\wm8994" />
@@ -376,15 +372,7 @@
 		<Unit filename="Src\BSP\Components\ft5336\ft5336.h" />
 		<Unit filename="Src\BSP\Components\n25q128a\n25q128a.h" />
 		<Unit filename="Src\BSP\Components\n25q512a\n25q512a.h" />
-		<Unit filename="Src\BSP\Components\ov9655\ov9655.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\BSP\Components\ov9655\ov9655.h" />
 		<Unit filename="Src\BSP\Components\rk043fn48h\rk043fn48h.h" />
-		<Unit filename="Src\BSP\Components\s5k5cag\s5k5cag.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\BSP\Components\s5k5cag\s5k5cag.h" />
 		<Unit filename="Src\BSP\Components\wm8994\wm8994.c">
 			<Option compilerVar="CC" />
 		</Unit>
