@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include <complex.h>
-#include "lcd.h"
+#include "LCD.h"
 
 #ifdef __cplusplus
 extern "C" {
