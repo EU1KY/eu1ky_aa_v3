@@ -170,7 +170,6 @@ static void do_fft_audiobuf(int ch)
 
 void FFTWND_Proc(void)
 {
-    uint32_t ctr = 0;
     int i;
 
     rqExit = 0;

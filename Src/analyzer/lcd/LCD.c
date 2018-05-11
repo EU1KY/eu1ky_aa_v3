@@ -106,10 +106,6 @@ void LCD_WaitForRedraw(void)
 
 void LCD_FillRect(LCDPoint p1, LCDPoint p2, LCDColor color)
 {
-    int32_t numPixels;
-    int32_t i;
-    uint16_t tmp;
-
     if (p1.x >= LCD_GetWidth()) p1.x = LCD_GetWidth() - 1;
     if (p2.x >= LCD_GetWidth()) p2.x = LCD_GetWidth() - 1;
     if (p1.y >= LCD_GetHeight()) p1.y = LCD_GetHeight() - 1;

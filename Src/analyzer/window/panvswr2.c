@@ -141,7 +141,6 @@ static int IsFinHamBands(uint32_t f_kHz)
 
 static void DrawCursor()
 {
-    LCDPoint p;
     if (!isMeasured)
         return;
     FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 2, 110, "<");
@@ -200,7 +199,6 @@ static void DrawCursorText()
 static void DrawCursorTextWithS11()
 {
     float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
-    float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
 
     uint32_t fstart;
     if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
@@ -744,7 +742,6 @@ static void DrawS11()
 
     //Draw horizontal lines and labels
     int yofs = 0;
-    int yofs_sm = 0;
     float labelValue;
 
 #define S11OFFS(s11) ((int)roundf(((s11 - graphmin) * WHEIGHT) / grange) + 1)

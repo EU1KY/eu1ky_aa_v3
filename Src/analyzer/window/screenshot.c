@@ -85,7 +85,6 @@ void SCREENSHOT_Show(const char* fname)
 char* SCREENSHOT_SelectFileName(void)
 {
     static char fname[64];
-    char path[128];
     uint32_t dfnum = 0;
 
     f_mkdir(SNDIR);
@@ -168,7 +167,6 @@ void SCREENSHOT_DeleteOldest(void)
 void SCREENSHOT_Save(const char *fname)
 {
     char path[64];
-    char wbuf[256];
     FRESULT fr = FR_OK;
     FIL fo = { 0 };
 
@@ -240,7 +238,6 @@ static void _Change_B_R(uint32_t* image)
 void SCREENSHOT_SavePNG(const char *fname)
 {
     char path[64];
-    char wbuf[256];
     FRESULT fr = FR_OK;
     FIL fo = { 0 };
 
