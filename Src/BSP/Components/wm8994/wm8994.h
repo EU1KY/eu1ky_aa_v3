@@ -158,11 +158,11 @@ uint32_t wm8994_SetFrequency(uint16_t DeviceAddr, uint32_t AudioFreq);
 uint32_t wm8994_Reset(uint16_t DeviceAddr);
 
 /* AUDIO IO functions */
-void    AUDIO_IO_Init(void);
-void    AUDIO_IO_DeInit(void);
-void    AUDIO_IO_Write(uint8_t Addr, uint16_t Reg, uint16_t Value);
-uint8_t AUDIO_IO_Read(uint8_t Addr, uint16_t Reg);
-void    AUDIO_IO_Delay(uint32_t Delay);
+void     AUDIO_IO_Init(void);
+void     AUDIO_IO_DeInit(void);
+void     AUDIO_IO_Write(uint8_t Addr, uint16_t Reg, uint16_t Value);
+uint16_t AUDIO_IO_Read(uint8_t Addr, uint16_t Reg);
+void     AUDIO_IO_Delay(uint32_t Delay);
 
 /* Audio driver structure */
 extern AUDIO_DrvTypeDef   wm8994_drv;
