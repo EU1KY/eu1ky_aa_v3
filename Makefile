@@ -58,9 +58,7 @@ INCLUDE = -ISrc/BSP/Components/ampire480272 \
           -ISrc/BSP/Components/mfxstm32l152 \
           -ISrc/BSP/Components/n25q128a \
           -ISrc/BSP/Components/n25q512a \
-          -ISrc/BSP/Components/ov9655 \
           -ISrc/BSP/Components/rk043fn48h \
-          -ISrc/BSP/Components/s5k5cag \
           -ISrc/BSP/Components/stmpe811 \
           -ISrc/BSP/Components/ts3510 \
           -ISrc/BSP/Components/wm8994 \
@@ -90,9 +88,7 @@ INCLUDE = -ISrc/BSP/Components/ampire480272 \
           -I./Src/BSP/Components/ft5336 \
           -I./Src/BSP/Components/n25q128a \
           -I./Src/BSP/Components/n25q512a \
-          -I./Src/BSP/Components/ov9655 \
           -I./Src/BSP/Components/rk043fn48h \
-          -I./Src/BSP/Components/s5k5cag \
           -I./Src/BSP/Components/wm8994 \
           -I./Src/BSP/STM32746G-Discovery \
           -I./Src/CMSIS/Device/ST/STM32F7xx/Include \
@@ -142,8 +138,6 @@ SRC :=   Src/analyzer/config/config.c \
         Src/analyzer/window/screenshot.c \
         Src/analyzer/window/tdr.c \
         Src/BSP/Components/ft5336/ft5336.c \
-        Src/BSP/Components/ov9655/ov9655.c \
-        Src/BSP/Components/s5k5cag/s5k5cag.c \
         Src/BSP/Components/wm8994/wm8994.c \
         Src/BSP/STM32746G-Discovery/custom_spi2.c \
         Src/BSP/STM32746G-Discovery/stm32746g_discovery.c \
