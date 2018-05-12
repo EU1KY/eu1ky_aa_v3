@@ -341,6 +341,8 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 //CFG module initialization
 void CFG_Init(void)
 {
@@ -449,6 +451,7 @@ void CFG_Init(void)
     if (CFG_GetParam(CFG_PARAM_TDR_VF) < 1 || CFG_GetParam(CFG_PARAM_TDR_VF) > 100)
         CFG_SetParam(CFG_PARAM_TDR_VF, 66);
 }
+#pragma GCC diagnostic pop
 
 uint32_t CFG_GetParam(CFG_PARAM_t param)
 {
@@ -536,6 +539,8 @@ static uint32_t CFG_GetPrevValue(uint32_t param_idx, uint32_t param_value)
     return pd->values[0];
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 //Get string representation of parameter
 const char * CFG_GetStringValue(uint32_t param_idx)
 {
@@ -591,6 +596,7 @@ const char * CFG_GetStringValue(uint32_t param_idx)
     }
     return tstr;
 }
+#pragma GCC diagnostic pop
 
 const char * CFG_GetStringDescr(uint32_t param_idx)
 {

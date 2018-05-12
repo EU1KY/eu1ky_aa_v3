@@ -114,12 +114,15 @@ void DSP_Init(void)
     int ns = NSAMPLES - 1;
     uint32_t tmp;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
     tmp = CFG_GetParam(CFG_PARAM_BRIDGE_RM);
     Rmeas = *(float*)&tmp;
     tmp = CFG_GetParam(CFG_PARAM_BRIDGE_RADD);
     RmeasAdd = *(float*)&tmp;
     tmp = CFG_GetParam(CFG_PARAM_BRIDGE_RLOAD);
     Rload = *(float*)&tmp;
+#pragma GCC diagnostic pop
 
     OSL_Select(CFG_GetParam(CFG_PARAM_OSL_SELECTED));
     OSL_LoadErrCorr();
