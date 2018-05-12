@@ -382,10 +382,11 @@ typedef enum
     ADF4351_Err_InvalidMODLowSpur,             ///< Min. MOD in low spur mode is 50
 } ADF4351_ERR_t;
 
-static ADF4351_ERR_t UpdateFrequencyRegisters(double RFout, double REFin, double OutputChannelSpacing, int gcd, int AutoBandSelectClock, double *RFoutCalc );
-static uint32_t ADF4351_GetRegisterBuf(int addr);
+static ADF4351_ERR_t UpdateFrequencyRegisters(double RFout, double REFin, double OutputChannelSpacing, int gcd, int AutoBandSelectClock, double *RFoutCalc) __attribute__((unused));
+static uint32_t ADF4351_GetRegisterBuf(int addr) __attribute__((unused));
 static void ADF4351_SetRegisterBuf(int addr, uint32_t val);
-static void ADF4351_ClearRegisterBuf(void);
+static void ADF4351_ClearRegisterBuf(void) __attribute__((unused));
+static ADF4351_ERR_t ADF4351_SetRcounterVal(uint16_t val) __attribute__((unused));
 
 /**
  * @brief ADF4351 registers - local storage
