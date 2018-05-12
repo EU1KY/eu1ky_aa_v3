@@ -45,6 +45,10 @@ typedef struct
 //Float array macro
 #define CFG_FARR(...) (const float[]){__VA_ARGS__}
 
+static uint32_t isSi5351(void)  __attribute__((unused));
+static uint32_t isADF4350(void) __attribute__((unused));
+static uint32_t isADF4351(void) __attribute__((unused));
+
 //Callback that returns nonzero if Si5351 frequency synthesizer is selected
 static uint32_t isSi5351(void)
 {

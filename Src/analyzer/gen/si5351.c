@@ -40,7 +40,7 @@ struct Si5351IntStatus dev_int_status;
 /******************************/
 static void si5351_set_freq(uint32_t, enum si5351_clock);
 static void si5351_clock_enable(enum si5351_clock clk, uint8_t enable);
-static uint8_t si5351_read_device_reg(uint8_t reg);
+static uint8_t si5351_read_device_reg(uint8_t reg) __attribute__((unused));
 static void set_multisynth_alt(uint32_t freq, enum si5351_clock clk);
 static uint8_t si5351_write_bulk(uint8_t, uint8_t, uint8_t *);
 static uint8_t si5351_write(uint8_t, uint8_t);
