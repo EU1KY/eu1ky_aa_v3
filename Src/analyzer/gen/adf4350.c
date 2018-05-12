@@ -24,6 +24,9 @@
 
 extern void Sleep(uint32_t);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-value"
+
 static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_int, uint32_t* div_frac, uint32_t* div_mod)
 {
     //Check fhz valid value (140 MHz ... 4200 MHz)
@@ -42,6 +45,7 @@ static void adf4350_calc_div(uint32_t fhz, uint32_t* rfdiv_out, uint32_t* div_in
         mask >>= 1;
         *rfdiv_out--;
     }
+
     // rfd is 16, 8, 4, 2 or 1 at this point
     // *rfdiv_out is 4, 3, 2, 1 or 0 respectively at this point - the value to be placed to ADF4350 register R4
 
