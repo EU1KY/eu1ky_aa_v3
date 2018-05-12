@@ -114,7 +114,7 @@ static float complex SmoothRX(int idx, int useHighSmooth);
 
 static void prevspan(BANDSPAN *sp) __attribute__((unused));
 static void nextspan(BANDSPAN *sp) __attribute__((unused));
-static void printspan(BANDSPAN *sp) __attribute__((unused));
+static void print_span(BANDSPAN sp) __attribute__((unused));
 static void print_f1(uint32_t f) __attribute__((unused));
 
 static int swroffset(float swr)
