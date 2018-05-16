@@ -144,7 +144,7 @@ uint32_t NumKeypad(uint32_t initial, uint32_t min_value, uint32_t max_value, con
     }
 
     while(TOUCH_IsPressed());
-        Sleep(0);
+    Sleep(0);
 
     return result;
 }
