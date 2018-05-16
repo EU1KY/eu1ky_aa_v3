@@ -3,6 +3,9 @@
 # set PATH=d:\EmBitz\share\em_armgcc\bin\;%PATH%
 # or in Linux:
 # export PATH=$PATH:/opt/gcc-arm-none-eabi-7-2017-q4-major/bin
+#
+# Note that in Linux only the Launchpad toolchain should be used to build the binaries, see
+# https://launchpad.net/~team-gcc-arm-embedded/+archive/ubuntu/ppa
 
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
@@ -27,7 +30,7 @@ OBJCOPY = arm-none-eabi-objcopy
 SIZE    = arm-none-eabi-size
 
 CFLAGS  = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -fgcse -fexpensive-optimizations -fomit-frame-pointer \
-          -fdata-sections -ffunction-sections -Os -g -mfpu=fpv5-sp-d16 -flto -MMD
+          -fdata-sections -ffunction-sections -Os -g -mfpu=fpv5-sp-d16 -flto -MMD -Wall
 
 ASFLAGS = -mcpu=cortex-m7 -mthumb -Wa,--gdwarf-2
 
