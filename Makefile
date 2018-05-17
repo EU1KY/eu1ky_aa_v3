@@ -1,10 +1,11 @@
 # This makefile to build firmware from command line in Windows and Linux
-# Before running make, ensure that path to arm-none-eabi-gcc is added to the system path, e.g. like this:
-# set PATH=d:\EmBitz\share\em_armgcc\bin\;%PATH%
+# Before running make, ensure that path to GNU ARM Embedded toolchain (arm-none-eabi-gcc)
+# is added to the system path, e.g. like this:
+#     set PATH=d:\EmBitz\share\em_armgcc\bin\;%PATH%
 # or in Linux:
-# export PATH=$PATH:/opt/gcc-arm-none-eabi-7-2017-q4-major/bin
+#     export PATH=$PATH:/opt/gcc-arm-none-eabi-7-2017-q4-major/bin
 #
-# Note that in Linux only the Launchpad toolchain should be used to build the binaries, see
+# GNU ARM Embedded toolchain for Linux is available here:
 # https://launchpad.net/~team-gcc-arm-embedded/+archive/ubuntu/ppa
 
 ifeq ($(OS),Windows_NT)
@@ -30,13 +31,13 @@ OBJCOPY = arm-none-eabi-objcopy
 SIZE    = arm-none-eabi-size
 
 CFLAGS  = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -fgcse -fexpensive-optimizations -fomit-frame-pointer \
-          -fdata-sections -ffunction-sections -Os -g -mfpu=fpv5-sp-d16 -flto -MMD -Wall
+          -fdata-sections -ffunction-sections -Os -g -mfpu=fpv5-sp-d16 -MMD -Wall
 
 ASFLAGS = -mcpu=cortex-m7 -mthumb -Wa,--gdwarf-2
 
 LDFLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -fgcse -fexpensive-optimizations -fomit-frame-pointer \
           -fdata-sections -ffunction-sections -Os -g -mthumb -mfpu=fpv5-sp-d16 -Wl,-Map=bin/Release/F7Discovery.map \
-          -u _printf_float -specs=nano.specs -Wl,--gc-sections -flto -TSrc/Sys/STM32F746NGHx_FLASH.ld -lm
+          -u _printf_float -specs=nano.specs -Wl,--gc-sections -TSrc/Sys/STM32F746NGHx_FLASH.ld -lm
 
 DEFINE = -DSTM32F746xx \
          -DSTM32F746G_DISCO \
@@ -264,9 +265,9 @@ bin/Release/F7Discovery.elf : $(OBJS)
 	@$(call mkdir,bin/Release)
 	@echo Linking...
 	@$(CC) $(OBJS) -o bin/Release/F7Discovery.elf $(LDFLAGS)
-	@$(OBJCOPY) -O ihex $@ $@.hex
-	@$(OBJCOPY) -O binary $@ $@.bin
-	@$(SIZE) bin/Release/F7Discovery.elf
+	@$(OBJCOPY) -O ihex $@ $(basename $@).hex
+	@$(OBJCOPY) -O binary $@ $(basename $@).bin
+	@$(SIZE) $@
 
 obj/release/%.c.o : %.c
 	@$(call mkdir,"$(@D)")
