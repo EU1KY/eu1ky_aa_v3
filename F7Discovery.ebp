@@ -178,7 +178,6 @@
 					<Add option="-eb_lib=n" />
 					<Add option="-eb_start_files" />
 					<Add option="-Wl,--gc-sections" />
-					<Add option="-flto" />
 					<Add option="-TSrc\Sys\STM32F746NGHx_FLASH.ld" />
 					<Add option="-mcpu=cortex-m7" />
 					<Add option="-mthumb" />
