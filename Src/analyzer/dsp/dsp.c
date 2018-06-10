@@ -219,7 +219,7 @@ void DSP_Sample(void)
 void DSP_Sample16(void)
 {
     extern SAI_HandleTypeDef haudio_in_sai;
-    HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (2 + 10) * 2, HAL_MAX_DELAY);
+    HAL_StatusTypeDef res = HAL_SAI_Receive(&haudio_in_sai, (uint8_t*)audioBuf, (2 + 62) * 2, HAL_MAX_DELAY);
     if (HAL_OK != res)
     {
         CRASHF("HAL_SAI_Receive failed, err %d", res);

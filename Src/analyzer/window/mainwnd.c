@@ -48,6 +48,7 @@ static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
 static TEXTBOX_t hbTDR;
+static TEXTBOX_t hbTun;
 static TEXTBOX_t hbMulti;
 static TEXTBOX_t hbExitCal;
 static TEXTBOX_t hbFrq;
@@ -458,7 +459,6 @@ uint8_t i;
 //    LCD_ShowActiveLayerOnly();
     ColourSelection=1;
     FatLines=false;
-    for(i=0;i<5;i++)fr[i]=0;
     while (TOUCH_IsPressed());
 
     //Initialize textbox context
@@ -487,17 +487,17 @@ uint8_t i;
     TEXTBOX_Append(&main_ctx, &hbTDR);
 
     //MultiScan  WK
-     hbMulti = (TEXTBOX_t){.x0 = COL1, .y0 = 210, .text =   " Multi SWR ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+    hbMulti = (TEXTBOX_t){.x0 = COL1, .y0 = 210, .text =   " Multi SWR ", .font = FONT_FRANBIG, .width = 200, .center = 1,
                             .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MultiSWR_Proc };
     TEXTBOX_Append(&main_ctx, &hbMulti);
      //Find Frequency  WK
-   /* hbFrq = (TEXTBOX_t){.x0 = COL2, .y0 = 60, .text =" Find Frequency ", .font = FONT_FRANBIG, .width = 200, .center = 1,
+    hbFrq = (TEXTBOX_t){.x0 = COL2, .y0 = 60, .text =" Find Frequency ", .font = FONT_FRANBIG, .width = 230, .center = 1,
                             .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SPECTR_FindFreq };
-    TEXTBOX_Append(&main_ctx, &hbFrq);*/
-    //Find Frequency  WK
-    hbFrq = (TEXTBOX_t){.x0 = COL2, .y0 = 110, .text =" Tune SWR//Sound", .font = FONT_FRANBIG, .width = 230, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Tune_SWR_Proc };
     TEXTBOX_Append(&main_ctx, &hbFrq);
+    //Find Frequency  WK
+    hbTun = (TEXTBOX_t){.x0 = COL2, .y0 = 110, .text =" Tune SWR//Sound", .font = FONT_FRANBIG, .width = 230, .center = 1,
+                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Tune_SWR_Proc };
+    TEXTBOX_Append(&main_ctx, &hbTun);
     //Reload Pictures WK
     hbPict     = (TEXTBOX_t){.x0 = COL2, .y0 = 160, .text =   " View Pictures ", .font = FONT_FRANBIG, .width = 230, .center = 1,
                             .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Reload_Proc };

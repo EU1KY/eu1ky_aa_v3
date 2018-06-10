@@ -9,6 +9,7 @@
 #include "stm32f7xx_hal_def.h"
 #include "stm32f7xx_hal_tim.h"
 #include "panvswr2.h"
+#include "FreqCounter.h"
 
 #define preScaler 8;
 

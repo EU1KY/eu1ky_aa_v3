@@ -156,7 +156,7 @@ static void do_fft_audiobuf(int ch)
     int16_t* pBuf = &audioBuf[NDUMMY + (ch != 0)];
     for(i = 0; i < NSAMPLES; i++)
     {
-        rfft_input[i] = (float)*pBuf * windowfunc[i];
+        rfft_input[i] = (float)*pBuf * windowfunc[i];// Blackman Window
         pBuf += 2;
     }
 

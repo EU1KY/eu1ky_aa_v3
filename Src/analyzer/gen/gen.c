@@ -107,6 +107,19 @@ if (frqu1 > CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ))
         gen.SetLO(frqu1);
 }
 
+void GEN_SetF0Freq(uint32_t frqu1){// ** WK ** 02.04.2018
+if(frqu1==0) {
+    gen.Off();
+    return;
+}
+
+if (frqu1 > CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ))
+        gen.SetF0(frqu1 / 3);
+    else
+        gen.SetF0(frqu1);
+}
+
+
 uint32_t GEN_GetLastFreq()
 {
     return lastSetFreq;

@@ -620,7 +620,7 @@ void MEASUREMENT_Proc(void)
             Sleep(2);
             DSP_Measure(f_mess, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
             rx0= DSP_MeasuredZ();
-            if(first){
+            if(first || (l==1)){
                 first=false;
                 rmid= rx0;
             }

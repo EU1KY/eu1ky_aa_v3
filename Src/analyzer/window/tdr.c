@@ -27,13 +27,13 @@ extern void Sleep(uint32_t);
 
 #define NUMTDRSAMPLES 256
 #define X0 40
-#define Y0 135
+#define Y0 145
 #define WWIDTH 400
 
 static float time_domain[NUMTDRSAMPLES*2];
 static float complex freq_domain[NUMTDRSAMPLES];
 static uint32_t rqExit = 0;
-static float normFactor = 1.f; //Factor for calculating graph magnitude scale. Calculated from maximum value in time domain.
+static float normFactor = 0.9f; //Factor for calculating graph magnitude scale. Calculated from maximum value in time domain.
 
 static uint32_t TDR_isScanned = 0;
 static uint32_t TDR_cursorPos = WWIDTH / 2;
@@ -82,15 +82,18 @@ static const float halfKBDwnd[] =
 
 static const float KBD_td_factor = 1.43502708f; //Factor for the above window to normalize time-domain cumulative power to 1.0
 
-
+static float max1 ;
+int max_idx;
 //Scan 255 samples from 500 KHz up to 127.5 MHz step 500KHz
 static void TDR_Scan(void)
 {
+float d;
+int i;
     DSP_Measure(BAND_FMIN, 1, 1, 1); //Fake initial run to let the circuit stabilize
 
     freq_domain[0] = 0.f+0.fi; //bin 0 is zero
 
-    uint32_t i;
+
     for (i = 1; i < NUMTDRSAMPLES; i++)
     {
         uint32_t freqHz =i * 500000;
@@ -111,17 +114,18 @@ static void TDR_Scan(void)
 
     //Time domain data is in rfft_input now
     //Normalize
-    float max = -9999999.f;
-    for (i = 0; i < NUMTDRSAMPLES*2; i++)
+    max1 = -9999999.f;
+    for (i = NUMTDRSAMPLES*2-1; i >=0 ; i--)
     {
-        time_domain[i] * KBD_td_factor; //Normalization to compensate windowing
-        float d = fabs(time_domain[i]);
-        if (d > max)
-        {
-            max = d;
+        time_domain[i] *= KBD_td_factor; //Normalization to compensate windowing
+        d = fabs(time_domain[i]);
+        if (d > max1){
+            max1 = d;// upstairs
+            max_idx=i;
         }
     }
-    normFactor = 1.f / fabs(max);
+    normFactor = 0.9f / fabs(max1);
+    TDR_cursorPos=max_idx*155/TDR_Length;
 }
 
 static void TDR_Exit(void)
@@ -153,8 +157,10 @@ static void TDR_DrawCursorText(void)
     if (vf < 0.01f || vf > 1.00f)
         vf = 0.66f;
     float lenm = vf * (0.299792458f * ns) * 0.5f;
-    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 15, "T: %.1f ns, Mag: %.5f Dist: %.1f m (@Vf=%.2f)      ",
-               ns, val, lenm, vf);
+    FONT_Print(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 15, "T: %.1f ns, Mag: %.5f  Vf=%.2f      Distance: ",
+               ns, val, vf);
+    LCD_FillRect(LCD_MakePoint(200,30), LCD_MakePoint(326, 72), BGColor);
+    FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 200, 30, "%.1f m", lenm);
 }
 
 
@@ -165,8 +171,8 @@ static void TDR_DrawCursor(void)
         return;
 
     //Draw cursor line as inverted image
-    p = LCD_MakePoint(X0 + TDR_cursorPos, Y0 - 100);
-    while (p.y < Y0 + 100)
+    p = LCD_MakePoint(X0 + TDR_cursorPos, Y0 - 90);
+    while (p.y < Y0 + 90)
     {
         LCD_InvertPixel(p);
         p.y++;
@@ -176,18 +182,19 @@ static void TDR_DrawCursor(void)
 
 static void TDR_DrawGrid(void)
 {
-    LCD_FillRect(LCD_MakePoint(0, Y0 - 100 - 2), LCD_MakePoint(LCD_GetWidth() - 1, Y0 + 100 + 2), BGColor);
-    LCD_Rectangle(LCD_MakePoint(X0, Y0 - 100), LCD_MakePoint(X0 + WWIDTH - 1, Y0 + 100), LCD_RGB(80,80,80));
+    LCD_FillRect(LCD_MakePoint(0, Y0 - 90 - 2), LCD_MakePoint(LCD_GetWidth() - 1, Y0 + 90 + 2), BGColor);
+    LCD_FillRect(LCD_MakePoint(200,30), LCD_MakePoint(326, 72), BGColor);
+    LCD_Rectangle(LCD_MakePoint(X0, Y0 - 90), LCD_MakePoint(X0 + WWIDTH - 1, Y0 + 90), LCD_RGB(80,80,80));
     LCD_Line(LCD_MakePoint(X0, Y0), LCD_MakePoint(X0 + WWIDTH - 1, Y0), LCD_RGB(80,80,80));
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 364, 4, "10m");// WK
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 404, 4, "50m");
-    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 444, 4, "155m");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 335, 19, "10m");// WK
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 385, 19, "50m");
+    FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLUE, 435, 19, "155m");
     if(TDR_Length==10)
-        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 364, 4, "10m");
+        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 335, 19, "10m");
     else if(TDR_Length==50)
-        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 404, 4, "50m");
+        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 385, 19, "50m");
     else
-        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 444, 4, "155m");
+        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_WHITE, 435, 19, "155m");
 }
 
 static void TDR_DecrCursor(void)
@@ -234,8 +241,8 @@ static void TDR_DrawGraph(void)
         }
         lasty = y;
     }
-    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, Y0 - 100-1, "%.3f", 1./normFactor);// WK
-    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, Y0 + 100 - 12, "%.3f", -1./normFactor);
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, Y0 - 90-1, "%.3f", 1./normFactor);// WK
+    FONT_Print(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, Y0 + 90 - 12, "%.3f", -1./normFactor);
    /* FONT_Print(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, 10, Y0 - 100, "%.5f", 1./normFactor);
     FONT_Print(FONT_SDIGITS, LCD_WHITE, LCD_BLACK, 5, Y0 + 100 - 5, "%.5f", -1./normFactor);*/
 }
@@ -253,19 +260,27 @@ static void TDR_DoScan (void)
 }
 
 static void TDR_10m(void){
+    while(TOUCH_IsPressed());
+    Sleep(100);
     TDR_Length=10;
     TDR_DrawGrid();
 }
 static void TDR_50m(void){
+    while(TOUCH_IsPressed());
+    Sleep(100);
     TDR_Length=50;
     TDR_DrawGrid();
 }
 static void TDR_155m(void){
+    while(TOUCH_IsPressed());
+    Sleep(100);
     TDR_Length=155;
     TDR_DrawGrid();
 }
 
 static void TDR_Colors(void){
+    while(TOUCH_IsPressed());
+    Sleep(100);
     if(colorScheme==0){
         BGColor=LCD_WHITE;
         GraphColor=LCD_BLACK;
@@ -290,9 +305,9 @@ static const struct HitRect hitArr[] =
     HITRECT( 190, 241,  80,     31, TDR_Screenshot),
     HITRECT( 300, 241,  80,     31, TDR_DoScan),
     HITRECT( 400, 241,  60,     31, TDR_Colors),
-    HITRECT( 360, Y0 - 135,   38,     30, TDR_10m),
-    HITRECT( 400, Y0 - 135,   38,     30, TDR_50m),
-    HITRECT( 440, Y0 - 135,   38,     30, TDR_155m),
+    HITRECT( 328, Y0 - 135,  50,     40, TDR_10m),
+    HITRECT( 378, Y0 - 135,  50,     40, TDR_50m),
+    HITRECT( 428, Y0 - 135,  50,     40, TDR_155m),
     HITRECT( 430, Y0 - 20,   60,     72, TDR_AdvCursor),
     HITRECT(   0, Y0 - 20,   60,     72, TDR_DecrCursor),
     HITEND

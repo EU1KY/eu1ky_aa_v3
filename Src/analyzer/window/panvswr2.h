@@ -10,13 +10,13 @@
 // ** WK ** :
 typedef enum
 {
-    BS2, BS5, BS10, BS25, BS50, BS100, BS200, BS400, BS800, BS1600, BS2M, BS4M, BS8M, BS16M, BS20M, BS40M, BS80M
+    BS2, BS4, BS10, BS20, BS40, BS100, BS200, BS400, BS1000, BS2M, BS4M, BS10M, BS20M, BS40M, BS100M
 } BANDSPAN;
 
 extern const char* BSSTR[];
 extern const char* BSSTR_HALF[];
 extern const uint32_t BSVALUES[];
-static uint32_t fr[5];
+static uint32_t multi_fr[5];
 void PANVSWR2_Proc(void);
 typedef struct
 {

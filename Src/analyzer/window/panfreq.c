@@ -162,7 +162,7 @@ static bool IsValidRange(void)
         fstart = _f1;
         fend = _f1 + BSVALUES[_bs];
     }
-    return (fstart < fend) && (fstart >= BAND_FMIN/1000) && (fend <= CFG_GetParam(CFG_PARAM_BAND_FMAX)/1000);
+    return ((fstart < fend) && (fstart >= BAND_FMIN/1000) && (fend <= CFG_GetParam(CFG_PARAM_BAND_FMAX)/1000));
 }
 
 static void Show_F(void)
@@ -194,7 +194,7 @@ static void BSPrevHitCb(void)
 {
     if (_bs == BS2)// ** WK **
     {
-        _bs = BS80M;
+        _bs = BS100M;
         if (!IsValidRange())
             _bs = BS200;
     }
@@ -205,7 +205,7 @@ static void BSPrevHitCb(void)
 
 static void BSNextHitCb(void)
 {
-    if (_bs == BS80M)
+    if (_bs == BS100M)
         _bs = BS2;// ** WK **
     else
     {
@@ -356,8 +356,8 @@ static void BandHitCb(const TEXTBOX_t* tb)
     }
     else if (0 == strcmp(tb->text, "80"))
     {
-        _f1 = 3300;
-        _bs = BS800;
+        _f1 = 3500;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "60"))
     {
@@ -366,62 +366,62 @@ static void BandHitCb(const TEXTBOX_t* tb)
     }
     else if (0 == strcmp(tb->text, "40"))
     {
-        _f1 = 6900;
+        _f1 = 7000;
         _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "30"))
     {
-        _f1 = 9900;
-        _bs = BS400;
+        _f1 = 10100;
+        _bs = BS100;
     }
     else if (0 == strcmp(tb->text, "20"))
     {
-        _f1 = 13800;
-        _bs = BS800;
+        _f1 = 14000;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "17"))
     {
-        _f1 = 17900;
-        _bs = BS400;
+        _f1 = 18000;
+        _bs = BS200;
     }
     else if (0 == strcmp(tb->text, "15"))
     {
-        _f1 = 20800;
-        _bs = BS800;
+        _f1 = 21000;
+        _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "12"))
     {
-        _f1 = 24700;
+        _f1 = 24890;
         _bs = BS400;
     }
     else if (0 == strcmp(tb->text, "10"))
     {
-        _f1 = 27900;
+        _f1 = 28000;
         _bs = BS2M;
     }
     else if (0 == strcmp(tb->text, "6"))
     {
-        _f1 = 49500;
-        _bs = BS4M;
+        _f1 = 50000;
+        _bs = BS2M;
     }
     else if (0 == strcmp(tb->text, "4"))
     {
-        _f1 = 69000;
+        _f1 = 70000;
         _bs = BS2M;
     }
     else if (0 == strcmp(tb->text, "2"))
     {
-        _f1 = 143000;
-        _bs = BS4M;
+        _f1 = 144000;
+        _bs = BS2M;
     }
-    else if (0 == strcmp(tb->text, "1.25m") && CFG_GetParam(CFG_PARAM_BAND_FMAX) >= 234000000ul)
+    else if (0 == strcmp(tb->text, "1.25m"))// && (CFG_GetParam(CFG_PARAM_BAND_FMAX) >= 234000000ul))
     {// 222-225 MHz in USA
         _f1 = 214000;
         _bs = BS20M;
     }
-    else if (0 == strcmp(tb->text, "70cm") && CFG_GetParam(CFG_PARAM_BAND_FMAX) >= 445000000ul)
+    else if (0 == strcmp(tb->text, "70cm"))// && (CFG_GetParam(CFG_PARAM_BAND_FMAX) >= 445000000ul))
     {
-        _f1 = 425000;
+        _f1 = 430000;
         _bs = BS20M;
     }
     else

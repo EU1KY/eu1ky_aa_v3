@@ -98,12 +98,13 @@ static const char *modstr = "EU1KY AA v." AAVERSION " ";
 
 static uint32_t modstrw = 0;
 // ** WK ** :
-const char* BSSTR[] = {"2 kHz","5 kHz","10  kHz","25 kHz","50 kHz","100 kHz","200 kHz", "400 kHz", "800 kHz", "1.6 MHz", "2 MHz", "4 MHz", "8 MHz", "16 MHz", "20 MHz", "40 MHz", "80 MHz"};
-const char* BSSTR_HALF[] = {"1 kHz","2,5 kHz","5 kHz","12,5 kHz","25 kHz","50 kHz","100 kHz", "200 kHz", "400 kHz", "800 kHz", "1 MHz", "2 MHz", "4 MHz", "8 MHz", "10 MHz", "20 MHz", "40 MHz"};
-const uint32_t BSVALUES[] = {2,5,10,25,50,100,200, 400, 800, 1600, 2000, 4000, 8000, 16000, 20000, 40000, 80000};
+const char* BSSTR[] = {"2 kHz","4 kHz","10  kHz","20 kHz","40 kHz","100 kHz","200 kHz", "400 kHz", "1000 kHz", "2 MHz", "4 MHz", "10 MHz", "20 MHz", "40 MHz", "100 MHz"};
+const char* BSSTR_HALF[] = {"1 kHz","2 kHz","5 kHz","10 kHz","20 kHz","50 kHz","100 kHz", "200 kHz", "500 kHz", "1 MHz", "2 MHz", "5 MHz", "10 MHz", "20 MHz", "50 MHz"};
+const uint32_t BSVALUES[] = {2,4,10,20,40,100,200, 400, 1000, 2000, 4000, 10000, 20000, 40000, 100000};
+
 
 static uint32_t f1 = 14000; //Scan range start frequency, in kHz
-static BANDSPAN span = BS800;
+static BANDSPAN span = BS400;
 static char buf[64];
 static LCDPoint pt;
 static float complex values[WWIDTH+1];
@@ -142,14 +143,20 @@ static const TEXTBOX_t tb_menuSWR[] = {
                  .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
 };
 
-static uint32_t fr[5]  = {0,0,27800,3670,7150};//Multi SWR frequencies in kHz
-static uint32_t bw[5]  = {200,800,200,400,100};//Multi SWR bandwidth in kHz
+static uint32_t multi_fr[5]  = {1850,21200,27800,3670,7150};//Multi SWR frequencies in kHz
+static uint32_t multi_bw[5]  = {200,1000,200,400,100};//Multi SWR bandwidth number
+static BANDSPAN multi_bwNo[5]  = {6,8,6,5,4};//Multi SWR bandwidth number
+
 
 unsigned long GetUpper(int i){
-return 1000*hamBands[i].fhi;
+if((i>=0)&&(i<=12))
+    return 1000*hamBands[i].fhi;
+return 0;
 }
 unsigned long GetLower(int i){
-return 1000*hamBands[i].flo;
+if((i>=0)&&(i<=12))
+    return 1000*hamBands[i].flo;
+return 0;
 }
 
 int GetBandNr(unsigned long freq){
@@ -639,9 +646,9 @@ static void print_f1(uint32_t f)
 
 static void nextspan(BANDSPAN *sp)
 {
-    if (*sp == BS80M)
+    if (*sp == BS100M)
     {
-        *sp = BS200;
+        *sp = BS2;
     }
     else
     {
@@ -651,9 +658,9 @@ static void nextspan(BANDSPAN *sp)
 
 static void prevspan(BANDSPAN *sp)
 {
-    if (*sp == BS200)
+    if (*sp == BS2)
     {
-        *sp = BS80M;
+        *sp = BS100M;
     }
     else
     {
@@ -859,18 +866,18 @@ static void LoadBkups()
     {
         f1 = 14000;
         CFG_SetParam(CFG_PARAM_PAN_F1, f1);
-        CFG_SetParam(CFG_PARAM_PAN_SPAN, BS800);
+        CFG_SetParam(CFG_PARAM_PAN_SPAN, BS400);
         CFG_Flush();
     }
 
     int spbkup = CFG_GetParam(CFG_PARAM_PAN_SPAN);
-    if (spbkup <= BS80M)
+    if (spbkup <= BS100M)
     {
         span = (BANDSPAN)spbkup;
     }
     else
     {
-        span = BS800;
+        span = BS400;
         CFG_SetParam(CFG_PARAM_PAN_SPAN, span);
         CFG_Flush();
     }
@@ -1291,24 +1298,24 @@ CRASH_WR:
  #define XX0 190
  #define YY0 42
 
-int8_t TouchTest(){
+int TouchTest(){
 
      if (TOUCH_Poll(&pt)){
-        if((pt.y <40)&&(pt.x >420)){
-            // Upper right corner
+        if((pt.y <80)&&(pt.x >380)){
+            // Upper right corner --> EXIT
             while(TOUCH_IsPressed());
             Sleep(100);
             return 99;
         }
-        if(pt.x<(XX0-8)){
-            if(pt.y<YY0+48) return 1;
-            if(pt.y<YY0+96) return 2;
-            if(pt.y<YY0+144) return 3;
-            if(pt.y<YY0+192) return 4;
-            return 5;
+        if(pt.x<(XX0-8)){// select the pressed field:
+            if(pt.y<YY0+48) return 0;
+            if(pt.y<YY0+96) return 1;
+            if(pt.y<YY0+144) return 2;
+            if(pt.y<YY0+192) return 3;
+            return 4;
         }
      }
-     return 0;
+     return -1;
  }
 
 //Scan R-50 / X in +/- 200 kHz range around measurement frequency with 10 kHz step, to draw a small graph besides the measurement
@@ -1319,21 +1326,21 @@ static int xMax;
 static bool reverse1;
 static float complex z200[21] = { 0 };
 
-uint8_t Scan200(uint8_t line, int index1){
+int Scan200(uint8_t line, int index1){
 
-uint8_t touch;
+int touch;
  int32_t r;
  int32_t x;
  int8_t idx;
  int fq;// frequency in Hz
- if(fr[line]==0) return 0;
+ if(multi_fr[line]==0) return -1;// nothing to do
     if(index1==0){
         rMax=0;
         xMax=0;
         for(idx=0;idx<21;idx++){
-            fq = (int)fr[line]*1000 + (idx - 10) * bw[line]*50;
+            fq = (int)multi_fr[line]*1000 + (idx - 10) * multi_bw[line]*50;
             touch=TouchTest();
-            if(touch!=0) return touch;
+            if(touch!=-1) return touch;
             if (fq > 0){
                 GEN_SetMeasurementFreq(fq);
                 Sleep(2);
@@ -1375,7 +1382,7 @@ uint8_t touch;
     }
     else{
         touch=TouchTest();
-        if(touch!=0) return touch;
+        if(touch!=-1) return touch;
         r=(int)((crealf(z200[index1])-50.0)*20.0/rMax);// -50.0
         //if(r<0) r=-r;
         if(r>40) r=40;
@@ -1400,22 +1407,23 @@ uint8_t touch;
             lastX=x;
         }
     }
-    return 0;
+    return -1;
 }
 
-void ShowResult(uint8_t indx){
-float VSWR;
-float complex z0;
+
 char str[6];
-uint8_t i;
+int i;
+
+uint32_t freqx;
+
+int ShowFreq(int indx){
 uint32_t dp;
 uint32_t mhz;
-uint32_t freqx;
 uint32_t bw1;
 
-    if(indx>4) return;
-    freqx=fr[indx];
-    bw1=bw[indx];
+   if(indx>4) return -1;
+    freqx=multi_fr[indx];
+    bw1=multi_bw[indx];
     dp = (freqx % 1000) ;
     mhz = freqx / 1000;
     LCD_FillRect((LCDPoint){0, YY0-6 + indx*48}, (LCDPoint){XX0-6, FONT_GetHeight(FONT_FRANBIG)+ YY0-6 + indx*48}, BackGrColor);
@@ -1423,12 +1431,21 @@ uint32_t bw1;
     if(freqx==0) {
         LCD_FillRect((LCDPoint){4, YY0-10+48*indx}, (LCDPoint){XX0+229, YY0+32+48*indx}, BackGrColor);
         LCD_Rectangle((LCDPoint){2, YY0-10+48*indx}, (LCDPoint){XX0-8, YY0+30+48*indx}, TextColor);
-        return;
+        return -1;
     }
     LCD_FillRect((LCDPoint){XX0+230, YY0+5 + 48*indx}, (LCDPoint){XX0+288, YY0 + 20 + 48*indx}, BackGrColor);// clear bandwidth
     FONT_Print(FONT_FRAN, TextColor, BackGrColor, XX0+234, YY0+6 + 48*indx, "+-%u k", bw1/2);// bandwidth
     FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 4, YY0-6 + 48*indx, "%u.%03u", mhz, dp);// frequency
-    GEN_SetMeasurementFreq(fr[indx]*1000);
+    return indx;
+}
+
+void ShowResult(int indx){
+
+float VSWR;
+float complex z0;
+
+    if(ShowFreq(indx)==-1) return;// nothing to do
+    GEN_SetMeasurementFreq(multi_fr[indx]*1000);
     Sleep(10);
     DSP_Measure(freqx*1000, 1, 1, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
     z0 = DSP_MeasuredZ();
@@ -1628,25 +1645,52 @@ for(;;)
 
 void MultiSWR_Proc(void){// WK
 int redrawRequired = 0;
-uint8_t touch;
+int touch;
 uint32_t activeLayer;
-uint8_t i,j;
+int i,j;
 
     while(TOUCH_IsPressed());
     SetColours();
     reverse1=true;
-    fr[0]=CFG_GetParam(CFG_PARAM_MEAS_F)/1000;// now in kHz
-    fr[1]=CFG_GetParam(CFG_PARAM_PAN_F1);
+    multi_fr[0]=CFG_GetParam(CFG_PARAM_MULTI_F1);//  in kHz
+    multi_fr[1]=CFG_GetParam(CFG_PARAM_MULTI_F2);
+    multi_fr[2]=CFG_GetParam(CFG_PARAM_MULTI_F3);//  in kHz
+    multi_fr[3]=CFG_GetParam(CFG_PARAM_MULTI_F4);//  in kHz
+    multi_fr[4]=CFG_GetParam(CFG_PARAM_MULTI_F5);//  in kHz
+    multi_bwNo[0]=CFG_GetParam(CFG_PARAM_MULTI_BW1);
+    multi_bwNo[1]=CFG_GetParam(CFG_PARAM_MULTI_BW2);
+    multi_bwNo[2]=CFG_GetParam(CFG_PARAM_MULTI_BW3);
+    multi_bwNo[3]=CFG_GetParam(CFG_PARAM_MULTI_BW4);
+    multi_bwNo[4]=CFG_GetParam(CFG_PARAM_MULTI_BW5);
+    if(multi_bwNo[0]>=5)
+        multi_bw[0]=BSVALUES[multi_bwNo[0]];//  in kHz
+    else  multi_bw[0] = 0;
+    if(multi_bwNo[1]>=5)
+        multi_bw[1]=BSVALUES[multi_bwNo[1]];//  in kHz
+    else  multi_bw[1] = 0;
+    if(multi_bwNo[2]>=5)
+        multi_bw[2]=BSVALUES[multi_bwNo[2]];//  in kHz
+    else  multi_bw[2] = 0;
+    if(multi_bwNo[3]>=5)
+        multi_bw[3]=BSVALUES[multi_bwNo[3]];//  in kHz
+    else  multi_bw[3] = 0;
+    if(multi_bwNo[4]>=5)
+        multi_bw[4]=BSVALUES[multi_bwNo[4]];//  in kHz
+    else  multi_bw[4] = 0;
+
  //   BSP_LCD_SelectLayer(0);
  //   LCD_FillAll(BackGrColor);
  //   BSP_LCD_SelectLayer(1);
     LCD_FillAll(BackGrColor);
-    LCD_FillRect((LCDPoint){421,1}, (LCDPoint){476,35}, LCD_MakeRGB(255, 0, 0));
+    LCD_FillRect((LCDPoint){380,1}, (LCDPoint){476,35}, LCD_MakeRGB(255, 0, 0));
     LCD_Rectangle(LCD_MakePoint(420, 1), LCD_MakePoint(476, 35), BackGrColor);
-    FONT_Write(FONT_FRANBIG, TextColor, LCD_MakeRGB(255, 0, 0), 428, 2, "Exit");
+    FONT_Write(FONT_FRANBIG, TextColor, LCD_MakeRGB(255, 0, 0), 400, 2, "Exit");
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 5, 0, "MHz           SWR      R /");
     FONT_Write(FONT_FRANBIG, Color1, BackGrColor, 254, 0, "X");
 //    LCD_ShowActiveLayerOnly();
+    for(j=0;j<=4;j++){
+        ShowFreq(j);// show stored frequencies and bandwidths
+    }
     Sleep(500);
 
     for(;;){
@@ -1655,20 +1699,45 @@ uint8_t i,j;
             ShowResult(j);
             for(i=0;i<21;i++){
                 touch=TouchTest();//if all fr[i]==0
-                if(touch==0) touch=Scan200(j,i);
-                if (touch==99){
+                if(touch==-1) touch=Scan200(j,i);
+                if (touch==99){// Exit
                    LCD_FillAll(BackGrColor);
                    Sleep(100);
+                   CFG_Flush();
                    return;
                 }
-                if(touch>0){
-                    fr[touch-1]=GetFrequency(fr[touch-1]);// manual frequency input
+                if(touch>=0){// new manual frequency input (touch = line 1..5
+                    multi_fr[touch]=GetFrequency(multi_fr[touch]);// manual frequency input
+                    multi_bw[touch]=BSVALUES[span];//span?
+                    switch (touch){
+                        case 0:
+                            CFG_SetParam(CFG_PARAM_MULTI_F1, f1);
+                            CFG_SetParam(CFG_PARAM_MULTI_BW1, span);
+                            break;
+                        case 1:
+                            CFG_SetParam(CFG_PARAM_MULTI_F2, f1);
+                            CFG_SetParam(CFG_PARAM_MULTI_BW2, span);
+                            break;
+                        case 2:
+                            CFG_SetParam(CFG_PARAM_MULTI_F3, f1);
+                            CFG_SetParam(CFG_PARAM_MULTI_BW3, span);
+                            break;
+
+                        case 3:
+                            CFG_SetParam(CFG_PARAM_MULTI_F4, f1);
+                            CFG_SetParam(CFG_PARAM_MULTI_BW4, span);
+                            break;
+                        case 4:
+                            CFG_SetParam(CFG_PARAM_MULTI_F5, f1);
+                            CFG_SetParam(CFG_PARAM_MULTI_BW5, span);
+                            break;
+                    }
                     if (rqDel==1) {
                         rqDel= 0;
-                        fr[touch-1]=0;
+                        multi_fr[touch]=0;
                     }
-                    bw[touch-1]=BSVALUES[span];//span?
-                    j=touch-2;
+                    else  ShowFreq(touch);// show new frequency and bandwidth
+
                     if(j<0) j=0;
                     break;
                 }
