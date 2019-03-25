@@ -9,6 +9,6 @@
 #define MEASUREMENT_H_
 extern uint32_t Timer5Value;
 extern uint16_t TimeFlag;
-void MEASUREMENT_Proc(void);
+void Single_Frequency_Proc(void);
 
 #endif

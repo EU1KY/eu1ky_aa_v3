@@ -62,7 +62,7 @@ static float phdifdeg = 0.f;                 //Measured phase difference in degr
 static DSP_RX mZ = DSP_Z0 + 0.0fi;
 
 static float DSP_CalcR(void);
-static float DSP_CalcX(void);
+float DSP_CalcX(void);
 
 //Ensure f is nonzero (to be safely used as denominator)
 static float _nonz(float f)
@@ -226,6 +226,58 @@ void DSP_Sample16(void)
     }
 }
 
+void DSP_Measure2(void){
+float mag_v = 0.0f;
+float mag_i = 0.0f;
+float pdif = 0.0f;
+float complex res_v, res_i;
+int i;
+int retries = 3;
+int nMeasurements=CFG_GetParam(CFG_PARAM_MEAS_NSCANS);
+REMEASURE:
+    for (i = 0; i < nMeasurements; i++)
+    {
+        DSP_Sample();
+
+        //NB:
+        //  If DMA is in use, HAL_SAI_Receive_DMA is to be called instead of HAL_SAI_Receive.
+        //  In this case, to provide cache coherence, a call SCB_InvalidateDCache() should be added
+        //  to the custom HAL_SAI_RxCpltCallback() implementation !!! (EU1KY)
+
+        res_i = DSP_FFT(0);
+        res_v = DSP_FFT(1);
+
+        mag_v_buf[i] = crealf(res_v);
+        mag_i_buf[i] = crealf(res_i);
+        pdif = cimagf(res_i) - cimagf(res_v);
+        //Correct phase difference quadrant
+        pdif = fmodf(pdif + M_PI, 2 * M_PI) - M_PI;
+
+        if (pdif < -M_PI)
+            pdif += 2 * M_PI;
+        else if (pdif > M_PI)
+            pdif -= 2 * M_PI;
+
+        phdif_buf[i] = pdif;
+    }
+
+    //Now perform filtering to remove outliers with sigma > 1.0
+    mag_v = DSP_FilterArray(mag_v_buf, nMeasurements, retries);
+    mag_i = DSP_FilterArray(mag_i_buf, nMeasurements, retries);
+    phdif = DSP_FilterArray(phdif_buf, nMeasurements, retries);
+    if (mag_v == 0.0f || mag_i == 0.0f || phdif == 0.0f)
+    {//need to measure again : too much noise detected
+        retries--;
+        goto REMEASURE;
+    }
+
+    magdif = mag_v / _nonz(mag_i);
+    //Calculate derived results
+    magmv_v = mag_v * MCF;
+    magmv_i = mag_i * MCF;
+
+}
+
 
 //Set frequency, run measurement sampling and calculate phase, magnitude ratio
 //and Z from sampled data, applying hardware error correction and OSL correction
@@ -379,7 +431,7 @@ static float DSP_CalcR(void)
     return RR;
 }
 
-static float DSP_CalcX(void)
+float DSP_CalcX(void)
 {
     return sinf(phdif) * Rtotal * magdif;
 }

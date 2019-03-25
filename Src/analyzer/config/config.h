@@ -11,7 +11,9 @@
 #define BAND_FMIN 100000ul    //BAND_FMIN must be multiple 100000
 
 //#define MAX_BAND_FREQ  450000000ul
-#define MAX_BAND_FREQ  600000000ul
+//#define MAX_BAND_FREQ  600000000ul
+//#define MAX_BAND_FREQ  890000000ul
+#define MAX_BAND_FREQ  1450000000ul
 
 #if (BAND_FMIN % 100000) != 0
     #error "Incorrect band limit settings"
@@ -70,16 +72,24 @@ typedef enum
     CFG_PARAM_SI5351_CAPS,           //Si5351a crystal capacitors setting
     CFG_PARAM_TDR_VF,                //Velocity factor for TDR, % (1..100)
     CFG_PARAM_MULTI_F1,              //Frequency 1 for multi SWR window
-    CFG_PARAM_MULTI_F2,              //Frequency 1 for multi SWR window
-    CFG_PARAM_MULTI_F3,              //Frequency 1 for multi SWR window
-    CFG_PARAM_MULTI_F4,              //Frequency 1 for multi SWR window
-    CFG_PARAM_MULTI_F5,              //Frequency 1 for multi SWR window
+    CFG_PARAM_MULTI_F2,              //Frequency 2 for multi SWR window
+    CFG_PARAM_MULTI_F3,              //Frequency 3 for multi SWR window
+    CFG_PARAM_MULTI_F4,              //Frequency 4 for multi SWR window
+    CFG_PARAM_MULTI_F5,              //Frequency 5 for multi SWR window
     CFG_PARAM_MULTI_BW1,             //Bandwidth 1 for multi SWR window
     CFG_PARAM_MULTI_BW2,             //Bandwidth 2 for multi SWR window
     CFG_PARAM_MULTI_BW3,             //Bandwidth 3 for multi SWR window
     CFG_PARAM_MULTI_BW4,             //Bandwidth 4 for multi SWR window
     CFG_PARAM_MULTI_BW5,             //Bandwidth 5 for multi SWR window
-
+    CFG_PARAM_Volt_max,              //Maximum Voltage (with full Accu)
+    CFG_PARAM_Volt_max_Display,      //Maximum displayed Voltage (with full Accu) 0 = Voltage Display off
+    CFG_PARAM_Volt_max_Factor,       //Factor for correct Max Voltage (Accu has to be loaded)
+    CFG_PARAM_Volt_min_Display,      //Minimum Voltage (Accu must be loaded immediately)
+    CFG_PARAM_Daylight,              // Daylight (1)  Inhouse  (0)
+    CFG_PARAM_Fatlines,              // Fat Lines (1) Thin Lines (0)
+    CFG_PARAM_BeepOn,                // Beep on (1) Beep off (0)
+    CFG_PARAM_Date,                  // Date yyyymmdd
+    CFG_PARAM_Time,                  // Time hhmm
     //---------------------
     CFG_NUM_PARAMS
 } CFG_PARAM_t;
@@ -103,5 +113,6 @@ uint32_t CFG_GetParam(CFG_PARAM_t param);
 void CFG_SetParam(CFG_PARAM_t param, uint32_t value);
 void CFG_Flush(void);
 void CFG_ParamWnd(void);
+int BeepIsOn;
 
 #endif // _CONFIG_H_

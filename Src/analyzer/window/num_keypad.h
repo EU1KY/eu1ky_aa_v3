@@ -11,5 +11,4 @@
 #include <stdint.h>
 
 uint32_t NumKeypad(uint32_t initial, uint32_t min_value, uint32_t max_value, const char* header_text);
-
 #endif

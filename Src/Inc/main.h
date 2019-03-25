@@ -49,7 +49,14 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_msc.h"
+#include "stm32_ub_adc3_single.h"
+#include "FreqCounter.h"
+#include "panvswr2.h"
 
 #endif /* __MAIN_H */
+extern  int BeepIsOn;
+void Sleep(uint32_t nms);
+volatile uint32_t secondsCounter;
+static uint8_t second;
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

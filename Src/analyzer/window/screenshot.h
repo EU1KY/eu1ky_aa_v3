@@ -18,5 +18,6 @@ void SCREENSHOT_Save(const char *fname);
 void SCREENSHOT_SavePNG(const char *fname);
 void SCREENSHOT_ShowPicture(uint16_t Pointer1);
 void SCREENSHOT_DeleteFile(uint16_t Pointer1);
+void Date_Time_Stamp(void);
 int32_t ShowLogo(void);
 #endif

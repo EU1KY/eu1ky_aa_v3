@@ -43,19 +43,19 @@ static void ShowF()
 char str[20] = "";
 uint8_t i,j;
     FONT_ClearHalfLine(FONT_FRANBIG, BackGrColor, 72);// WK
-    sprintf(str, "F: %#u Hz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) ));
-    for(i=3;i<14;i++){
-        if(str[i]==' ') break;// search space before "Hz"
+    sprintf(str, "F: %#u MHz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) ));
+    for(i=3;i<15;i++){
+        if(str[i]==' ') break;// search space before "MHz"
     }
-    for(j=i+3;j>i-4;j--){
+    for(j=i+4;j>i-4;j--){//4
        str[j+2]=str[j];
     }
-     for(j=i-4;j>i-7;j--){
+     for(j=i-4;j>i-7;j--){//7
        str[j+1]=str[j];
     }
     str[i-6]='.';
-    str[i-2]='.';
-    str[i+5]=0;
+    str[i-2]=' ';
+    str[i+6]=0;
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 72, str );
 }
 
@@ -186,13 +186,14 @@ static void GENERATOR_SetFreq(void)
     redrawWindow = 1;
     Sleep(200);
 }
-void GENERATOR_ChgColrs(void){
+
+/*void GENERATOR_ChgColrs(void){
     if(ColourSelection==0)ColourSelection=1;
     else ColourSelection=0;
     SetColours();
     redrawWindowCompl = 1;
  //   while(TOUCH_IsPressed());
-}
+}*/
 
 void GENERATOR_AM(void){
 int k;
@@ -272,7 +273,7 @@ static const struct HitRect GENERATOR_hitArr[] =
     //        x0,  y0, width, height, callback
     HITRECT(   0, 233,  80, 38, GENERATOR_SwitchWindow),//200
     HITRECT(  85, 233, 135, 38, GENERATOR_SetFreq),
-    HITRECT( 220, 233, 100, 38, GENERATOR_ChgColrs),
+   // HITRECT( 220, 233, 100, 38, GENERATOR_ChgColrs),
     HITRECT( 320, 233, 59, 38, GENERATOR_AM),
     HITRECT( 380, 233, 59, 38, GENERATOR_FM),
     HITRECT( 290,   1,  90, 35, GENERATOR_FDecr_500k),
@@ -303,29 +304,16 @@ void ShowIncDec1(void){
     FONT_Write(FONT_FRANBIG, Color1, BackGrColor,380,  41, "+0.1M");
     FONT_Write(FONT_FRANBIG, Color1, BackGrColor,380,   2, "+0.5M");
 }
-void SetColours(void){
- if(ColourSelection==0){// Daylight
-        BackGrColor=LCD_WHITE;
-        CurvColor=LCD_COLOR_DARKGREEN;// dark blue
-        TextColor=LCD_BLACK;
-        Color1=LCD_COLOR_DARKGREEN;//LCD_COLOR_DARKBLUE;
-        Color2=LCD_COLOR_DARKGRAY;
-        Color3=LCD_YELLOW;// -ham bands area at daylight
-        Color4=LCD_MakeRGB(128,255,128);//Light green
-
-    }
-    else{// Inhouse
-        BackGrColor=LCD_BLACK;
-        CurvColor=LCD_COLOR_LIGHTGREEN;
-        TextColor=LCD_WHITE;
-        Color1=LCD_COLOR_LIGHTBLUE;
-        Color2=LCD_COLOR_GRAY;
-        Color3=LCD_MakeRGB(0, 0, 64);// very dark blue -ham bands area
-        Color4=LCD_MakeRGB(0, 64, 0);// very dark green
-    }
-}
 
 static DSP_RX rx;
+
+int testGen(void){// wk 21.1.2019
+    GEN_SetMeasurementFreq(3500000ul);
+    Sleep(200);
+    DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
+    if (DSP_MeasuredMagVmv() > 0.3f) return 0;
+    return -1;
+}
 
 void GENERATOR_Window_Proc(void)
 {
@@ -358,7 +346,7 @@ GENERATOR_REDRAW:
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 36, "Generator mode");// WK
         FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 235, " Exit ");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 85, 235, "Frequency");
-        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 220, 235, "Colour");
+        //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 220, 235, "Colour");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 332, 235, "AM");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 392, 235, "FM");
     }
@@ -437,8 +425,8 @@ GENERATOR_REDRAW:
             rx = DSP_MeasuredZ();
             FONT_ClearHalfLine(FONT_FRAN, BackGrColor, 140);
             FONT_Printf(0, 140, "Raw R: %.1f X: %.1f", crealf(rx), cimagf(rx));
-
-            if (DSP_MeasuredMagVmv() > 1.f){
+            //if (DSP_MeasuredMagVmv() > 1.f){
+            if (DSP_MeasuredMagVmv() > 0.3f){
                 if(SignalGood==0){
                     FONT_Write(FONT_FRAN, Color1, BackGrColor, 0, 160, "Signal OK   ");
                     SignalGood=1;

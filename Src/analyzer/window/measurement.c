@@ -38,6 +38,7 @@ static float vswr500[100];
 static float complex zFine500[100] = { 0 };
 static uint8_t DrawFine;
 static int parallel;
+static unsigned int freqOld=0;
 
 #define SCAN_ORIGIN_X 20
 #define SCAN_ORIGIN_Y 209
@@ -49,7 +50,9 @@ static void ShowF()
     char str[50];
     uint8_t i,j;
     unsigned int freq=(unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000);
-    sprintf(str, "F: %u kHz        ", freq);
+    if(freqOld==freq) return;
+    freqOld=freq;
+    sprintf(str, "F: %u MHz        ", freq);
     if(freq>999){// WK
         for(i=3;i<10;i++){
             if(str[i]==' ') break;// search space before "kHz"
@@ -87,7 +90,7 @@ void MEASUREMENT_ParSerial(void){
 
 void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
 {
-    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 2), LCD_MakePoint(LCD_GetWidth()-3, LCD_GetHeight()-3), BackGrColor);
+    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 5), LCD_MakePoint(LCD_GetWidth()-3, LCD_GetHeight()-3), BackGrColor);
     float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     if (isMatch)
     { //Draw LC match
@@ -124,7 +127,6 @@ void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
         return;
     }
 
-    LCDColor sc = LCD_RGB(96, 96, 96);
     SMITH_DrawGrid(X0, Y0, R, Color2, BackGrColor, SMITH_R50 | SMITH_Y50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
                                      SMITH_J50 | SMITH_J100 | SMITH_J200 | SMITH_J25 | SMITH_J10);
     SMITH_DrawLabels(TextColor, BackGrColor, SMITH_R50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
@@ -141,9 +143,9 @@ float complex Gx;
         if(TOUCH_IsPressed()) return;
         if(crealf(zFine500[i])!=9999.){
             Gx = OSL_GFromZ(zFine500[i], CFG_GetParam(CFG_PARAM_R0));
-            SMITH_DrawG(i, Gx, Color1);
+            SMITH_DrawG(i, Gx, CurvColor);
         }
-        else SMITH_DrawG(800, Gx, Color1);// trick, to write lastoffsets
+        else SMITH_DrawG(800, Gx, CurvColor);// trick, to write lastoffsets
     }
 
     x = (int)(crealf(G) * R) + X0;
@@ -204,7 +206,7 @@ char str[40] = "";
             sprintf(str, "Rp: %.1f ", r);
         else
             sprintf(str, "Rp: %.2f ", r);
-        if(fabsf(im) >= 5000.0f) sprintf(str[strlen(str)], "|Xp| > 5k");
+        if(fabsf(im) >= 5000.0f) sprintf(&str[strlen(str)], "|Xp| > 5k");
         else if (fabsf(im) > 999.5f)
             sprintf(&str[strlen(str)], "Xp:%.1f k", im / 1000.0f);
         else if (fabsf(im) >= 199.5f)
@@ -219,7 +221,7 @@ char str[40] = "";
             sprintf(str, "Rs: %.1f ", r);
         else
             sprintf(str, "Rs: %.2f ", r);
-        if(fabsf(im) >= 5000.0f) sprintf(str[strlen(str)], "|Xs| > 5k");
+        if(fabsf(im) >= 5000.0f) sprintf(&str[strlen(str)], "|Xs| > 5k");
         else if (fabsf(im) > 999.5f)
             sprintf(&str[strlen(str)], "Xs:%.1f k", im / 1000.0f);
         else if (fabsf(im) >= 199.5f)
@@ -239,7 +241,7 @@ char str[40] = "";
 
     if(im>=0){
     //calculate equivalent capacity and inductance (if XX is big enough)
-        if(im > 1.0 && im < 5000.0f)// XX > 2.0 && XX < 1500.
+        if((im > 1.0) && (im < 5000.0f))// XX > 2.0 && XX < 1500.
         {
             float Luh = 1e6 * fabsf(im) / (2.0 * 3.1415926 * GEN_GetLastFreq());
             if(parallel==1)
@@ -253,7 +255,7 @@ char str[40] = "";
         }
     }
     else {
-        if (im < -1.0 && im > -5000.0f)
+        if ((im < -1.0) && (im > -5000.0f))
         {
             float Cpf = 1e12 / (2.0 * 3.1415926 * GEN_GetLastFreq() * fabs(im));
             if(parallel==1)
@@ -435,6 +437,7 @@ static void MEASUREMENT_Screenshot(void)
      if(strlen(fname)==0) return;
 
     SCREENSHOT_DeleteOldest();
+    Date_Time_Stamp();
     if (CFG_GetParam(CFG_PARAM_SCREENSHOT_FORMAT))
         SCREENSHOT_SavePNG(fname);
     else
@@ -472,7 +475,7 @@ void ShowIncDec(void){
 //To change frequency, in steps of +/- 500, 100 and 10 kHz, tap top part of the display,
 //the step depends on how far you tap from the center.
 
-void MEASUREMENT_Proc(void)
+void Single_Frequency_Proc(void)
 {
  float delta, r, im;
  uint32_t fbkup,f_mess;
@@ -487,7 +490,7 @@ void MEASUREMENT_Proc(void)
     DrawFine=0;
     MeasRqExit = 0;
     MeasRedrawWindow = 0;
-    fChanged = 0;
+    fChanged = 1;
     isMatch = 0;
     SetColours();
     BSP_LCD_SelectLayer(0);
@@ -508,7 +511,7 @@ void MEASUREMENT_Proc(void)
     }
 
     LCD_FillRect(LCD_MakePoint(0,0), LCD_MakePoint(479,271), BackGrColor); // Graph rectangle
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 60, "Measurement mode");
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 60, "Single Frequency Mode");
     Sleep(1000);
     LCD_FillRect(LCD_MakePoint(120,60), LCD_MakePoint(479,140), BackGrColor); // Graph rectangle
     if (-1 == OSL_GetSelected())
@@ -520,8 +523,8 @@ void MEASUREMENT_Proc(void)
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 6, 236, " Exit");
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 92, 250, "Set frequency");
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 182, 250, "Save snapshot ");
-
-
+    freqOld=0;//to ensure that frequency is shown in next step
+    ShowF();
 
  //   LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
     firstRun=0;
@@ -654,8 +657,8 @@ void MEASUREMENT_Proc(void)
                 InitScan500();
                 rx=rx0;
             }
-
-            if (DSP_MeasuredMagVmv() < 1.)
+            //if (DSP_MeasuredMagVmv() < 1.)
+            if (DSP_MeasuredMagVmv() < 0.3f)
             {
                 FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 380, 38, "No signal  ");// WK
             }

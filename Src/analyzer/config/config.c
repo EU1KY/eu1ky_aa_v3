@@ -13,6 +13,7 @@ const char *g_cfg_osldir = "/aa/osl";
 static uint32_t resetRequired = 0;
  uint8_t ColourSelection;
  bool FatLines;
+ int BeepIsOn;
  uint32_t rqExit;
  uint32_t BackGrColor;
  uint32_t CurvColor;
@@ -21,6 +22,7 @@ static uint32_t resetRequired = 0;
  uint32_t Color2;
  uint32_t Color3;
  uint32_t Color4;
+ uint32_t Color5;
 
 typedef enum
 {
@@ -145,10 +147,10 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .id = CFG_PARAM_SI5351_MAX_FREQ,
         .idstring = "SI5351_MAX_FREQ",
         .type = CFG_PARAM_T_U32,
-        .nvalues = 2,
-        .strvalues = CFG_SARR("160 MHz", "200 MHz"),
-        .values = CFG_IARR(160000000ul, 200000000ul),
-        .dstring = "Maximum frequency that Si5351 can output (160 or 200 MHz.)",
+        .nvalues = 6,// was 2
+        .strvalues = CFG_SARR("160 MHz", "200 MHz", "260 MHz", "270 MHz", "280 MHz", "290 MHz"),
+        .values = CFG_IARR(160000000ul, 200000000ul, 260000000ul, 270000000ul, 280000000ul, 290000000ul),
+        .dstring = "Maximum frequency that Si5351 can output (160/200/270/280/290 MHz)",
         .isvalid = isShowHiddenSi,
     },
     {
@@ -311,9 +313,11 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
         .id = CFG_PARAM_BAND_FMAX,
         .idstring = "BAND_FMAX",
         .type = CFG_PARAM_T_U32,
-        .nvalues = 10,// ** WK **
-        .values = CFG_IARR(150000000ul, 200000000ul, 300000000ul, 450000000ul, 479000000ul, 500000000ul, 550000000ul, 590000000ul, 599000000ul, 600000000ul),// ** WK **
-        .strvalues = CFG_SARR("150 MHz", "200 MHz*", "300 MHz*", "450 MHz*", "479 MHz*", "500 MHz*", "550 MHz*","590 MHz*","599 MHz*","600 MHz*"),// ** WK **
+        .nvalues = 16,// ** WK **
+        .values = CFG_IARR(150000000ul, 200000000ul, 300000000ul, 450000000ul, 480000000ul, 500000000ul, 550000000ul,\
+                            590000000ul, 600000000ul, 810000000ul, 870000000ul, 1000000000ul, 1300000000ul, 1350000000ul, 1400000000ul, 1450000000ul),// ** WK **
+        .strvalues = CFG_SARR("150 MHz", "200 MHz*", "300 MHz*", "450 MHz*", "480 MHz*", "500 MHz*", "550 MHz*",\
+                              "590 MHz*","600 MHz*","810 MHz*","870 MHz*","1000 MHz*","1300 MHz*","1350 MHz*","1400 MHz*","1450 MHz*"),// ** WK **
         .isvalid = isShowHidden,
         .dstring = "Upper frequency band limit. If changed, full recalibration is required.",
         .resetRequired = 1
@@ -348,6 +352,23 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
 
+void CFG_Init_additions(void){// wk 21.01.2019
+    CFG_SetParam(CFG_PARAM_BAND_FMIN, 100000ul);
+    CFG_SetParam(CFG_PARAM_BAND_FMAX, 600000000ul);
+    CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 200000000ul);
+    CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
+    CFG_SetParam(CFG_PARAM_TDR_VF, 66);
+    CFG_SetParam(CFG_PARAM_MULTI_F1, 3600000);
+    CFG_SetParam(CFG_PARAM_MULTI_BW1, 100000);
+    CFG_SetParam(CFG_PARAM_Volt_max_Display, 4000);
+    CFG_SetParam(CFG_PARAM_Volt_min_Display, 3100);
+    CFG_SetParam(CFG_PARAM_Daylight,0);              // Daylight (1)  Inhouse  (0)
+    CFG_SetParam(CFG_PARAM_Fatlines,0);              // Fat Lines (1) Thin Lines (0)
+    CFG_SetParam(CFG_PARAM_BeepOn,1);                // Beep on (1) Beep off (0)
+    CFG_SetParam(CFG_PARAM_Date,20180919);           // Date yyyymmdd
+    CFG_SetParam(CFG_PARAM_Time,1930);
+}
+
 //CFG module initialization
 void CFG_Init(void)
 {
@@ -358,9 +379,9 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
     CFG_SetParam(CFG_PARAM_SYNTH_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SI5351_XTAL_FREQ, 27000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0x00);
+    CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0xC0);// wk 22.01.2019
     CFG_SetParam(CFG_PARAM_SI5351_CORR, 0);
-    CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0ul);
+    CFG_SetParam(CFG_PARAM_OSL_SELECTED, 0ul);// wk 21.01.2019
     CFG_SetParam(CFG_PARAM_R0, 50);
     CFG_SetParam(CFG_PARAM_OSL_RLOAD, 50);
     CFG_SetParam(CFG_PARAM_OSL_RSHORT, 5);
@@ -386,11 +407,7 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_S1P_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SHOW_HIDDEN, 0);
     CFG_SetParam(CFG_PARAM_SCREENSHOT_FORMAT, 0);
-    CFG_SetParam(CFG_PARAM_BAND_FMIN, 100000ul);
-    CFG_SetParam(CFG_PARAM_BAND_FMAX, 600000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 200000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
-    CFG_SetParam(CFG_PARAM_TDR_VF, 66);
+    CFG_Init_additions();// wk 21.01.2019
 
     //Load parameters from file on SD card
     FRESULT res;
@@ -419,6 +436,7 @@ void CFG_Init(void)
             f_close(&fo);
             //Replace configuration version to current
             CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
+            CFG_Init_additions();// wk 21.01.2019
             //And write extended file
             CFG_Flush();
         }
@@ -448,9 +466,14 @@ void CFG_Init(void)
         if (CFG_GetParam(CFG_PARAM_BAND_FMAX) > MAX_BAND_FREQ)
             CFG_SetParam(CFG_PARAM_BAND_FMAX, MAX_BAND_FREQ);
         if (CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 160000000ul
-            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 200000000ul)
+            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 200000000ul
+            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 260000000ul
+            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 270000000ul
+            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 280000000ul
+            && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 290000000ul)
             CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     }
+    if ((CFG_GetParam(CFG_PARAM_BAND_FMIN) >= 500000ul)) CFG_SetParam(CFG_PARAM_BAND_FMIN, 500000ul);// wk 21.01.2019
     if ((CFG_GetParam(CFG_PARAM_BAND_FMAX) <= BAND_FMIN) || (CFG_GetParam(CFG_PARAM_BAND_FMAX) % 1000000 != 0))
         CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
     if (CFG_GetParam(CFG_PARAM_TDR_VF) < 1 || CFG_GetParam(CFG_PARAM_TDR_VF) > 100)

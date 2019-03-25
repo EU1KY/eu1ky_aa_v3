@@ -12,18 +12,19 @@
 #include "dsp.h"
 #include "config.h"
 
-static void quadratic_equation(float a, float b, float c, float *pResult)
+static int quadratic_equation(float a, float b, float c, float *pResult)
 {
     float d = b * b - 4 * a * c;
     if (d < 0)
     {
         pResult[0] = 0.f;
         pResult[1] = 0.f;
-        return;
+        return 0;
     }
     float sd = sqrtf(d);
     pResult[0] = (-b + sd) / (2.f * a);
     pResult[1] = (-b - sd) / (2.f * a);
+    return 2;
 }
 
 // Calculate two solutions for ZL where R + X * X / R > R0
@@ -35,7 +36,17 @@ static void calc_hi(float R0, float complex ZL, MATCH_S *pResult)
     float b = 2 * Xl * R0;
     float c = R0 * (Xl * Xl + Rl * Rl);
     float xp[2];
-    quadratic_equation(a, b, c, xp);
+
+    pResult[0].XS  = NAN;
+    pResult[0].XPS = NAN;
+    pResult[0].XPL = NAN;
+    pResult[1].XS  = NAN;
+    pResult[1].XPS = NAN;
+    pResult[1].XPL = NAN;
+
+    int solutions = quadratic_equation(a, b, c, xp);
+    if(solutions==0) return;// no solutions
+
     //Found two impedances parallel to load
 
     //Now calculate serial impedances
@@ -60,7 +71,17 @@ static void calc_lo(float R0, float complex ZL, MATCH_S *pResult)
     float b = 2.f * Xl;
     float c = Rl * Rl + Xl * Xl - R0 * Rl;
     float xs[2];
-    quadratic_equation(a, b, c, xs);
+
+    pResult[0].XS  = NAN;
+    pResult[0].XPS = NAN;
+    pResult[0].XPL = NAN;
+    pResult[1].XS  = NAN;
+    pResult[1].XPS = NAN;
+    pResult[1].XPL = NAN;
+
+    int solutions = quadratic_equation(a, b, c, xs);
+    if(solutions==0) return;// no solutions
+
     //Got two serial impedances that change ZL to the Y.real = 1/R0
 
     float complex ZZ1 = ZL + xs[0] * I;

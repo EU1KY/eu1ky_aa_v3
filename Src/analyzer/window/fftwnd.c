@@ -129,6 +129,7 @@ static void FFTWND_ExitWnd(void)
 
 static void FFTWND_SwitchDispMode(void)
 {
+    while(TOUCH_IsPressed());// wait for release
     oscilloscope = !oscilloscope;
 }
 
@@ -136,7 +137,7 @@ static const struct HitRect hitArr[] =
 {
     //        x0,   y0, width,  height, callback
     HITRECT(   390, 55, 90,  40, FFTWND_ExitWnd),
-    HITRECT(   0, 140, 480, 140, FFTWND_SwitchDispMode),
+    HITRECT(   0, 140, 480, 130, FFTWND_SwitchDispMode),
     HITRECT(   0,   0,  80, 50, FFTWND_FDecr_10k),
     HITRECT(  80,   0,  80, 50, FFTWND_FDecr_5k),
     HITRECT( 160,   0,  70, 50, FFTWND_FDecr_1k),
@@ -172,17 +173,17 @@ static void do_fft_audiobuf(int ch)
 
 void FFTWND_Proc(void)
 {
-    uint32_t activeLayer;
+    //uint32_t activeLayer;
     uint32_t ctr = 0;
     int i;
     SetColours();
     rqExit = 0;
     oscilloscope = 0;
-    BSP_LCD_SelectLayer(0);
+    //BSP_LCD_SelectLayer(0);
+    //LCD_FillAll(LCD_BLACK);
+    //BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
-    BSP_LCD_SelectLayer(1);
-    LCD_FillAll(LCD_BLACK);
-    LCD_ShowActiveLayerOnly();
+    //LCD_ShowActiveLayerOnly();
 
     FONT_SetAttributes(FONT_FRANBIG, LCD_WHITE, LCD_BLACK);
 
@@ -197,9 +198,21 @@ void FFTWND_Proc(void)
     {
         Sleep(10);
     }
+    FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
 
-
-    activeLayer = BSP_LCD_GetActiveLayer();
+    //Draw freq change areas bar
+    uint16_t y;
+    for (y = 0; y < 2; y++)
+    {
+        LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
+        LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
+        LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
+        LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
+        LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
+        LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
+    }
+    ShowF1();
+    //activeLayer = BSP_LCD_GetActiveLayer();
     while (1)
     {
         LCDPoint pt;
@@ -228,23 +241,12 @@ void FFTWND_Proc(void)
                 GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
                 CFG_Flush();
                 fChanged1 = 0;
-            }
-            activeLayer = BSP_LCD_GetActiveLayer();
-            BSP_LCD_SelectLayer(!activeLayer);
-            FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 0);
 
-            //Draw freq change areas bar
-            uint16_t y;
-            for (y = 0; y < 2; y++)
-            {
-                LCD_Line(LCD_MakePoint(0,y), LCD_MakePoint(79,y), LCD_RGB(15,15,63));
-                LCD_Line(LCD_MakePoint(80,y), LCD_MakePoint(159,y), LCD_RGB(31,31,127));
-                LCD_Line(LCD_MakePoint(160,y), LCD_MakePoint(229,y),  LCD_RGB(64,64,255));
-                LCD_Line(LCD_MakePoint(250,y), LCD_MakePoint(319,y), LCD_RGB(64,64,255));
-                LCD_Line(LCD_MakePoint(320,y), LCD_MakePoint(399,y), LCD_RGB(31,31,127));
-                LCD_Line(LCD_MakePoint(400,y), LCD_MakePoint(479,y), LCD_RGB(15,15,63));
+            //activeLayer = BSP_LCD_GetActiveLayer();
+            //BSP_LCD_SelectLayer(!activeLayer);
+
+               // ShowF1();
             }
-            ShowF1();
         }
 
         uint32_t tmstart = HAL_GetTick();
@@ -259,7 +261,7 @@ void FFTWND_Proc(void)
             int16_t minMag = 32767;
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
-            BSP_LCD_SelectLayer(!activeLayer);// WK
+            //BSP_LCD_SelectLayer(!activeLayer);// WK
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
 
@@ -274,7 +276,7 @@ void FFTWND_Proc(void)
             magnitude = (maxMag - minMag) / 2;
 
             FONT_SetAttributes(FONT_FRANBIG, LCD_BLUE, LCD_BLACK);
-            LCD_FillRect(LCD_MakePoint(0, 64), LCD_MakePoint(398, 98), BackGrColor);
+            //LCD_FillRect(LCD_MakePoint(0, 64), LCD_MakePoint(398, 98), BackGrColor);
             FONT_Printf(0, 64, "Sampling %d ms, Magnitude: %d", tmstart, magnitude);
 
             pData = &audioBuf[NDUMMY];
@@ -316,7 +318,7 @@ void FFTWND_Proc(void)
                 if (i >= LCD_GetWidth()-1)
                     break;
             }
-             BSP_LCD_SelectLayer(!activeLayer);// WK
+             //BSP_LCD_SelectLayer(!activeLayer);// WK
         }
         else //Spectrum
         {
@@ -389,11 +391,11 @@ void FFTWND_Proc(void)
 
             }
             // BSP_LCD_SelectLayer(!activeLayer);// WK
-             LCD_ShowActiveLayerOnly();
+             //LCD_ShowActiveLayerOnly();
 
 
         }
-        LCD_ShowActiveLayerOnly();
+        //LCD_ShowActiveLayerOnly();
         Sleep(100);
     }
 }

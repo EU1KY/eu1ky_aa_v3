@@ -46,7 +46,7 @@ extern float windowfunc[NSAMPLES];
 #define Fieldw1 70
 #define FieldH 36
 
-const uint32_t Scale_Factors[]={10,8,10,10,8,10,10,8,10,10,8,10,10,8,10};
+const uint32_t Scale_Factors[]={10,8,10,10,8,10,10,8,10,10,8,10,10,8,10,10};
 static int16_t maxMag;
 static int16_t mag;
 static int m, AreaSelected, cycl3;

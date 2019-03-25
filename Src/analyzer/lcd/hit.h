@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include "LCD.h"
+#include "main.h"
 
 struct HitRect
 {

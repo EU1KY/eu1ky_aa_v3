@@ -21,17 +21,18 @@ typedef float complex DSP_RX;
 void DSP_Init(void);
 
 void DSP_Measure(uint32_t freqHz, int applyErrCorr, int applyOSL, int nMeasurements);
+void DSP_Measure2(void);
 
 DSP_RX DSP_MeasuredZ(void);
 float DSP_MeasuredPhase(void);
 float DSP_MeasuredDiff(void);
 float DSP_MeasuredDiffdB(void);
 float DSP_MeasuredPhaseDeg(void);
-float DSP_MeasuredPhase(void);
 float DSP_MeasuredMagVmv(void);
 float DSP_MeasuredMagImv(void);
 float complex DSP_MeasuredMagPhaseV(void);
 float complex DSP_MeasuredMagPhaseI(void);
+float DSP_CalcX(void);
 
 float DSP_CalcVSWR(DSP_RX Z);
 uint32_t DSP_GetIF(void);

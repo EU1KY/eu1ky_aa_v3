@@ -27,6 +27,7 @@
 #include "keyboard.h"
 #include "lodepng.h"
 #include "mainwnd.h"
+#include "DS3231.h"
 
 extern void Sleep(uint32_t);
 
@@ -57,6 +58,32 @@ static const uint8_t bmp_hdr[] =
 static const char *g_logo_fpath1 = "/aa/logo.bmp";
 
 static const char *g_logo_fpath2 = "/aa/logo.png";
+
+DWORD get_fattime(void){
+uint8_t second1;
+short AMPM1;
+uint32_t mon,yy,mm,dd,h,m,s;
+
+    if(NoDate==1) return 0;
+    if(RTCpresent==1){
+        getTime(&time, &second1,&AMPM1,0);
+        getDate(&date);
+
+    }
+    else{
+
+        time=GetInternTime(&second1);
+        date=CFG_GetParam(CFG_PARAM_Date);
+    }
+    mon=date%10000;
+    yy=date/10000-1980;
+    mm=mon/100;
+    dd=mon%100;
+    h=time/100;
+    m=time%100;
+    s=second1/2;
+    return ((yy<<25)+(mm<<21)+(dd<<16)+ (h<<11)+(m<<5)+s);
+}
 
 int32_t ShowLogo(void){
 
@@ -110,7 +137,7 @@ uint8_t* OutBuf=0;
             f_close(&fo);
             if(result1==0){
                PixPict((480-w)/2,(272-h)/2,&OutBuf[0]);
-               lodepng_free(OutBuf);
+               lodepng_free((void*) &OutBuf);
             }
             else {
                 return -1;
@@ -121,46 +148,32 @@ uint8_t* OutBuf=0;
  }
 
 
-
-//This is the prototype of the function that draws a screenshot from a file on SD card,
-//and waits for tapping the screen to exit.
-//fname must be without path and extension
-//For example: SCREENSHOT_Window("00000214");
-//TODO: add error handling
-void SCREENSHOT_Show(const char* fname)
-{
-    char path[255];
-    while(TOUCH_IsPressed());
-    sprintf(path, "%s/%s.bmp", SNDIR, fname);
-
-    FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 0, 0, path);// TEST WK
-    Sleep(500);
-
-    FIL fo = { 0 };
-    FRESULT fr = f_open(&fo, path, FA_READ);
-    if (FR_OK != fr)
-        return;
-    uint32_t br = 0;
-    fr = f_read(&fo, bmpFileBuffer, SCREENSHOT_FILE_SIZE, &br);
-    f_close(&fo);
-    if (br != SCREENSHOT_FILE_SIZE || FR_OK != fr)
-        return;
-    LCD_DrawBitmap(LCD_MakePoint(0,0), bmpFileBuffer, SCREENSHOT_FILE_SIZE);
-    while (!TOUCH_IsPressed())
-        Sleep(50);
-    LCD_FillAll(LCD_BLACK);
-    while (TOUCH_IsPressed())
-        Sleep(50);
-}
-extern int  Page;
+extern volatile int  Page;
 extern uint16_t Pointer;
 extern TCHAR  fileNames[13][13];
 static DWORD  FileLength[12];
 
+void AnalyzeDate(WORD datex, char* str){
+int yy, mm, dd;
+    if(NoDate==1) return ;
+    yy=datex>>9;
+    dd=datex&0x1f;
+    mm=(datex>>5)&0xf;
+    sprintf(&str[0], "%04d %02d %02d", yy+1980, mm, dd);
+}
+void AnalyzeTime(WORD datex, char* str){
+int hh, mm;
+    if(NoDate==1) return ;
+    hh=datex>>11;
+    mm=(datex>>5)&0x3f;
+    sprintf(&str[0], "%02d:%02d", hh, mm);
+}
+
 int16_t SCREENSHOT_SelectFileNames(int fileNoMin)
 {
-    f_mkdir(SNDIR);
+char string0[10];
 
+    f_mkdir(SNDIR);
     //Scan dir for snapshot files
     DIR dir = { 0 };
     FILINFO fno = { 0 };
@@ -189,10 +202,14 @@ int16_t SCREENSHOT_SelectFileNames(int fileNoMin)
                 strcpy((char*) &fileNames[j%12][0], fno.fname);
                 FileLength[j%12]=fno.fsize;
                 FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 32+16*(j%12), fno.fname);
+                AnalyzeDate(fno.fdate, &string0[0]);
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 150, 32+16*(j%12), &string0[0]);
+                AnalyzeTime(fno.ftime, &string0[0]);
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 240, 32+16*(j%12), &string0[0]);
                 fileNoMax++;
             }
             j++;
-            Pointer++;
+            FileNo++;
 
         }
         f_closedir(&dir);
@@ -295,12 +312,37 @@ void SCREENSHOT_DeleteOldest(void)
     }
 }
 
+void Date_Time_Stamp(void){
+char text[24], second1;
+uint32_t mon;
+short AMPM1;
+
+    LCD_FillRect((LCDPoint){50,248}, (LCDPoint){479,271}, BackGrColor);
+    if(NoDate==1) return;
+    if(RTCpresent==1){
+        getTime(&time, &second1,&AMPM1,0);
+        getDate(&date);
+    }
+    else{
+        time=GetInternTime(&second1);
+        date=CFG_GetParam(CFG_PARAM_Date);
+    }
+    mon=date%10000;
+    sprintf(text, "%04d %02d %02d ", date/10000,mon/100, mon%100);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 100, 252, text);
+    sprintf(text, "%02d:%02d:%02d ", time/100, time%100, second1);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 252, text);
+
+}
+
 void SCREENSHOT_Save(const char *fname)
 {
     char path[64];
     char wbuf[256];
     FRESULT fr = FR_OK;
     FIL fo = { 0 };
+    sprintf(path, "%s.bmp", fname);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 252, path);
 
     SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4); //Flush and invalidate D-Cache contents to the RAM to avoid cache coherency
     Sleep(10);
@@ -310,6 +352,7 @@ void SCREENSHOT_Save(const char *fname)
 
     //Now write screenshot as bitmap
     sprintf(path, "%s/%s.bmp", SNDIR, fname);
+
     fr = f_open(&fo, path, FA_CREATE_ALWAYS | FA_WRITE);
     if (FR_OK != fr)
         CRASHF("Failed to open file %s", path);
@@ -373,7 +416,8 @@ void SCREENSHOT_SavePNG(const char *fname)
     char wbuf[256];
     FRESULT fr = FR_OK;
     FIL fo = { 0 };
-
+    sprintf(path, "%s.png", fname);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 252, path);
     uint8_t* image = LCD_Push();
     if (0 == image)
         CRASH("LCD_Push failed");
@@ -425,7 +469,7 @@ uint8_t* OutBuf=0; //&bmpFileBuffer[0];
     sprintf(path, "%s/%s", SNDIR, (char*) &fileNames[Pointer1][0]);
 
     FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 200, 0, path);
-    Sleep(1500);
+    Sleep(150);//1500
 
     FIL fo = { 0 };
 
@@ -443,6 +487,7 @@ uint8_t* OutBuf=0; //&bmpFileBuffer[0];
 
     if (br != SCREENSHOT_FILE_SIZE || FR_OK != fr)
         return;
+
     LCD_DrawBitmap(LCD_MakePoint(0,0), bmpFileBuffer, SCREENSHOT_FILE_SIZE);
     }
 
@@ -469,7 +514,7 @@ uint8_t* OutBuf=0; //&bmpFileBuffer[0];
         }
 
     }
-    LCD_FillRect(LCD_MakePoint(0, 267),LCD_MakePoint(479, 271), LCD_COLOR_BLACK);
+    //LCD_FillRect(LCD_MakePoint(0, 267),LCD_MakePoint(479, 271), LCD_COLOR_BLACK);
     while (!TOUCH_IsPressed())
         Sleep(50);
     LCD_FillAll(LCD_BLACK);

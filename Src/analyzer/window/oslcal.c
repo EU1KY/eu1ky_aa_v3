@@ -115,7 +115,7 @@ static void _hit_save(void)
     rqExit = 1;
 }
 
-//OSL calibration window
+//OSL calibration window **********************************************************************************************
 void OSL_CalWnd(void)
 {
     if (-1 == OSL_GetSelected())
@@ -180,7 +180,7 @@ void OSL_CalWnd(void)
     }
 }
 
-static void _hit_err_scan(void)
+static void _hit_err_scan(void) // ************************************************************************
 {
     progressval = 100;
     progress_cb(0);
@@ -198,7 +198,7 @@ static void _hit_err_scan(void)
     TEXTBOX_DrawContext(&osl_ctx);
 }
 
-//Hardware error calibration window
+//Hardware error calibration window **********************************************************************
 void OSL_CalErrCorr(void)
 {
     rqExit = 0;

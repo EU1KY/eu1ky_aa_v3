@@ -141,11 +141,18 @@ void PendSV_Handler(void)
   * @param  None
   * @retval None
   */
+extern volatile uint32_t secondsCounter;
+static uint32_t millis;
+
 void SysTick_Handler(void)
 {
     extern volatile uint32_t main_sleep_timer;
     extern volatile uint32_t autosleep_timer;
     HAL_IncTick();
+    if(++millis>=1000){
+        millis=0;
+        secondsCounter++;
+    }
     if (0 != main_sleep_timer)
     {
         if (--main_sleep_timer == 0)

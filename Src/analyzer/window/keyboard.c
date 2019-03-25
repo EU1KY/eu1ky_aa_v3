@@ -22,7 +22,11 @@ static uint32_t kbdRqExit = 0;
 static char txtbuf[33];
 static char *presult;
 static uint32_t maxlen;
+static uint32_t lenTxt;
 static uint32_t isChanged;
+static uint32_t CurPos;
+static uint32_t iCount;
+uint32_t color = LCD_GREEN;
 
 #define KEYW 40
 #define KEYH 40
@@ -31,38 +35,64 @@ static uint32_t isChanged;
 #define KBDX(col) (KBDX0 + col * KEYW + 6 * col)
 #define KBDY(row) (KBDY0 + row * KEYH + 6 * row)
 
+
+void SetCursor(void){
+int x;
+    x=150+(CurPos)*23;
+    if(x>23) LCD_FillRect((LCDPoint){x-23,32},(LCDPoint){x+46,35}, LCD_BLACK);//delete the old cursor
+    else LCD_FillRect((LCDPoint){x,32},(LCDPoint){x+46,35}, LCD_BLACK);//delete the old cursor
+    LCD_FillRect((LCDPoint){x,32},(LCDPoint){x+23,35}, LCD_WHITE);// Set new cursor
+}
+
+void WriteText(void){
+    for(iCount=0;iCount<lenTxt;iCount++){
+        FONT_Write_N(FONT_FRANBIG, color, LCD_BLACK, 150+23*iCount, 5, &txtbuf[iCount],1);
+    }
+    SetCursor();
+}
+
 static void KeybHitCb(const TEXTBOX_t* tb)
 {
-    uint32_t CursorPosition;
-    uint32_t len = strlen(txtbuf);
-    if (len >= maxlen)
-        return;
     isChanged=1;
-    txtbuf[len] = tb->text[0];
-    txtbuf[len+1] = '\0';
-    uint32_t color = LCD_GREEN;
-    LCD_FillRect(LCD_MakePoint(150, 5),LCD_MakePoint(350 , 46),LCD_BLACK);
-    FONT_Write(FONT_FRANBIG, color, LCD_BLACK, 150, 5, txtbuf);
-    CursorPosition = FONT_GetStrPixelWidth(FONT_FRANBIG, txtbuf) + 150;
-    LCD_FillRect(LCD_MakePoint(CursorPosition, 35),LCD_MakePoint(CursorPosition+5 , 40),LCD_WHITE);// Cursor
+    txtbuf[CurPos] = tb->text[0];//overwrite
+    color = LCD_GREEN;
+    LCD_FillRect((LCDPoint){150+(CurPos)*23,5},(LCDPoint){173+(CurPos)*23,33}, LCD_BLACK);// delete the old character
+    if(CurPos<maxlen-1)   CurPos++;
+    if((CurPos==lenTxt)&&(lenTxt<=maxlen-1)) lenTxt++;
+
+    WriteText();
 }
 
 static void KeybHitBackspaceCb(void)
 {
-    uint32_t CursorPosition;
-    uint32_t len = strlen(txtbuf);
-    if (len == 0)
+ uint32_t pos;
+    if(CurPos>0) CurPos-=1;
+    if (lenTxt <=1)
         return;
-    if(isChanged==0){ // first time
-       isChanged=1;
-       len=1;
+    lenTxt-=1;
+    isChanged=1;
+    pos=CurPos+1;
+    while  (txtbuf[pos]!='\0'){
+        txtbuf[pos]=txtbuf[pos+1];
+        pos++;
     }
-    txtbuf[len-1] = '\0';
-    uint32_t color = LCD_GREEN;
-    LCD_FillRect(LCD_MakePoint(150, 5),LCD_MakePoint(350 , 46),LCD_BLACK);
-    FONT_Write(FONT_FRANBIG, color, LCD_BLACK, 150, 5, txtbuf);
-    CursorPosition = FONT_GetStrPixelWidth(FONT_FRANBIG, txtbuf) + 150;
-    LCD_FillRect(LCD_MakePoint(CursorPosition, 35),LCD_MakePoint(CursorPosition+5 , 40),LCD_WHITE);// Cursor
+    color = LCD_GREEN;
+    LCD_FillRect(LCD_MakePoint(150, 5),LCD_MakePoint(350 , 46),LCD_BLACK);//delete the old text
+    WriteText();
+}
+
+static void KeybHitLeftCb(void){
+    if(CurPos>0) {
+        CurPos--;
+        SetCursor();
+    }
+}
+
+static void KeybHitRightCb(void){
+    if(CurPos<lenTxt-1) {
+        CurPos++;
+        SetCursor();
+    }
 }
 
 static void KeybHitOKCb(void)
@@ -166,38 +196,40 @@ static const TEXTBOX_t tb_keybal[] = {
 
     (TEXTBOX_t){ .x0 = KBDX(8), .y0 = KBDY(3), .text = "<-", .font = FONT_FRANBIG, .width = 2* KEYW, .height = KEYH, .center = 1,
                  .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RGB(200,0,0), .cb = KeybHitBackspaceCb, .next = (void*)&tb_keybal[38] },
-
+    (TEXTBOX_t){ .x0 = KBDX(4), .y0 = KBDY(4)+4, .text = "<", .font = FONT_FRANBIG, .width =  KEYW, .height = 30, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_GRAY, .cb = KeybHitLeftCb, .next = (void*)&tb_keybal[39] },
+    (TEXTBOX_t){ .x0 = KBDX(6), .y0 = KBDY(4)+4, .text = ">", .font = FONT_FRANBIG, .width =  KEYW, .height = 30, .center = 1,
+                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_GRAY, .cb = KeybHitRightCb, .next = (void*)&tb_keybal[40] },
     (TEXTBOX_t){ .x0 = KBDX(0), .y0 = KBDY(4) + 4, .text = "Cancel", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
-                 .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = KeybHitCancelCb, .next = (void*)&tb_keybal[39] },
+                 .fgcolor = LCD_BLUE, .bgcolor = LCD_YELLOW, .cb = KeybHitCancelCb, .next = (void*)&tb_keybal[41] },
     (TEXTBOX_t){ .x0 = KBDX(7), .y0 = KBDY(4) + 4, .text = "OK", .font = FONT_FRANBIG, .border = 1, .center = 1, .width = 90, .height = 32,
                  .fgcolor = LCD_YELLOW, .bgcolor = LCD_RGB(0,128,0), .cb = KeybHitOKCb, },
 
 };
 #define KBDNUMKEYS (sizeof(tb_keybal) / sizeof(TEXTBOX_t))
 
+
+
+
 uint32_t KeyboardWindow(char* buffer, uint32_t max_len, const char* header_text)
 {
 uint32_t CursorPosition;
-char HelpBuf[9];
     LCD_Push(); //Store current LCD bitmap
     LCD_FillAll(LCD_BLACK);
 
     kbdRqExit = 0;
     isChanged = 0;
     if (max_len > (sizeof(txtbuf) - 1))
-        max_len = sizeof(txtbuf) - 1;
-    maxlen = max_len;
-    memcpy(txtbuf, buffer, max_len);
-    strcpy(HelpBuf, txtbuf);
+        maxlen = sizeof(txtbuf) - 1;
+    else maxlen = max_len;
+    memcpy(txtbuf, buffer, maxlen);
     presult = buffer;
-
+    color=LCD_WHITE;
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, KBDX0, 0, header_text);
-    //FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, KBDX0, 17, txtbuf);
     LCD_FillRect(LCD_MakePoint(150, 5),LCD_MakePoint(350 , 46),LCD_BLACK);
-    HelpBuf[strlen(txtbuf)]= '\0';// cut the last character
-    FONT_Write(FONT_FRANBIG, LCD_WHITE, LCD_BLACK, 150, 5, txtbuf);
-    CursorPosition = FONT_GetStrPixelWidth(FONT_FRANBIG, HelpBuf) + 150;
-    LCD_FillRect(LCD_MakePoint(CursorPosition, 35),LCD_MakePoint(CursorPosition+5 , 40),LCD_WHITE);// Cursor
+    lenTxt=strlen(txtbuf);
+    CurPos=0;
+    WriteText();
 
     TEXTBOX_CTX_t keybd_ctx;
     TEXTBOX_InitContext(&keybd_ctx);

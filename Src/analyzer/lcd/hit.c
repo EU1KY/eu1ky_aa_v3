@@ -6,6 +6,11 @@
  */
 
 #include "hit.h"
+#include "config.h"
+#include "FreqCounter.h"
+#include "panvswr2.h"
+
+
 void ShowHitRect(const struct HitRect* r){// WK
 
     while(r->x1!=0xFFFFFFFFul){
@@ -15,6 +20,8 @@ void ShowHitRect(const struct HitRect* r){// WK
     }
 }
 
+void (*LastR)(void) ;
+extern int BeepIsActive;
 int HitTest(const struct HitRect* r, uint32_t x, uint32_t y)
 {
 
@@ -23,8 +30,21 @@ int HitTest(const struct HitRect* r, uint32_t x, uint32_t y)
 
         if (x >= r->x1 && x <= r->x2 && y >= r->y1 && y <= r->y2)
         {
-            if (r->HitCallback)
+            if (r->HitCallback){
+                if(LastR!=r->HitCallback) {
+                    LastR=r->HitCallback;
+                    if(SWRTone==0){// SWR Sound against beep
+                        if(BeepIsOn==1){
+                            BeepIsActive=1;
+                            UB_TIMER2_Init_FRQ(880);
+                            UB_TIMER2_Start();
+                            Sleep(100);
+                            BeepIsActive=0;
+                        }
+                    }
+                }
                 r->HitCallback();
+            }
             return 1;
         }
         ++r;
