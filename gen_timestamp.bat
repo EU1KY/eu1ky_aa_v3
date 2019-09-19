@@ -1,10 +1,10 @@
 @echo off
 echo #ifndef BUILD_TIMESTAMP > Src/Inc/build_timestamp.h
 
-hg stat > NUL
-if ERRORLEVEL 1 goto HGERR
+git status > NUL
+if ERRORLEVEL 1 goto GITERR
 echo | set /p TMPHG="#define HGREV " >> Src/Inc/build_timestamp.h
-hg identify -ni >> Src/Inc/build_timestamp.h
+git rev-parse --short=8 HEAD >> Src/Inc/build_timestamp.h
 
 :MAKE_TIMESTAMP
 for /F "skip=1 delims=" %%F in ('
@@ -28,8 +28,8 @@ echo #endif >> Src/Inc/build_timestamp.h
 echo Src/Inc/build_timestamp.h file created at %CurrYear%-%CurrMonth%-%CurrDay% %CurrHour%:%CurrMinute% UT
 goto END
 
-:HGERR
-echo #warning Mercurial failed. Repository not found. Firmware revision will not be generated. >> Src/Inc/build_timestamp.h
+:GITERR
+echo #warning GIT failed. Repository not found. Firmware revision will not be generated. >> Src/Inc/build_timestamp.h
 echo #define HGREV N/A >> Src/Inc/build_timestamp.h
 goto MAKE_TIMESTAMP
 
