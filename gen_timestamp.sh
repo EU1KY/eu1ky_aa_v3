@@ -16,20 +16,20 @@ function write_timestamp {
     echo Src/Inc/build_timestamp.h file created at ${CurrYear}-${CurrMonth}-${CurrDay} ${CurrHour}:${CurrMinute} UT
 }
 
-function write_hg_error {
-    echo #warning Mercurial failed. Repository not found. Firmware revision will not be generated. >> Src/Inc/build_timestamp.h
+function write_git_error {
+    echo #warning GIT failed. Repository not found. Firmware revision will not be generated. >> Src/Inc/build_timestamp.h
     echo #define HGREV N/A >> Src/Inc/build_timestamp.h
 }
 
 function write_header {
     echo \#ifndef BUILD_TIMESTAMP > Src/Inc/build_timestamp.h
-    hg stat &> /dev/null
+    git status &> /dev/null
     if [ $? -ne 0 ]; then
-	echo Failed to execute hg stat
+	echo Failed to execute git status
 	return 1
     fi
 
-    HGREV="$(hg identify -ni)"
+    HGREV="$(git rev-parse --short=8 HEAD)"
     echo "#define HGREV \"${HGREV}\"" >> Src/Inc/build_timestamp.h
     return 0
 }
@@ -38,7 +38,7 @@ write_header
 if [ $? -eq 0 ]; then
     write_timestamp
 else
-    echo Failed to execute hg stat
-    write_hg_error
+    echo Failed to execute git status
+    write_git_error
     write_timestamp	
 fi

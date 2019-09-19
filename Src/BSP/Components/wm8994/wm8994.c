@@ -602,10 +602,10 @@ uint32_t wm8994_Init(uint16_t DeviceAddr, uint16_t OutputInputDevice, uint8_t Vo
       counter += CODEC_IO_Write(DeviceAddr, 0x410, 0x7800);
 
       /* Disable mute on IN1L_TO_MIXINL, Gain = +0dB */
-      counter += CODEC_IO_Write(DeviceAddr, 0x29, 0x0025);
+      counter += CODEC_IO_Write(DeviceAddr, 0x29, 0x0020);
 
       /* Disable mute on IN1R_TO_MIXINL, Gain = +0dB */
-      counter += CODEC_IO_Write(DeviceAddr, 0x2A, 0x0025);
+      counter += CODEC_IO_Write(DeviceAddr, 0x2A, 0x0020);
 
       /* IN1LN_TO_IN1L, IN1LP_TO_VMID, IN1RN_TO_IN1R, IN1RP_TO_VMID */
       counter += CODEC_IO_Write(DeviceAddr, 0x28, 0x0011);
