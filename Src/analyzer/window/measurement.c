@@ -188,7 +188,7 @@ static void MeasurementModeDraw(DSP_RX rx)
 
     //Calculated matched cable loss at this frequency
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, 158);
-    float g = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
+    float complex g = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     float ga = cabsf(g); //G amplitude
     if (ga > 0.01)
     {
