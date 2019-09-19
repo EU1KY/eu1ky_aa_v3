@@ -143,7 +143,7 @@ static int Scan500(void)
 //Display measured data
 static void MeasurementModeDraw(DSP_RX rx)
 {
-    char str[50] = "";
+    char str[100] = "";
     sprintf(str, "Magnitude diff %.2f dB     ", DSP_MeasuredDiffdB());
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, 0, 38, str);
 
@@ -188,13 +188,27 @@ static void MeasurementModeDraw(DSP_RX rx)
 
     //Calculated matched cable loss at this frequency
     FONT_ClearLine(FONT_FRAN, LCD_BLACK, 158);
-    float ga = cabsf(OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0))); //G amplitude
+    float g = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
+    float ga = cabsf(g); //G amplitude
     if (ga > 0.01)
     {
         float cl = -10. * log10f(ga);
         if (cl < 0.001f)
             cl = 0.f;
-        sprintf(str, "MCL: %.2f dB  |Z|: %.1f", cl, cabsf(rx));
+        sprintf(str, "MCL: %.2f dB, |Z|: %.1f", cl, cabsf(rx));
+        
+        // Calculate open line phase length, in degrees
+        if (ga > 0.9f) // it is reasonable for short enough, low loss line only
+        {
+            float complex fi = clogf(g) / (-2. * I);
+            float fi_degrees = crealf(fi) * 180.f / M_PI;
+            if (fi_degrees < 0.f)
+            {
+                fi_degrees += 180.f;
+            }
+            sprintf(&str[strlen(str)], ", \xd4: %.1f\xb0", fi_degrees);
+        }
+
         FONT_Write(FONT_FRAN, LCD_YELLOW, LCD_BLACK, 0, 158, str);
     }
 
