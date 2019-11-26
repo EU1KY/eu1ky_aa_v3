@@ -119,9 +119,9 @@ char* SCREENSHOT_SelectFileName(void)
             if (0 != strcasecmp(pdot, ".bmp") && 0 != strcasecmp(pdot, ".png"))
                 continue; //Bypass files that are not bmp
             for (i = 0; i < 8; i++)
-                if (!isdigit(fno.fname[i]))
+                if (!isdigit((int)fno.fname[i]))
                     break;
-            if (i != 8)
+            if (i != 8u)
                 continue; //Bypass file names that are not 8-digit numbers
             numfiles++;
             //Now convert file name to number
