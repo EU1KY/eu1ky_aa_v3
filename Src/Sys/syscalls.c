@@ -20,12 +20,12 @@ Notes   : SWO Output should work on every Cortex-M. In case of errors
 *
 *       Defines for Cortex-M debug unit
 */
-#define ITM_STIM_U32 (*(volatile unsigned int*)0xE0000000)    // Stimulus Port Register word acces
-#define ITM_STIM_U8  (*(volatile         char*)0xE0000000)    // Stimulus Port Register byte acces
-#define ITM_ENA      (*(volatile unsigned int*)0xE0000E00)    // Control Register
-#define ITM_TCR      (*(volatile unsigned int*)0xE0000E80)    // Trace control register
-#define DHCSR        (*(volatile unsigned int*)0xE000EDF0)    // Debug Halting Control Status Register
-#define DEMCR        (*(volatile unsigned int*)0xE000EDFC)    // Debug Exception Monitor Control Register
+#define ITM_STIM_U32 (*(volatile uint32_t *)0xE0000000)    // Stimulus Port Register word acces
+#define ITM_STIM_U8  (*(volatile uint8_t  *)0xE0000000)    // Stimulus Port Register byte acces
+#define ITM_ENA      (*(volatile uint32_t *)0xE0000E00)    // Control Register
+#define ITM_TCR      (*(volatile uint32_t *)0xE0000E80)    // Trace control register
+#define DHCSR        (*(volatile uint32_t *)0xE000EDF0)    // Debug Halting Control Status Register
+#define DEMCR        (*(volatile uint32_t *)0xE000EDFC)    // Debug Exception Monitor Control Register
 
 char *heap_end = NULL;
 
@@ -36,17 +36,20 @@ char *heap_end = NULL;
 */
 _ssize_t _write_r (struct _reent *r, int file, const void *ptr, size_t len)
 {
-    int i;
-    const unsigned char *p;
+    size_t i;
+    const uint8_t *p;
 
-    p = (const unsigned char*) ptr;
+    p = (const uint8_t*) ptr;
 
     for (i = 0; i < len; i++)
     {
         //
         // Check if SWO is enabled / Debugger is connected
         //
-        if ((DHCSR & 1)!= 1 || (DEMCR & (1 << 24)) == 0 || (ITM_TCR & (1 << 22)) == 1 || (ITM_ENA & 1) == 0)
+        if (   (DHCSR & 1) != 1
+            || (DEMCR & (1 << 24)) == 0
+            || (ITM_TCR & (1u << 22)) != 0
+            || (ITM_ENA & 1) == 0)
         {
             return len;
         }
