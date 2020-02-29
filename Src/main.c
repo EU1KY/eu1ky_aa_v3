@@ -52,8 +52,15 @@ void Sleep(uint32_t nms)
     // leave device running when the main_sleep_timer downcount reaches zero,
     // until then the device remains in Sleep state with only interrupts running.
     main_sleep_timer = nms;
+    __disable_irq();
     HAL_PWR_EnableSleepOnExit();
     HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+    __enable_irq();
+    __NOP();
+    while (main_sleep_timer)
+    {
+        __WFI();
+    }
 }
 
 //SDFatFs must be aligned to 32 bytes in order the buffer to be valid for DCache operataions
