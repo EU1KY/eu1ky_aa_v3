@@ -661,7 +661,7 @@ void Z0_Proc(void)
             goto EXIT;
         if (cimagf(rx) < 0.f)
             break;
-        freq -= 10000u;
+        freq -= 1000u;
     }
 
     // -X measured at half the frequency corresponding to line length lambda/4 - is actually the line Z0
@@ -670,12 +670,12 @@ void Z0_Proc(void)
 
     FONT_Print(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 0, 100, "Measured Z0: %.1f", -cimagf(rx));
     FONT_Print(FONT_FRANBIG, LCD_GREEN, LCD_BLACK, 0, 140, "L/4 freq %u kHz", freq / 1000);
-    float complex gamma = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
-    if (cabsf(gamma) < 0.7f)
+    if (Z0_IsLossy(rx))
     {
         FONT_Print(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 0, 180, "Line is lossy, Q = %.1f", cimagf(rx)/crealf(rx));
     }
     Sleep(500);
+
     while (!TOUCH_IsPressed())
     {
         Sleep(50);
