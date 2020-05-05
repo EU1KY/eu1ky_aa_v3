@@ -366,12 +366,6 @@ void MainWnd(void)
                             .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbTDR);
 
-    //TDR window
-    hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 160, .text = " Time Domain ", .font = FONT_FRANBIG,
-                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc,
-                            .border = TEXTBOX_BORDER_BUTTON };
-    TEXTBOX_Append(&main_ctx, &hbTDR);
-
     //Z0 window
     hbZ0 = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Measure line Z0 ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Z0_Proc,
