@@ -45,6 +45,7 @@ static TEXTBOX_t hbDsp;
 static TEXTBOX_t hbUSBD;
 static TEXTBOX_t hbTimestamp;
 static TEXTBOX_t hbTDR;
+static TEXTBOX_t hbZ0;
 
 #define M_BGCOLOR LCD_RGB(0,0,127)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,255) //Menu item foreground color
@@ -342,32 +343,40 @@ void MainWnd(void)
     TEXTBOX_Append(&main_ctx, &hbPan);
 
     //Measurement window
-    hbMeas = (TEXTBOX_t){.x0 = COL2, .y0 =  50, .text =   " Measurement    ", .font = FONT_FRANBIG,
+    hbMeas = (TEXTBOX_t){.x0 = COL2, .y0 =  40, .text =   " Measurement    ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Proc,
                             .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbMeas);
 
     //Generator window
-    hbGen  = (TEXTBOX_t){.x0 = COL2, .y0 = 100, .text =   " Generator      ", .font = FONT_FRANBIG,
+    hbGen  = (TEXTBOX_t){.x0 = COL2, .y0 = 80, .text =   " Generator      ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc,
                             .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbGen);
 
     //DSP window
-    hbDsp  = (TEXTBOX_t){.x0 = COL2, .y0 = 150, .text =   " DSP            ", .font = FONT_FRANBIG,
+    hbDsp  = (TEXTBOX_t){.x0 = COL2, .y0 = 120, .text =   " DSP            ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc,
                             .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbDsp);
 
     //TDR window
-    hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Time Domain ", .font = FONT_FRANBIG,
+    hbTDR = (TEXTBOX_t){.x0 = COL2, .y0 = 160, .text = " Time Domain ", .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc,
                             .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbTDR);
 
+    //Z0 window
+    hbZ0 = (TEXTBOX_t){.x0 = COL2, .y0 = 200, .text = " Measure line Z0 ", .font = FONT_FRANBIG,
+                            .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Z0_Proc,
+                            .border = TEXTBOX_BORDER_BUTTON };
+    TEXTBOX_Append(&main_ctx, &hbZ0);
+
+    //Version and Build Timestamp
     hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
                             .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
+
     //Draw context
     TEXTBOX_DrawContext(&main_ctx);
 

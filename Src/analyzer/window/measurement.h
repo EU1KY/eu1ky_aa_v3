@@ -9,5 +9,6 @@
 #define MEASUREMENT_H_
 
 void MEASUREMENT_Proc(void);
+void Z0_Proc(void);
 
 #endif
