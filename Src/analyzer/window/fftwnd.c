@@ -255,6 +255,7 @@ void FFTWND_Proc(void)
             int16_t maxMag = -32767;
             int32_t magnitude = 0;
 
+            LCD_WaitForRedraw();
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
             FONT_ClearLine(FONT_FRANBIG, LCD_BLACK, 100);
 
@@ -315,6 +316,7 @@ void FFTWND_Proc(void)
         else //Spectrum
         {
             //Draw spectrum
+            LCD_WaitForRedraw();
             LCD_FillRect(LCD_MakePoint(0, 140), LCD_MakePoint(LCD_GetWidth()-1, LCD_GetHeight()-1), 0xFF000020);
 
             //Draw horizontal grid lines
