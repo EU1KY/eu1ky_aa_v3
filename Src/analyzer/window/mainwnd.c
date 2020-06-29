@@ -62,7 +62,11 @@ static void USBD_Proc()
     while(TOUCH_IsPressed());
 
     LCD_FillAll(LCD_BLACK);
+#if defined(USE_USB_HS)
     FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 10, 0, "USB storage access via USB HS port");
+#elif defined(USE_USB_FS)
+    FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 10, 0, "USB storage access via USB FS port");
+#endif
     FONT_Write(FONT_FRANBIG, LCD_YELLOW, LCD_BLACK, 80, 200, "Exit (Reset device)");
 
     FATFS_UnLinkDriver(SDPath);
@@ -331,7 +335,16 @@ void MainWnd(void)
     TEXTBOX_Append(&main_ctx, &hbConfig);
 
     //USB access
-    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 200, .text =   " USB HS cardrdr ", .font = FONT_FRANBIG,
+    hbUSBD = (TEXTBOX_t){.x0 = COL1, .y0 = 200,
+                .text =
+#if defined(USE_USB_HS)
+                " USB HS cardrdr "
+#elif defined(USE_USB_FS)
+                " USB FS cardrdr "
+#else
+                " (no USB support)"
+#endif
+                            , .font = FONT_FRANBIG,
                             .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc,
                             .border = TEXTBOX_BORDER_BUTTON };
     TEXTBOX_Append(&main_ctx, &hbUSBD);
@@ -373,7 +386,7 @@ void MainWnd(void)
     TEXTBOX_Append(&main_ctx, &hbZ0);
 
     //Version and Build Timestamp
-    hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", hg rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
+    hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", git rev: " HGREVSTR(HGREV) ", Build: " BUILD_TIMESTAMP, .font = FONT_FRAN,
                             .fgcolor = LCD_LGRAY, .bgcolor = LCD_BLACK };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
 

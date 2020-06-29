@@ -194,7 +194,11 @@ void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
   * @param  None
   * @retval None
 */
+#ifdef USE_USB_FS
+void OTG_FS_IRQHandler(void)
+#else
 void OTG_HS_IRQHandler(void)
+#endif
 {
     HAL_PCD_IRQHandler(&hpcd);
 }
