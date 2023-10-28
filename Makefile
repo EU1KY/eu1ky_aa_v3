@@ -37,7 +37,7 @@ ASFLAGS = -mcpu=cortex-m7 -mthumb -Wa,--gdwarf-2
 
 LDFLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -fgcse -fexpensive-optimizations -fomit-frame-pointer \
           -fdata-sections -ffunction-sections -Os -g -mthumb -mfpu=fpv5-sp-d16 -Wl,-Map=bin/Release/F7Discovery.map \
-          -u _printf_float -specs=nano.specs -Wl,--gc-sections -TSrc/Sys/STM32F746NGHx_FLASH.ld -lm
+          -u _printf_float -specs=nano.specs -Wl,--gc-sections -Wl,--no-warn-rwx-segments -TSrc/Sys/STM32F746NGHx_FLASH.ld -lm
 
 DEFINE = -DSTM32F746xx \
          -DSTM32F746G_DISCO \

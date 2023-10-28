@@ -8,8 +8,8 @@ language: c
 matrix:
   fast_finish: true
   include:
-    - name: 9-2019q4
-      env: GCC_URL=https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2
+    - name: 12.3.rel1
+      env: GCC_URL=https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi.tar.xz
 
 install:
   - pushd .
@@ -17,7 +17,7 @@ install:
   - mkdir arm-gcc-toolchain
   - wget -O $HOME/arm-gcc-toolchain/gcc.tar.bz2 $GCC_URL
   - cd arm-gcc-toolchain
-  - tar -jxf gcc.tar.bz2 --strip=1
+  - tar -Jxf gcc.tar.bz2 --strip=1
   - popd
   - export PATH=$HOME/arm-gcc-toolchain/bin:$PATH
   

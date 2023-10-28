@@ -69,8 +69,8 @@ typedef enum
     CFG_NUM_PARAMS
 } CFG_PARAM_t;
 
-const char *g_cfg_osldir;
-const char *g_aa_dir;
+extern const char *g_cfg_osldir;
+extern const char *g_aa_dir;
 
 void CFG_Init(void);
 uint32_t CFG_GetParam(CFG_PARAM_t param);
