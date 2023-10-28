@@ -15,9 +15,9 @@ install:
   - pushd .
   - cd ~ 
   - mkdir arm-gcc-toolchain
-  - wget -O $HOME/arm-gcc-toolchain/gcc.tar.bz2 $GCC_URL
+  - wget -O $HOME/arm-gcc-toolchain/gcc.tar.xz $GCC_URL
   - cd arm-gcc-toolchain
-  - tar -Jxf gcc.tar.bz2 --strip=1
+  - tar -Jxf gcc.tar.xz --strip=1
   - popd
   - export PATH=$HOME/arm-gcc-toolchain/bin:$PATH
   
